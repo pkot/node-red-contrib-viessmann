@@ -1,5 +1,8 @@
 const axios = require('axios');
 
+// Token refresh buffer time (5 minutes before expiration)
+const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
+
 module.exports = function(RED) {
     function ViessmannConfigNode(config) {
         RED.nodes.createNode(this, config);
@@ -82,9 +85,8 @@ module.exports = function(RED) {
                 return node.accessToken;
             }
             
-            // Check if token is expired (with 5 minute buffer)
-            const bufferTime = 5 * 60 * 1000; // 5 minutes
-            if (node.tokenExpiry && Date.now() >= (node.tokenExpiry - bufferTime)) {
+            // Check if token is expired (with buffer)
+            if (node.tokenExpiry && Date.now() >= (node.tokenExpiry - TOKEN_REFRESH_BUFFER_MS)) {
                 if (node.refreshToken) {
                     await node.refreshAccessToken();
                 } else {
