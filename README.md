@@ -42,10 +42,44 @@ Stores API credentials (client_id, client_secret) securely and handles authentic
 - Token endpoint: `https://iam.viessmann.com/idp/v3/token`
 
 ### Device Discovery Node: `viessmann-device-list`
-Lists all accessible Viessmann installations, gateways, devices, and their features.
+Lists all accessible Viessmann installations for the authenticated account.
+
+**Inputs:**
+- `msg.payload` (optional): Can accept filter options (currently unused)
 
 **Outputs:**
-- `msg.payload`: Array of discovered devices/features with IDs and metadata
+- `msg.payload`: Array of installation objects with the following structure:
+  ```json
+  [
+    {
+      "id": 123456,
+      "description": "My Home",
+      "address": {
+        "street": "Main Street 1",
+        "city": "Berlin",
+        "postalCode": "10115",
+        "country": "DE"
+      },
+      "registeredAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    }
+  ]
+  ```
+
+**Error Handling:**
+- Emits an error if the config node is not configured
+- Emits an error if the API request fails
+- Error details are available in the debug panel
+
+**Example Usage:**
+1. Add a `viessmann-device-list` node to your flow
+2. Connect it to a `viessmann-config` node
+3. Trigger the node with an inject node
+4. View the list of installations in the debug panel
+
+**API Endpoint:**
+- Uses `GET /iot/v2/equipment/installations` from the Viessmann API
+- Base URL: `https://api.viessmann-climatesolutions.com`
 
 ### Data Read Node: `viessmann-read`
 Reads specific data points from a selected device.
