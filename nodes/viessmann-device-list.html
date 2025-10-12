@@ -27,15 +27,38 @@
 </script>
 
 <script type="text/html" data-help-name="viessmann-device-list">
-    <p>Lists all accessible Viessmann installations, gateways, devices, and their features.</p>
+    <p>Lists all accessible Viessmann installations for the authenticated account.</p>
+    
     <h3>Inputs</h3>
     <dl class="message-properties">
         <dt class="optional">payload <span class="property-type">object</span></dt>
-        <dd>Optional filter options for device discovery.</dd>
+        <dd>Optional filter options (currently unused).</dd>
     </dl>
+    
     <h3>Outputs</h3>
     <dl class="message-properties">
         <dt>payload <span class="property-type">array</span></dt>
-        <dd>Array of discovered devices/features with IDs and metadata.</dd>
+        <dd>Array of installation objects. Each installation contains:
+            <ul>
+                <li><code>id</code> - Installation ID</li>
+                <li><code>description</code> - Installation name/description</li>
+                <li><code>address</code> - Object containing street, city, postalCode, country</li>
+                <li><code>registeredAt</code> - ISO 8601 timestamp</li>
+                <li><code>updatedAt</code> - ISO 8601 timestamp</li>
+            </ul>
+        </dd>
     </dl>
+    
+    <h3>Details</h3>
+    <p>This node fetches all installations associated with the authenticated account from the Viessmann API.</p>
+    <p>The node requires a configured <code>viessmann-config</code> node for authentication.</p>
+    <p>API endpoint: <code>GET /iot/v2/equipment/installations</code></p>
+    
+    <h3>Error Handling</h3>
+    <p>The node will emit an error if:</p>
+    <ul>
+        <li>The config node is not configured</li>
+        <li>The API request fails</li>
+    </ul>
+    <p>Error details are available in the debug panel.</p>
 </script>
