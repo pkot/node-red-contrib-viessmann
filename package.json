@@ -23,6 +23,7 @@
       "viessmann-config": "nodes/viessmann-config.js",
       "viessmann-device-list": "nodes/viessmann-device-list.js",
       "viessmann-gateway-list": "nodes/viessmann-gateway-list.js",
+      "viessmann-gateway-devices": "nodes/viessmann-gateway-devices.js",
       "viessmann-read": "nodes/viessmann-read.js",
       "viessmann-write": "nodes/viessmann-write.js"
     }

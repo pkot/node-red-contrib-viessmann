@@ -7,7 +7,7 @@ A Node-RED module for integrating Viessmann heating devices via the official Vie
 - **OAuth2 Authentication**: Secure authentication with Viessmann API using client credentials or device flow
 - **Installation Discovery**: List all accessible Viessmann installations for your account
 - **Gateway Discovery**: List all gateways for a specific installation
-- **Device Discovery**: List all devices and their features (coming soon)
+- **Device Discovery**: List all devices attached to a specific gateway
 - **Read Data**: Read specific data points from Viessmann devices (e.g., temperature, state)
 - **Write Data**: Set writable parameters (e.g., temperature setpoint, operation modes)
 
@@ -190,6 +190,54 @@ Lists all gateways for a specific Viessmann installation.
 - Uses `GET /iot/v2/equipment/installations/{installationId}/gateways` from the Viessmann API
 - Base URL: `https://api.viessmann-climatesolutions.com`
 
+### Gateway Devices Node: `viessmann-gateway-devices`
+Lists all devices attached to a specific gateway in a Viessmann installation.
+
+**Inputs:**
+- `msg.installationId` (required): The installation ID (number)
+- `msg.gatewaySerial` (required): The gateway serial number (string)
+
+**Outputs:**
+- `msg.payload`: Array of device objects with the following structure:
+  ```json
+  [
+    {
+      "id": "0",
+      "gatewaySerial": "7571381573112225",
+      "boilerSerial": "123456789012",
+      "boilerSerialEditor": "User",
+      "bmuSerial": "123456789012",
+      "bmuSerialEditor": "User",
+      "createdAt": "2025-09-18T13:56:08.9193723+00:00",
+      "editedAt": "2025-09-18T13:56:08.9193938+00:00",
+      "modelId": "MODEL_7",
+      "status": "Offline",
+      "deviceType": "heating",
+      "roles": ["type:boiler", "type:E3"],
+      "isBoilerSerialEditable": false,
+      "brand": null,
+      "translationKey": null
+    }
+  ]
+  ```
+
+**Error Handling:**
+- Emits an error if the config node is not configured
+- Emits an error if `msg.installationId` is not provided or invalid
+- Emits an error if `msg.gatewaySerial` is not provided or invalid
+- Emits an error if the API request fails (e.g., gateway not found)
+- Error details are available in the debug panel
+
+**Example Usage:**
+1. Use `viessmann-device-list` to get installation IDs
+2. Use `viessmann-gateway-list` to get gateway serial numbers for an installation
+3. Pass both `msg.installationId` and `msg.gatewaySerial` to `viessmann-gateway-devices`
+4. View the list of devices attached to the gateway in the debug panel
+
+**API Endpoint:**
+- Uses `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices` from the Viessmann API
+- Base URL: `https://api.viessmann-climatesolutions.com`
+
 ### Data Read Node: `viessmann-read`
 Reads specific data points from a selected device.
 
@@ -216,8 +264,9 @@ Sets values for writable device parameters.
 1. Add a `viessmann-config` node and configure your API credentials
 2. Use `viessmann-device-list` to discover available installations
 3. Use `viessmann-gateway-list` to list gateways for a specific installation
-4. Use `viessmann-read` to read data from devices
-5. Use `viessmann-write` to control device parameters
+4. Use `viessmann-gateway-devices` to list devices attached to a gateway
+5. Use `viessmann-read` to read data from devices
+6. Use `viessmann-write` to control device parameters
 
 ## Development
 

@@ -1,0 +1,79 @@
+<script type="text/javascript">
+    RED.nodes.registerType('viessmann-gateway-devices', {
+        category: 'Viessmann',
+        color: '#E60000',
+        defaults: {
+            name: { value: "" },
+            config: { value: "", type: "viessmann-config", required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-thermometer",
+        label: function() {
+            return this.name || "gateway devices";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="viessmann-gateway-devices">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-config" placeholder="Viessmann Config">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="viessmann-gateway-devices">
+    <p>Lists all devices attached to a specific gateway in a Viessmann installation.</p>
+    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>installationId <span class="property-type">number</span></dt>
+        <dd>The installation ID (required).</dd>
+        <dt>gatewaySerial <span class="property-type">string</span></dt>
+        <dd>The gateway serial number (required).</dd>
+    </dl>
+    
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">array</span></dt>
+        <dd>Array of device objects. Each device contains:
+            <ul>
+                <li><code>id</code> - Device ID</li>
+                <li><code>gatewaySerial</code> - Associated gateway serial number</li>
+                <li><code>boilerSerial</code> - Boiler serial number</li>
+                <li><code>boilerSerialEditor</code> - Editor of boiler serial</li>
+                <li><code>bmuSerial</code> - BMU serial number</li>
+                <li><code>bmuSerialEditor</code> - Editor of BMU serial</li>
+                <li><code>createdAt</code> - ISO 8601 timestamp</li>
+                <li><code>editedAt</code> - ISO 8601 timestamp</li>
+                <li><code>modelId</code> - Device model identifier</li>
+                <li><code>status</code> - Device status (e.g., Online, Offline)</li>
+                <li><code>deviceType</code> - Type of device (e.g., heating)</li>
+                <li><code>roles</code> - Array of device roles</li>
+                <li><code>isBoilerSerialEditable</code> - Whether boiler serial can be edited</li>
+                <li><code>brand</code> - Device brand (may be null)</li>
+                <li><code>translationKey</code> - Translation key for device name (may be null)</li>
+            </ul>
+        </dd>
+    </dl>
+    
+    <h3>Details</h3>
+    <p>This node fetches all devices attached to a specific gateway from the Viessmann API.</p>
+    <p>The node requires a configured <code>viessmann-config</code> node for authentication.</p>
+    <p>Both <code>msg.installationId</code> and <code>msg.gatewaySerial</code> must be provided. You can get installation IDs using the <code>viessmann-device-list</code> node and gateway serials using the <code>viessmann-gateway-list</code> node.</p>
+    <p>API endpoint: <code>GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices</code></p>
+    
+    <h3>Error Handling</h3>
+    <p>The node will emit an error if:</p>
+    <ul>
+        <li>The config node is not configured</li>
+        <li>The installationId is not provided or invalid</li>
+        <li>The gatewaySerial is not provided or invalid</li>
+        <li>The API request fails (e.g., gateway not found, network error)</li>
+    </ul>
+    <p>Error details are available in the debug panel.</p>
+</script>
