@@ -84,7 +84,7 @@ This module is under active development. See [SPEC.md](SPEC.md) for detailed fun
 This project uses GitHub Actions for continuous integration. The CI workflow automatically:
 
 - Runs on all pushes and pull requests to `main` and `feature/**` branches
-- Sets up Node.js version 14 (as specified in `package.json` engines field)
+- Sets up Node.js version 20 (as specified in `package.json` engines field)
 - Installs dependencies using `npm ci`
 - Runs the linter (if `npm run lint` is configured)
 - Runs the test suite (if `npm test` is configured)
