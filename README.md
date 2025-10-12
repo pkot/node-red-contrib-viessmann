@@ -62,7 +62,7 @@ If you prefer to generate tokens manually, follow these steps:
 
 3. **Authorize in browser** - Visit this URL (replace CLIENT_ID and CODE_CHALLENGE):
    ```
-   https://iam.viessmann-climatesolutions.com/idp/v3/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:4200/&scope=IoT%20User%20offline_access&code_challenge=YOUR_CODE_CHALLENGE&code_challenge_method=S256
+   https://iam.viessmann-climatesolutions.com/idp/v3/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:4200/&scope=IoT%20offline_access&code_challenge=YOUR_CODE_CHALLENGE&code_challenge_method=S256
    ```
    - Log in with your Viessmann account
    - After authorization, copy the `code` parameter from the redirect URL

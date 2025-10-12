@@ -21,7 +21,7 @@
 
 **OAuth2 Configuration:**
 - **Grant Type**: Client credentials flow
-- **Scopes**: Default is `IoT User offline_access`
+- **Scopes**: Default is `IoT offline_access`
 - **Token Endpoint**: `https://iam.viessmann.com/idp/v3/token`
 
 **External Requirements:**
@@ -66,7 +66,7 @@ Users must obtain credentials from the Viessmann Developer Portal:
 
 ## 3. Key Implementation Decisions
 
-- **Authentication:** Use OAuth2 client credentials flow with scopes (`IoT User offline_access` by default); token refresh managed by config node.
+- **Authentication:** Use OAuth2 PKCE flow with scopes (`IoT offline_access` by default); token refresh managed by config node.
   - **Scopes are configurable**: Users can modify scopes if needed for their specific use case
   - **External setup required**: Users must obtain credentials from the Viessmann Developer Portal
   - **Error handling**: Provide specific, actionable error messages that guide users to fix configuration issues

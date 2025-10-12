@@ -154,7 +154,7 @@ async function main() {
         
         // Build authorization URL
         const redirectUri = 'http://localhost:4200/';
-        const scope = 'IoT User offline_access';
+        const scope = 'IoT offline_access';
         const authUrl = `https://iam.viessmann-climatesolutions.com/idp/v3/authorize?` +
             `response_type=code&` +
             `client_id=${encodeURIComponent(clientId)}&` +

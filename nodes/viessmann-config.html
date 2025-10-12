@@ -54,7 +54,7 @@ node node_modules/node-red-contrib-viessmann/scripts/get-viessmann-tokens.js</pr
         <li>Get your Client ID from the <a href="https://developer.viessmann.com/" target="_blank">Viessmann Developer Portal</a> (create a client if needed)</li>
         <li>Generate a code verifier and code challenge (use <a href="https://developer.pingidentity.com/en/tools/pkce-code-generator.html" target="_blank">this tool</a>)</li>
         <li>Visit the authorization URL in your browser (replace CLIENT_ID and CODE_CHALLENGE):
-            <pre>https://iam.viessmann-climatesolutions.com/idp/v3/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=http://localhost:4200/&scope=IoT%20User%20offline_access&code_challenge=CODE_CHALLENGE&code_challenge_method=S256</pre>
+            <pre>https://iam.viessmann-climatesolutions.com/idp/v3/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=http://localhost:4200/&scope=IoT%20offline_access&code_challenge=CODE_CHALLENGE&code_challenge_method=S256</pre>
         </li>
         <li>After login, copy the authorization code from the redirect URL (you have 20 seconds to use it)</li>
         <li>Exchange the code for tokens using curl (replace values):
