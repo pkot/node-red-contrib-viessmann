@@ -45,8 +45,15 @@ module.exports = function(RED) {
                 return;
             }
             
-            // Validate gatewaySerial is a non-empty string
-            const gatewaySerial = String(msg.gatewaySerial).trim();
+            // Validate gatewaySerial is a string
+            if (typeof msg.gatewaySerial !== 'string') {
+                node.status({fill: 'red', shape: 'dot', text: 'invalid gatewaySerial'});
+                node.error('Invalid gatewaySerial. Must be a string.', msg);
+                return;
+            }
+            
+            // Validate gatewaySerial is not empty after trimming
+            const gatewaySerial = msg.gatewaySerial.trim();
             if (gatewaySerial === '') {
                 node.status({fill: 'red', shape: 'dot', text: 'invalid gatewaySerial'});
                 node.error('Invalid gatewaySerial. Must be a non-empty string.', msg);
