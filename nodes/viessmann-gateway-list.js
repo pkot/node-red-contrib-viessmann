@@ -2,7 +2,7 @@ const axios = require('axios');
 const { setupDependentNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
-    function ViessmannDeviceListNode(config) {
+    function ViessmannGatewayListNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
         
@@ -23,21 +23,36 @@ module.exports = function(RED) {
                 return;
             }
             
+            // Check if installationId is provided
+            if (msg.installationId === null || msg.installationId === undefined) {
+                node.status({fill: 'red', shape: 'dot', text: 'no installationId'});
+                node.error('No installationId provided. Please provide msg.installationId.', msg);
+                return;
+            }
+            
+            // Validate installationId is a valid positive number
+            const installationId = Number(msg.installationId);
+            if (!Number.isInteger(installationId) || installationId <= 0) {
+                node.status({fill: 'red', shape: 'dot', text: 'invalid installationId'});
+                node.error('Invalid installationId. Must be a positive integer.', msg);
+                return;
+            }
+            
             try {
                 node.status({fill: 'yellow', shape: 'ring', text: 'fetching...'});
                 
                 // Get valid access token
                 const token = await node.config.getValidToken();
                 
-                // Fetch installations from Viessmann API
-                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations`, {
+                // Fetch gateways from Viessmann API
+                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json'
                     }
                 });
                 
-                // Set payload to the installations data
+                // Set payload to the gateways data
                 msg.payload = response.data.data || [];
                 
                 node.status({fill: 'green', shape: 'dot', text: 'success'});
@@ -46,10 +61,10 @@ module.exports = function(RED) {
                 const errorMsg = extractErrorMessage(error);
                 const statusMsg = truncateForStatus(errorMsg);
                 node.status({fill: 'red', shape: 'dot', text: statusMsg});
-                node.error('Failed to fetch installations: ' + errorMsg, msg);
+                node.error('Failed to fetch gateways: ' + errorMsg, msg);
             }
         });
     }
     
-    RED.nodes.registerType("viessmann-device-list", ViessmannDeviceListNode);
+    RED.nodes.registerType("viessmann-gateway-list", ViessmannGatewayListNode);
 };

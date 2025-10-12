@@ -1,0 +1,75 @@
+<script type="text/javascript">
+    RED.nodes.registerType('viessmann-gateway-list', {
+        category: 'Viessmann',
+        color: '#E60000',
+        defaults: {
+            name: { value: "" },
+            config: { value: "", type: "viessmann-config", required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-server",
+        label: function() {
+            return this.name || "gateway list";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="viessmann-gateway-list">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-config" placeholder="Viessmann Config">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="viessmann-gateway-list">
+    <p>Lists all gateways for a specific Viessmann installation.</p>
+    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>installationId <span class="property-type">number</span></dt>
+        <dd>The installation ID to list gateways for (required).</dd>
+    </dl>
+    
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">array</span></dt>
+        <dd>Array of gateway objects. Each gateway contains:
+            <ul>
+                <li><code>serial</code> - Gateway serial number</li>
+                <li><code>version</code> - Firmware version</li>
+                <li><code>gatewayType</code> - Type of gateway (e.g., VitoconnectOPTO2)</li>
+                <li><code>aggregatedStatus</code> - Gateway status (e.g., WorksProperly)</li>
+                <li><code>description</code> - Gateway description</li>
+                <li><code>installationId</code> - Associated installation ID</li>
+                <li><code>autoUpdate</code> - Auto-update enabled status</li>
+                <li><code>firmwareUpdateFailureCounter</code> - Number of failed firmware updates</li>
+                <li><code>targetRealm</code> - Target realm</li>
+                <li><code>otaOngoing</code> - Over-the-air update ongoing status</li>
+                <li><code>createdAt</code> - ISO 8601 timestamp</li>
+                <li><code>producedAt</code> - ISO 8601 timestamp</li>
+                <li><code>registeredAt</code> - ISO 8601 timestamp</li>
+                <li><code>lastStatusChangedAt</code> - ISO 8601 timestamp</li>
+            </ul>
+        </dd>
+    </dl>
+    
+    <h3>Details</h3>
+    <p>This node fetches all gateways for a specific installation from the Viessmann API.</p>
+    <p>The node requires a configured <code>viessmann-config</code> node for authentication.</p>
+    <p>The installation ID must be provided in <code>msg.installationId</code>. You can get installation IDs using the <code>viessmann-device-list</code> node.</p>
+    <p>API endpoint: <code>GET /iot/v2/equipment/installations/{installationId}/gateways</code></p>
+    
+    <h3>Error Handling</h3>
+    <p>The node will emit an error if:</p>
+    <ul>
+        <li>The config node is not configured</li>
+        <li>The installationId is not provided</li>
+        <li>The API request fails (e.g., installation not found, network error)</li>
+    </ul>
+    <p>Error details are available in the debug panel.</p>
+</script>

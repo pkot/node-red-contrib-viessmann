@@ -57,7 +57,34 @@ function setupDependentNode(node) {
     });
 }
 
+/**
+ * Extract error message from axios error
+ * @param {Error} error - The error object
+ * @returns {string} Extracted error message
+ */
+function extractErrorMessage(error) {
+    return error.response?.data?.error || error.message;
+}
+
+/**
+ * Truncate long text for status display
+ * @param {string} text - The text to truncate
+ * @param {number} maxLength - Maximum length (default: 30)
+ * @returns {string} Truncated text
+ */
+function truncateForStatus(text, maxLength = 30) {
+    if (typeof text !== 'string') {
+        text = String(text);
+    }
+    if (text.length <= maxLength) {
+        return text;
+    }
+    return text.substring(0, maxLength - 3) + '...';
+}
+
 module.exports = {
     createStatusUpdater,
-    setupDependentNode
+    setupDependentNode,
+    extractErrorMessage,
+    truncateForStatus
 };
