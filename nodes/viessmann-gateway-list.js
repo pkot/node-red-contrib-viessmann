@@ -24,7 +24,7 @@ module.exports = function(RED) {
             }
             
             // Check if installationId is provided
-            if (!msg.installationId && msg.installationId !== 0) {
+            if (msg.installationId === null || msg.installationId === undefined) {
                 node.status({fill: 'red', shape: 'dot', text: 'no installationId'});
                 node.error('No installationId provided. Please provide msg.installationId.', msg);
                 return;
