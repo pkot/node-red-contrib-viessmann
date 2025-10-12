@@ -2,7 +2,8 @@
     RED.nodes.registerType('viessmann-config', {
         category: 'config',
         defaults: {
-            name: { value: "" }
+            name: { value: "" },
+            enableDebug: { value: false }
         },
         credentials: {
             clientId: { type: "text" },
@@ -27,6 +28,10 @@
         <label for="node-config-input-clientSecret"><i class="fa fa-lock"></i> Client Secret</label>
         <input type="password" id="node-config-input-clientSecret" placeholder="Client Secret">
     </div>
+    <div class="form-row">
+        <label for="node-config-input-enableDebug"><i class="fa fa-bug"></i> Enable Debug Logging</label>
+        <input type="checkbox" id="node-config-input-enableDebug" style="display:inline-block; width:auto; vertical-align:baseline;">
+    </div>
 </script>
 
 <script type="text/html" data-help-name="viessmann-config">
@@ -34,4 +39,9 @@
     <h3>Details</h3>
     <p>Stores API credentials (client_id, client_secret) securely and handles OAuth2 authentication/token refresh.</p>
     <p>This configuration is shared across all Viessmann nodes.</p>
+    <h3>Debug Logging</h3>
+    <p>When <b>Enable Debug Logging</b> is checked, the node will output detailed debug information about authentication, 
+    token refresh, and config usage operations. Sensitive data (client_id, client_secret, tokens) will be masked to show 
+    only the last 4 characters for security purposes.</p>
+    <p>By default, debug logging is disabled. Enable it only when troubleshooting authentication issues.</p>
 </script>
