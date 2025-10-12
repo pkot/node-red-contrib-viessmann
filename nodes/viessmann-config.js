@@ -153,7 +153,7 @@ module.exports = function(RED) {
             // Check if token is expired (with buffer)
             const now = Date.now();
             const timeUntilExpiry = node.tokenExpiry - now;
-            debugLog('Current token status: ' + timeUntilExpiry + 'ms until expiry (buffer: ' + TOKEN_REFRESH_BUFFER_MS + 'ms)');
+            debugLog('Current token status: ' + Math.max(0, timeUntilExpiry) + 'ms until expiry (buffer: ' + TOKEN_REFRESH_BUFFER_MS + 'ms)');
             
             if (node.tokenExpiry && now >= (node.tokenExpiry - TOKEN_REFRESH_BUFFER_MS)) {
                 debugLog('Token is expired or near expiry, refreshing');
