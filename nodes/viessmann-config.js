@@ -4,9 +4,28 @@ const axios = require('axios');
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 module.exports = function(RED) {
+    /**
+     * Helper function to mask sensitive data for logging
+     * Shows only the last 4 characters of a string
+     * @param {string} value - The value to mask
+     * @returns {string} Masked value
+     */
+    function maskSensitiveData(value) {
+        if (!value || typeof value !== 'string') {
+            return '****';
+        }
+        if (value.length <= 4) {
+            return '****';
+        }
+        return '****' + value.slice(-4);
+    }
+
     function ViessmannConfigNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
+        
+        // Store debug flag from config
+        this.enableDebug = config.enableDebug || false;
         
         // OAuth2 endpoints
         this.tokenUrl = 'https://iam.viessmann.com/idp/v3/token';
@@ -17,11 +36,25 @@ module.exports = function(RED) {
         this.tokenExpiry = null;
         
         /**
+         * Log debug information if debug mode is enabled
+         * @param {string} message - The debug message to log
+         */
+        const debugLog = function(message) {
+            if (node.enableDebug) {
+                node.log('[DEBUG] ' + message);
+            }
+        };
+        
+        /**
          * Authenticate using OAuth2 client credentials flow
          * @returns {Promise<void>}
          */
         this.authenticate = async function() {
             try {
+                debugLog('Starting authentication with Viessmann API');
+                debugLog('Token URL: ' + node.tokenUrl);
+                debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
+                
                 const response = await axios.post(node.tokenUrl, new URLSearchParams({
                     grant_type: 'client_credentials',
                     client_id: node.credentials.clientId,
@@ -36,8 +69,19 @@ module.exports = function(RED) {
                 node.refreshToken = response.data.refresh_token;
                 node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
                 
+                const expiryDate = new Date(node.tokenExpiry);
+                debugLog('Authentication successful');
+                debugLog('Access token received: ' + maskSensitiveData(node.accessToken));
+                debugLog('Refresh token received: ' + maskSensitiveData(node.refreshToken));
+                debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
+                
                 node.log('Successfully authenticated with Viessmann API');
             } catch (error) {
+                debugLog('Authentication failed with error: ' + error.message);
+                if (error.response) {
+                    debugLog('Error status: ' + error.response.status);
+                    debugLog('Error data: ' + JSON.stringify(error.response.data));
+                }
                 node.error('Authentication failed: ' + (error.response?.data?.error_description || error.message));
                 throw error;
             }
@@ -49,6 +93,10 @@ module.exports = function(RED) {
          */
         this.refreshAccessToken = async function() {
             try {
+                debugLog('Starting token refresh');
+                debugLog('Current refresh token: ' + maskSensitiveData(node.refreshToken));
+                debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
+                
                 const response = await axios.post(node.tokenUrl, new URLSearchParams({
                     grant_type: 'refresh_token',
                     client_id: node.credentials.clientId,
@@ -66,10 +114,24 @@ module.exports = function(RED) {
                 }
                 node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
                 
+                const expiryDate = new Date(node.tokenExpiry);
+                debugLog('Token refresh successful');
+                debugLog('New access token: ' + maskSensitiveData(node.accessToken));
+                if (response.data.refresh_token) {
+                    debugLog('New refresh token: ' + maskSensitiveData(node.refreshToken));
+                }
+                debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
+                
                 node.log('Successfully refreshed access token');
             } catch (error) {
+                debugLog('Token refresh failed with error: ' + error.message);
+                if (error.response) {
+                    debugLog('Error status: ' + error.response.status);
+                    debugLog('Error data: ' + JSON.stringify(error.response.data));
+                }
                 node.error('Token refresh failed: ' + (error.response?.data?.error_description || error.message));
                 // If refresh fails, try to re-authenticate
+                debugLog('Attempting re-authentication after refresh failure');
                 await node.authenticate();
             }
         };
@@ -79,19 +141,31 @@ module.exports = function(RED) {
          * @returns {Promise<string>} Valid access token
          */
         this.getValidToken = async function() {
+            debugLog('Checking token validity');
+            
             // If no token exists, authenticate
             if (!node.accessToken) {
+                debugLog('No access token found, initiating authentication');
                 await node.authenticate();
                 return node.accessToken;
             }
             
             // Check if token is expired (with buffer)
-            if (node.tokenExpiry && Date.now() >= (node.tokenExpiry - TOKEN_REFRESH_BUFFER_MS)) {
+            const now = Date.now();
+            const timeUntilExpiry = node.tokenExpiry - now;
+            debugLog('Current token status: ' + timeUntilExpiry + 'ms until expiry (buffer: ' + TOKEN_REFRESH_BUFFER_MS + 'ms)');
+            
+            if (node.tokenExpiry && now >= (node.tokenExpiry - TOKEN_REFRESH_BUFFER_MS)) {
+                debugLog('Token is expired or near expiry, refreshing');
                 if (node.refreshToken) {
+                    debugLog('Using refresh token for renewal');
                     await node.refreshAccessToken();
                 } else {
+                    debugLog('No refresh token available, re-authenticating');
                     await node.authenticate();
                 }
+            } else {
+                debugLog('Token is still valid, returning existing token');
             }
             
             return node.accessToken;
