@@ -82,7 +82,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -132,7 +133,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -164,7 +166,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'invalid-client-id',
-                clientSecret: 'invalid-client-secret'
+                accessToken: 'invalid-access-token',
+                refreshToken: 'invalid-refresh-token'
             }
         };
 
@@ -197,7 +200,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -240,7 +244,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -283,7 +288,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'my-secret-client-id',
-                clientSecret: 'my-secret-client-secret'
+                accessToken: 'my-secret-access-token',
+                refreshToken: 'my-secret-refresh-token'
             }
         };
 
@@ -342,7 +348,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -392,7 +399,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -437,7 +445,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -472,7 +481,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'invalid-client-id',
-                clientSecret: 'invalid-client-secret'
+                accessToken: 'invalid-access-token',
+                refreshToken: 'invalid-refresh-token'
             }
         };
 
@@ -506,7 +516,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -550,7 +561,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -585,7 +597,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -621,7 +634,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -657,7 +671,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 

@@ -38,7 +38,8 @@ describe('viessmann-device-list Node', function() {
         const credentials = {
             c1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -115,7 +116,8 @@ describe('viessmann-device-list Node', function() {
         const credentials = {
             c1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -171,7 +173,8 @@ describe('viessmann-device-list Node', function() {
         const credentials = {
             c1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -219,7 +222,8 @@ describe('viessmann-device-list Node', function() {
         const credentials = {
             c1: {
                 clientId: 'invalid-client-id',
-                clientSecret: 'invalid-client-secret'
+                accessToken: 'invalid-access-token',
+                refreshToken: 'invalid-refresh-token'
             }
         };
 

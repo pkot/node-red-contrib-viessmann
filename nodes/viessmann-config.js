@@ -42,14 +42,6 @@ module.exports = function(RED) {
         // List of dependent nodes
         this.dependentNodes = [];
         
-        // Initialize token expiry tracking if we have an access token
-        if (this.accessToken) {
-            // Assume token expires in 1 hour (default for Viessmann) minus buffer
-            // This will trigger a refresh on first use if refresh token is available
-            this.tokenExpiry = Date.now() + (3600 * 1000);
-            updateAuthState('authenticated');
-        }
-        
         /**
          * Log debug information if debug mode is enabled
          * @param {string} message - The debug message to log
@@ -76,6 +68,14 @@ module.exports = function(RED) {
                 }
             });
         };
+        
+        // Initialize token expiry tracking if we have an access token
+        if (this.accessToken) {
+            // Assume token expires in 1 hour (default for Viessmann) minus buffer
+            // This will trigger a refresh on first use if refresh token is available
+            this.tokenExpiry = Date.now() + (3600 * 1000);
+            updateAuthState('authenticated');
+        }
         
         /**
          * Register a dependent node to receive auth state updates
