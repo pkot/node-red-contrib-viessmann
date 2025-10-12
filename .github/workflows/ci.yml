@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feature/**'
+  pull_request:
+    branches:
+      - main
+      - 'feature/**'
+
+jobs:
+  build-lint-test:
+    name: Build, Lint, and Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: |
+          if grep -q '"lint"' package.json; then
+            echo "Running linter..."
+            npm run lint
+          else
+            echo "Warning: No lint script found in package.json"
+            echo "Consider adding a linter to ensure code quality"
+          fi
+
+      - name: Run tests
+        shell: bash
+        run: |
+          if grep -q '"test"' package.json; then
+            echo "Running tests..."
+            # Capture test output and exit code
+            set +e
+            npm test 2>&1 | tee /tmp/test-output.txt
+            TEST_EXIT_CODE=${PIPESTATUS[0]}
+            set -e
+            
+            # Check if it's the default placeholder test script
+            if grep -q "Error: no test specified" /tmp/test-output.txt; then
+              echo "Warning: Test script exists but no tests are configured yet"
+              echo "Please add tests to ensure code quality"
+              exit 0
+            fi
+            
+            # Return the original test exit code
+            exit $TEST_EXIT_CODE
+          else
+            echo "Warning: No test script found in package.json"
+            echo "Please add tests to ensure code quality"
+          fi
+
+      - name: Build (if applicable)
+        run: |
+          if grep -q '"build"' package.json; then
+            echo "Running build..."
+            npm run build
+          else
+            echo "No build script found - skipping"
+          fi
