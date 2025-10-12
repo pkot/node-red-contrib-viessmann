@@ -30,6 +30,14 @@ module.exports = function(RED) {
                 return;
             }
             
+            // Validate installationId is a number
+            const installationId = parseInt(msg.installationId, 10);
+            if (isNaN(installationId) || installationId <= 0) {
+                node.status({fill: 'red', shape: 'dot', text: 'invalid installationId'});
+                node.error('Invalid installationId. Must be a positive number.', msg);
+                return;
+            }
+            
             try {
                 node.status({fill: 'yellow', shape: 'ring', text: 'fetching...'});
                 
@@ -37,7 +45,7 @@ module.exports = function(RED) {
                 const token = await node.config.getValidToken();
                 
                 // Fetch gateways from Viessmann API
-                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations/${msg.installationId}/gateways`, {
+                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json'

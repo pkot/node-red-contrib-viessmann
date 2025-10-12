@@ -144,6 +144,30 @@ describe('viessmann-gateway-list Node', function() {
         });
     });
 
+    it('should handle invalid installationId', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-gateway-list', name: 'test gateway list', config: 'c1' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        helper.load([configNode, gatewayListNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            n1.on('call:error', function() {
+                done();
+            });
+
+            n1.receive({ installationId: 'invalid' });
+        });
+    });
+
     it('should handle API errors gracefully', function(done) {
         const flow = [
             { id: 'c1', type: 'viessmann-config', name: 'test config' },

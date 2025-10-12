@@ -73,6 +73,9 @@ function extractErrorMessage(error) {
  * @returns {string} Truncated text
  */
 function truncateForStatus(text, maxLength = 30) {
+    if (typeof text !== 'string') {
+        text = String(text);
+    }
     if (text.length <= maxLength) {
         return text;
     }
