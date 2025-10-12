@@ -34,18 +34,20 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
             expect(n1.credentials).to.have.property('clientId', 'test-client-id');
-            expect(n1.credentials).to.have.property('clientSecret', 'test-client-secret');
+            expect(n1.credentials).to.have.property('accessToken', 'test-access-token');
+            expect(n1.credentials).to.have.property('refreshToken', 'test-refresh-token');
             done();
         });
     });
 
-    it('should authenticate with OAuth2 client credentials', function(done) {
+    it('should use provided access token', function(done) {
         const flow = [{ 
             id: 'n1', 
             type: 'viessmann-config', 
@@ -54,19 +56,10 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
-
-        // Mock the OAuth2 token endpoint
-        nock('https://iam.viessmann.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'test-access-token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                refresh_token: 'test-refresh-token'
-            });
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -74,6 +67,7 @@ describe('viessmann-config Node', function() {
             n1.authenticate().then(() => {
                 expect(n1.accessToken).to.equal('test-access-token');
                 expect(n1.refreshToken).to.equal('test-refresh-token');
+                expect(n1.authState).to.equal('authenticated');
                 done();
             }).catch(done);
         });
@@ -88,22 +82,13 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'initial-token',
+                refreshToken: 'initial-refresh-token'
             }
         };
 
-        // Mock initial authentication
-        nock('https://iam.viessmann.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'initial-token',
-                token_type: 'Bearer',
-                expires_in: 1,
-                refresh_token: 'initial-refresh-token'
-            });
-
         // Mock token refresh
-        nock('https://iam.viessmann.com')
+        nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
             .reply(200, {
                 access_token: 'refreshed-token',
@@ -115,16 +100,17 @@ describe('viessmann-config Node', function() {
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
             
-            n1.authenticate().then(() => {
-                expect(n1.accessToken).to.equal('initial-token');
-                
-                // Wait for token to expire
-                setTimeout(() => {
-                    n1.getValidToken().then(() => {
-                        expect(n1.accessToken).to.equal('refreshed-token');
-                        done();
-                    }).catch(done);
-                }, 1500);
+            // Token is initially loaded from credentials
+            expect(n1.accessToken).to.equal('initial-token');
+            
+            // Force token to be expired
+            n1.tokenExpiry = Date.now() - 1000;
+            
+            // getValidToken should trigger a refresh
+            n1.getValidToken().then(() => {
+                expect(n1.accessToken).to.equal('refreshed-token');
+                expect(n1.refreshToken).to.equal('new-refresh-token');
+                done();
             }).catch(done);
         });
     });
@@ -138,7 +124,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -161,7 +148,7 @@ describe('viessmann-config Node', function() {
         });
     });
 
-    it('should handle authentication errors gracefully', function(done) {
+    it.skip('should handle authentication errors gracefully (OBSOLETE - authenticate no longer calls API)', function(done) {
         const flow = [{ 
             id: 'n1', 
             type: 'viessmann-config', 
@@ -170,7 +157,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'invalid-client-id',
-                clientSecret: 'invalid-client-secret'
+                accessToken: 'invalid-access-token',
+                refreshToken: 'invalid-refresh-token'
             }
         };
 
@@ -203,7 +191,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -246,7 +235,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -279,7 +269,7 @@ describe('viessmann-config Node', function() {
         });
     });
 
-    it('should mask sensitive data in debug logs', function(done) {
+    it.skip('should mask sensitive data in debug logs (OBSOLETE - authenticate no longer calls API)', function(done) {
         const flow = [{ 
             id: 'n1', 
             type: 'viessmann-config', 
@@ -289,7 +279,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'my-secret-client-id',
-                clientSecret: 'my-secret-client-secret'
+                accessToken: 'my-secret-access-token',
+                refreshToken: 'my-secret-refresh-token'
             }
         };
 
@@ -348,11 +339,12 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
-        nock('https://iam.viessmann.com')
+        nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
             .reply(200, {
                 access_token: 'refreshed-token',
@@ -398,7 +390,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -443,23 +436,16 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
-
-        nock('https://iam.viessmann.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'test-access-token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                refresh_token: 'test-refresh-token'
-            });
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
             
-            expect(n1.authState).to.equal('disconnected');
+            // With tokens provided, auth state should be authenticated on load
+            expect(n1.authState).to.equal('authenticated');
             
             n1.authenticate().then(() => {
                 expect(n1.authState).to.equal('authenticated');
@@ -477,17 +463,10 @@ describe('viessmann-config Node', function() {
         }];
         const credentials = {
             n1: {
-                clientId: 'invalid-client-id',
-                clientSecret: 'invalid-client-secret'
+                clientId: 'test-client-id'
+                // No accessToken or refreshToken
             }
         };
-
-        nock('https://iam.viessmann.com')
-            .post('/idp/v3/token')
-            .reply(401, {
-                error: 'invalid_client',
-                error_description: 'Invalid client credentials'
-            });
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -496,7 +475,7 @@ describe('viessmann-config Node', function() {
                 done(new Error('Should have failed authentication'));
             }).catch(() => {
                 expect(n1.authState).to.equal('error');
-                expect(n1.authError).to.equal('Invalid client credentials');
+                expect(n1.authError).to.include('No access token configured');
                 done();
             });
         });
@@ -511,7 +490,8 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -542,6 +522,157 @@ describe('viessmann-config Node', function() {
                 expect(statusUpdateCount).to.be.greaterThan(0);
                 done();
             }).catch(done);
+        });
+    });
+
+    it.skip('should include scope in authentication request (OBSOLETE - scope no longer a config param)', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config',
+            scope: 'IoT User offline_access'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        // Mock authentication endpoint
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'test-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'test-refresh-token'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            // Verify scope is stored
+            expect(n1.scope).to.equal('IoT User offline_access');
+            
+            n1.authenticate().then(() => {
+                done();
+            }).catch(done);
+        });
+    });
+
+    it.skip('should use default scope if not configured (OBSOLETE)', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        // Mock authentication endpoint
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'test-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'test-refresh-token'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            // Verify default scope is set
+            expect(n1.scope).to.equal('IoT User offline_access');
+            
+            n1.authenticate().then(() => {
+                done();
+            }).catch(done);
+        });
+    });
+
+    it.skip('should provide helpful error for invalid_scope (OBSOLETE)', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config',
+            scope: 'invalid_scope'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(400, {
+                error: 'invalid_scope',
+                error_description: 'Invalid scope'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            n1.authenticate().then(() => {
+                done(new Error('Should have failed authentication'));
+            }).catch(() => {
+                expect(n1.authState).to.equal('error');
+                expect(n1.authError).to.include('Invalid scope');
+                expect(n1.authError).to.include('Developer Portal');
+                expect(n1.authError).to.include('invalid_scope');
+                done();
+            });
+        });
+    });
+
+    it.skip('should provide helpful error for unauthorized_client (OBSOLETE)', function(done) {
+        this.timeout(5000); // Increase timeout
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(401, {
+                error: 'unauthorized_client',
+                error_description: 'Unauthorized client'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            n1.authenticate().then(() => {
+                done(new Error('Should have failed authentication'));
+            }).catch((err) => {
+                try {
+                    expect(n1.authState).to.equal('error');
+                    expect(n1.authError).to.include('Unauthorized client');
+                    expect(n1.authError).to.include('redirect URIs');
+                    expect(n1.authError).to.include('consent');
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            });
         });
     });
 });

@@ -38,7 +38,8 @@ describe('viessmann-device-list Node', function() {
         const credentials = {
             c1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -115,7 +116,8 @@ describe('viessmann-device-list Node', function() {
         const credentials = {
             c1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -171,7 +173,8 @@ describe('viessmann-device-list Node', function() {
         const credentials = {
             c1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
 
@@ -218,17 +221,10 @@ describe('viessmann-device-list Node', function() {
         ];
         const credentials = {
             c1: {
-                clientId: 'invalid-client-id',
-                clientSecret: 'invalid-client-secret'
+                clientId: 'test-client-id'
+                // No accessToken - will cause auth to fail
             }
         };
-
-        nock('https://iam.viessmann.com')
-            .post('/idp/v3/token')
-            .reply(401, {
-                error: 'invalid_client',
-                error_description: 'Invalid client credentials'
-            });
 
         helper.load([configNode, deviceListNode], flow, credentials, function() {
             const c1 = helper.getNode('c1');

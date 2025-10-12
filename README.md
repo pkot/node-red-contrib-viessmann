@@ -22,24 +22,87 @@ Or install via Node-RED's palette manager.
 ## Nodes
 
 ### Configuration Node: `viessmann-config`
-Stores API credentials (client_id, client_secret) securely and handles authentication/token refresh. This configuration is shared across all Viessmann nodes.
+Stores API credentials and tokens securely and handles automatic token refresh. This configuration is shared across all Viessmann nodes.
 
-**Configuration:**
+#### Authentication with Viessmann API
+
+The Viessmann API uses **OAuth2 with PKCE flow**, which requires browser-based authentication. You cannot authenticate directly from Node-RED - you must generate tokens first.
+
+#### Quick Start - Generating Tokens
+
+**Option 1: Use the Helper Script (Recommended)**
+
+Run the provided token generator script:
+
+```bash
+cd ~/.node-red
+node node_modules/node-red-contrib-viessmann/scripts/get-viessmann-tokens.js
+```
+
+The script will:
+1. Ask for your Client ID
+2. Open your browser for Viessmann login
+3. Automatically capture the authorization code
+4. Exchange it for access and refresh tokens
+5. Display the tokens to copy into Node-RED
+
+**Option 2: Manual Token Generation**
+
+If you prefer to generate tokens manually, follow these steps:
+
+1. **Get your Client ID** from the [Viessmann Developer Portal](https://developer.viessmann.com/)
+   - Log in with your Viessmann account
+   - Go to "My Dashboard" → "Your clients"
+   - Create a new client or use an existing one
+   - Note your Client ID
+   - Set redirect URI to: `http://localhost:4200/`
+
+2. **Generate PKCE codes** using [this tool](https://developer.pingidentity.com/en/tools/pkce-code-generator.html)
+   - Save both the Code Verifier and Code Challenge
+
+3. **Authorize in browser** - Visit this URL (replace CLIENT_ID and CODE_CHALLENGE):
+   ```
+   https://iam.viessmann-climatesolutions.com/idp/v3/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:4200/&scope=IoT%20offline_access&code_challenge=YOUR_CODE_CHALLENGE&code_challenge_method=S256
+   ```
+   - Log in with your Viessmann account
+   - After authorization, copy the `code` parameter from the redirect URL
+   - **Note:** The code expires in 20 seconds!
+
+4. **Exchange code for tokens** using curl (replace values):
+   ```bash
+   curl -X POST "https://iam.viessmann-climatesolutions.com/idp/v3/token" \
+     -H "Content-Type: application/x-www-form-urlencoded" \
+     -d "client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:4200/&grant_type=authorization_code&code_verifier=YOUR_CODE_VERIFIER&code=YOUR_AUTH_CODE"
+   ```
+
+5. **Copy the tokens** from the JSON response:
+   - `access_token` - valid for 1 hour
+   - `refresh_token` - valid for 180 days
+
+#### Configuration in Node-RED
+
 1. **Name** (optional): A friendly name for this configuration
-2. **Client ID** (required): Your Viessmann API client ID
-3. **Client Secret** (required): Your Viessmann API client secret
+2. **Client ID** (required): Your Client ID from the Viessmann Developer Portal
+3. **Access Token** (required): The access token from token generation
+4. **Refresh Token** (recommended): The refresh token for automatic token renewal
+5. **Enable Debug Logging** (optional): Enable for troubleshooting
 
-**How to obtain API credentials:**
-1. Visit the [Viessmann Developer Portal](https://developer.viessmann.com/)
-2. Register or log in to your developer account
-3. Create a new application to receive your client ID and client secret
-4. The credentials will be stored securely using Node-RED's credential system
+#### Token Management
 
-**Authentication Details:**
-- Uses OAuth2 client credentials flow
-- Automatically handles token refresh before expiration
-- Tokens are cached in memory and automatically renewed when needed
-- Token endpoint: `https://iam.viessmann.com/idp/v3/token`
+- **Access tokens** expire after 1 hour
+- If you provide a **refresh token**, new access tokens are automatically obtained when needed
+- **Refresh tokens** are valid for 180 days
+- Tokens persist across Node-RED restarts
+- When the refresh token expires, regenerate tokens using the helper script
+
+#### Troubleshooting
+
+If you encounter errors:
+- **"No access token configured"**: Generate tokens using the helper script
+- **"Token refresh failed"**: Your refresh token may have expired (180 days). Generate new tokens.
+- **API errors**: Ensure your access token hasn't expired. Enable debug logging for details.
+
+For more information, see the [Viessmann API Authentication Documentation](https://api.viessmann-climatesolutions.com/documentation/static/authentication).
 
 ### Device Discovery Node: `viessmann-device-list`
 Lists all accessible Viessmann installations for the authenticated account.

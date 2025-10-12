@@ -19,6 +19,17 @@
 - Handles authentication/token refresh.
 - Provides config for all Viessmann nodes.
 
+**OAuth2 Configuration:**
+- **Grant Type**: Client credentials flow
+- **Scopes**: Default is `IoT offline_access`
+- **Token Endpoint**: `https://iam.viessmann.com/idp/v3/token`
+
+**External Requirements:**
+Users must obtain credentials from the Viessmann Developer Portal:
+1. Create a client/application in the Developer Portal
+2. Obtain Client ID (and Client Secret if provided)
+3. Refer to [Viessmann API Authentication Documentation](https://api.viessmann-climatesolutions.com/documentation/static/authentication) for detailed setup instructions
+
 **Inputs:** (credentials via Node-RED credential system)  
 **Outputs:** (none; used as shared config)
 
@@ -55,9 +66,12 @@
 
 ## 3. Key Implementation Decisions
 
-- **Authentication:** Use OAuth2 (client credentials or device flow as supported); token refresh managed by config node.
+- **Authentication:** Use OAuth2 PKCE flow with scopes (`IoT offline_access` by default); token refresh managed by config node.
+  - **Scopes are configurable**: Users can modify scopes if needed for their specific use case
+  - **External setup required**: Users must obtain credentials from the Viessmann Developer Portal
+  - **Error handling**: Provide specific, actionable error messages that guide users to fix configuration issues
 - **API Version:** Prioritize v2 endpoints where available, fallback to v1 if needed.
-- **Error Handling:** All nodes must emit errors via Node-RED convention (`node.error()`), provide informative feedback.
+- **Error Handling:** All nodes must emit errors via Node-RED convention (`node.error()`), provide informative feedback with troubleshooting guidance.
 - **Security:** Store credentials securely using Node-RED’s credential system.
 - **Extensibility:** The module should be able to easily add more nodes for new Viessmann API endpoints as they become available.
 - **Testing:** Test all nodes using mocks/stubs for the Viessmann API.
@@ -76,4 +90,8 @@
 
 - **API Quotas & Rate Limits:** The module must respect Viessmann API limits.
 - **Device/Feature Variability:** Not all devices will expose the same features or writable parameters; dynamic discovery & validation is required.
-- **OAuth2 Flow:** If device flow is used, user interaction may be required for first-time setup; clarify which OAuth2 grant is preferred.
+- **OAuth2 Flow & External Setup:** 
+  - Client credentials flow is used
+  - **Users must obtain credentials** from the Viessmann Developer Portal before authentication will work
+  - Refer to Viessmann API documentation for detailed setup requirements
+  - Error messages guide users to fix configuration issues

@@ -7,7 +7,8 @@
         },
         credentials: {
             clientId: { type: "text" },
-            clientSecret: { type: "password" }
+            accessToken: { type: "password" },
+            refreshToken: { type: "password" }
         },
         label: function() {
             return this.name || "Viessmann Config";
@@ -25,8 +26,12 @@
         <input type="text" id="node-config-input-clientId" placeholder="Client ID">
     </div>
     <div class="form-row">
-        <label for="node-config-input-clientSecret"><i class="fa fa-lock"></i> Client Secret</label>
-        <input type="password" id="node-config-input-clientSecret" placeholder="Client Secret">
+        <label for="node-config-input-accessToken"><i class="fa fa-key"></i> Access Token</label>
+        <input type="password" id="node-config-input-accessToken" placeholder="Access Token">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-refreshToken"><i class="fa fa-refresh"></i> Refresh Token (Optional)</label>
+        <input type="password" id="node-config-input-refreshToken" placeholder="Refresh Token">
     </div>
     <div class="form-row">
         <label for="node-config-input-enableDebug"><i class="fa fa-bug"></i> Enable Debug Logging</label>
@@ -35,13 +40,59 @@
 </script>
 
 <script type="text/html" data-help-name="viessmann-config">
-    <p>Configuration node for Viessmann API authentication.</p>
-    <h3>Details</h3>
-    <p>Stores API credentials (client_id, client_secret) securely and handles OAuth2 authentication/token refresh.</p>
-    <p>This configuration is shared across all Viessmann nodes.</p>
-    <h3>Debug Logging</h3>
-    <p>When <b>Enable Debug Logging</b> is checked, the node will output detailed debug information about authentication, 
-    token refresh, and config usage operations. Sensitive data (client_id, client_secret, tokens) will be masked to show 
-    only the last 4 characters for security purposes.</p>
-    <p>By default, debug logging is disabled. Enable it only when troubleshooting authentication issues.</p>
+    <p>Configuration node for Viessmann API authentication using OAuth2 with PKCE flow.</p>
+    
+    <h3>Setup - Generating Tokens</h3>
+    <p>The Viessmann API uses OAuth2 PKCE flow which requires browser-based authentication. You need to generate tokens manually:</p>
+    
+    <p><strong>Quick Start:</strong> Use the provided helper script to generate tokens:</p>
+    <pre>cd ~/.node-red
+node node_modules/node-red-contrib-viessmann/scripts/get-viessmann-tokens.js</pre>
+    
+    <p><strong>Manual Steps:</strong></p>
+    <ol>
+        <li>Get your Client ID from the <a href="https://developer.viessmann.com/" target="_blank">Viessmann Developer Portal</a> (create a client if needed)</li>
+        <li>Generate a code verifier and code challenge (use <a href="https://developer.pingidentity.com/en/tools/pkce-code-generator.html" target="_blank">this tool</a>)</li>
+        <li>Visit the authorization URL in your browser (replace CLIENT_ID and CODE_CHALLENGE):
+            <pre>https://iam.viessmann-climatesolutions.com/idp/v3/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=http://localhost:4200/&scope=IoT%20offline_access&code_challenge=CODE_CHALLENGE&code_challenge_method=S256</pre>
+        </li>
+        <li>After login, copy the authorization code from the redirect URL (you have 20 seconds to use it)</li>
+        <li>Exchange the code for tokens using curl (replace values):
+            <pre>curl -X POST "https://iam.viessmann-climatesolutions.com/idp/v3/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=CLIENT_ID&redirect_uri=http://localhost:4200/&grant_type=authorization_code&code_verifier=CODE_VERIFIER&code=AUTH_CODE"</pre>
+        </li>
+        <li>Copy the <code>access_token</code> and <code>refresh_token</code> from the response</li>
+    </ol>
+    
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Name <span class="property-type">string</span></dt>
+        <dd>Optional friendly name for this configuration</dd>
+        
+        <dt>Client ID <span class="property-type">string</span></dt>
+        <dd>Your Client ID from the Viessmann Developer Portal</dd>
+        
+        <dt>Access Token <span class="property-type">string</span></dt>
+        <dd>The access token obtained through PKCE flow (expires in 1 hour)</dd>
+        
+        <dt>Refresh Token <span class="property-type">string</span></dt>
+        <dd>The refresh token (optional but recommended - valid for 180 days). If provided, the node will automatically refresh expired access tokens.</dd>
+        
+        <dt>Enable Debug Logging <span class="property-type">boolean</span></dt>
+        <dd>Enable detailed logging for troubleshooting (sensitive data is masked)</dd>
+    </dl>
+    
+    <h3>Token Management</h3>
+    <p>Access tokens expire after 1 hour. If you provide a refresh token, the node will automatically obtain new access tokens when needed. The refresh token is valid for 180 days.</p>
+    <p>Tokens are stored securely using Node-RED's credential system and persist across restarts.</p>
+    
+    <h3>Troubleshooting</h3>
+    <p>If you get authentication errors:</p>
+    <ul>
+        <li>Check that your access token hasn't expired (regenerate if needed)</li>
+        <li>Verify your Client ID is correct</li>
+        <li>If using refresh token, ensure it hasn't expired (180 day limit)</li>
+        <li>Enable debug logging to see detailed error messages</li>
+    </ul>
 </script>
