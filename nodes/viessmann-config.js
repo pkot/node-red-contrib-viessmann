@@ -108,13 +108,9 @@ module.exports = function(RED) {
                 const requestParams = {
                     grant_type: 'client_credentials',
                     client_id: node.credentials.clientId,
-                    client_secret: node.credentials.clientSecret
+                    client_secret: node.credentials.clientSecret,
+                    scope: node.scope
                 };
-                
-                // Add scope if configured
-                if (node.scope) {
-                    requestParams.scope = node.scope;
-                }
                 
                 const response = await axios.post(node.tokenUrl, new URLSearchParams(requestParams), {
                     headers: {
