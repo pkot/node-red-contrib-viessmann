@@ -30,37 +30,34 @@ jobs:
 
       - name: Run linter
         run: |
-          if npm run lint --silent 2>/dev/null; then
-            echo "Linting passed"
+          if grep -q '"lint"' package.json; then
+            echo "Running linter..."
+            npm run lint
           else
-            echo "Warning: No lint script found in package.json or linting failed"
-            if grep -q '"lint"' package.json; then
-              echo "Lint script exists but failed - failing the build"
-              exit 1
-            else
-              echo "Lint script does not exist - skipping with warning"
-            fi
+            echo "Warning: No lint script found in package.json"
+            echo "Consider adding a linter to ensure code quality"
           fi
 
       - name: Run tests
         run: |
-          if npm test 2>&1 | grep -q "Error: no test specified"; then
-            echo "Warning: No tests configured yet"
-            echo "Please add tests to ensure code quality"
-            exit 0
+          if grep -q '"test"' package.json; then
+            echo "Running tests..."
+            if npm test 2>&1 | grep -q "Error: no test specified"; then
+              echo "Warning: Test script exists but no tests are configured yet"
+              echo "Please add tests to ensure code quality"
+            else
+              npm test
+            fi
           else
-            npm test
+            echo "Warning: No test script found in package.json"
+            echo "Please add tests to ensure code quality"
           fi
 
       - name: Build (if applicable)
         run: |
-          if npm run build --silent 2>/dev/null; then
-            echo "Build completed successfully"
+          if grep -q '"build"' package.json; then
+            echo "Running build..."
+            npm run build
           else
-            if grep -q '"build"' package.json; then
-              echo "Build script exists but failed - failing the build"
-              exit 1
-            else
-              echo "No build script found - skipping"
-            fi
+            echo "No build script found - skipping"
           fi
