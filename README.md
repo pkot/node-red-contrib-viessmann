@@ -24,42 +24,22 @@ Or install via Node-RED's palette manager.
 ### Configuration Node: `viessmann-config`
 Stores API credentials (client_id, client_secret) securely and handles authentication/token refresh. This configuration is shared across all Viessmann nodes.
 
-#### Required Setup - Viessmann Developer Portal
+#### How to Obtain API Credentials
 
-**Before using this module, you MUST complete the following steps:**
+1. Visit the [Viessmann Developer Portal](https://developer.viessmann.com/)
+2. Register or log in with your Viessmann account
+3. Create a new client/application in "My Dashboard" under "Your clients"
+4. Provide a client name and redirect URI
+5. Note your **Client ID** and **Client Secret** (if provided)
 
-1. **Register at the Viessmann Developer Portal**
-   - Visit [Viessmann Developer Portal](https://developer.viessmann.com/)
-   - Log in with your Viessmann account (the same account you use for the ViCare app)
+For detailed step-by-step instructions on obtaining credentials and generating access tokens, please refer to the [Viessmann API Authentication Documentation](https://api.viessmann-climatesolutions.com/documentation/static/authentication).
 
-2. **Create an Application**
-   - In the Developer Portal, create a new application (or use an existing one)
-   - Give it a meaningful name (e.g., "Node-RED Integration")
-
-3. **Configure Application Settings** ⚠️ **CRITICAL**
-   - **Redirect URI**: Set to `http://localhost:4200/auth/callback` (or as specified in Viessmann documentation)
-   - **Scopes**: You MUST select the following scopes:
-     - `IoT User` - Required for accessing your device data
-     - `offline_access` - Required for token refresh capability
-   - Some applications may require additional configuration (reCAPTCHA settings, etc.) - follow the Developer Portal instructions
-
-4. **Get Your Credentials**
-   - After creating/configuring your application, note your **Client ID** and **Client Secret**
-   - Keep these credentials secure - you'll need them to configure the Node-RED config node
-
-5. **Complete User Authorization (if required)**
-   - Depending on your application type, you may need to complete a manual authorization/consent step
-   - This typically involves authorizing your application to access your Viessmann account data
-   - Check the Developer Portal for any pending authorization requests or instructions
-
-#### Configuration in Node-RED
+#### Configuration
 
 1. **Name** (optional): A friendly name for this configuration
-2. **Client ID** (required): Your Viessmann API client ID from the Developer Portal
-3. **Client Secret** (required): Your Viessmann API client secret from the Developer Portal
-4. **OAuth2 Scopes** (required): Space-separated scopes - default is `IoT User offline_access`
-   - **Do not change this** unless you know what you're doing
-   - Must match the scopes configured in your Developer Portal application
+2. **Client ID** (required): Your Viessmann API client ID
+3. **Client Secret** (required): Your Viessmann API client secret
+4. **OAuth2 Scopes** (optional): Space-separated scopes - default is `IoT User offline_access`
 5. **Enable Debug Logging** (optional): Enable for troubleshooting authentication issues
 
 #### Authentication Details
@@ -68,16 +48,14 @@ Stores API credentials (client_id, client_secret) securely and handles authentic
 - Tokens are cached in memory and automatically renewed when needed
 - Token endpoint: `https://iam.viessmann.com/idp/v3/token`
 
-#### Common Authentication Errors
+#### Troubleshooting
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `Unauthorized client` or `invalid_client` | Incorrect credentials or app not properly configured | Verify your Client ID and Client Secret match exactly what's shown in the Developer Portal |
-| `Invalid scope` | Scope mismatch | Ensure you selected `IoT User` and `offline_access` scopes when creating your app in the Developer Portal |
-| `Access denied` | Missing authorization/consent | Complete any pending authorization steps in the Developer Portal; ensure your Viessmann account is linked to the application |
-| `unauthorized_client` | Application configuration issue | Check that your app has correct redirect URIs and scopes configured in the Developer Portal |
+If you encounter authentication errors, enable debug logging in the config node to see detailed error messages. Common issues include:
+- Incorrect Client ID or Client Secret
+- Missing or incorrect OAuth2 scopes
+- Application not properly configured in the Developer Portal
 
-#### References
+For more information, see:
 - [Viessmann API Authentication Documentation](https://api.viessmann-climatesolutions.com/documentation/static/authentication)
 - [Viessmann Developer Portal](https://developer.viessmann.com/)
 

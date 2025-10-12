@@ -42,20 +42,15 @@
 <script type="text/html" data-help-name="viessmann-config">
     <p>Configuration node for Viessmann API authentication using OAuth2.</p>
     
-    <h3>Required Setup - Viessmann Developer Portal</h3>
-    <p><strong>Before using this node, you must complete these steps in the Viessmann Developer Portal:</strong></p>
+    <h3>Setup</h3>
+    <p>To use this node, you need credentials from the Viessmann Developer Portal:</p>
     <ol>
-        <li>Visit <a href="https://developer.viessmann.com/" target="_blank">Viessmann Developer Portal</a> and log in with your Viessmann account</li>
-        <li>Create a new application (or use an existing one)</li>
-        <li><strong>Important:</strong> Configure your application with the following settings:
-            <ul>
-                <li><strong>Redirect URI:</strong> Set to <code>http://localhost:4200/auth/callback</code> or your specific callback URL (consult Viessmann documentation)</li>
-                <li><strong>Scopes:</strong> Select <code>IoT User</code> and <code>offline_access</code> scopes (required for device access and token refresh)</li>
-            </ul>
-        </li>
-        <li>Note your <strong>Client ID</strong> and <strong>Client Secret</strong> from the application details</li>
-        <li>You may need to complete manual authorization or consent steps for your Viessmann account before the API will accept requests</li>
+        <li>Visit <a href="https://developer.viessmann.com/" target="_blank">Viessmann Developer Portal</a></li>
+        <li>Log in with your Viessmann account</li>
+        <li>Create a new client in "My Dashboard" under "Your clients"</li>
+        <li>Note your Client ID and Client Secret</li>
     </ol>
+    <p>For detailed instructions, see the <a href="https://api.viessmann-climatesolutions.com/documentation/static/authentication" target="_blank">Viessmann API Authentication Documentation</a></p>
     
     <h3>Configuration</h3>
     <dl class="message-properties">
@@ -69,33 +64,16 @@
         <dd>Your application's Client Secret from the Viessmann Developer Portal (stored securely)</dd>
         
         <dt>OAuth2 Scopes <span class="property-type">string</span></dt>
-        <dd>Space-separated OAuth2 scopes. Default: <code>IoT User offline_access</code>
-            <ul>
-                <li><code>IoT User</code> - Required for accessing device data</li>
-                <li><code>offline_access</code> - Required for token refresh capability</li>
-            </ul>
-        </dd>
+        <dd>Space-separated OAuth2 scopes. Default: <code>IoT User offline_access</code></dd>
         
         <dt>Enable Debug Logging <span class="property-type">boolean</span></dt>
         <dd>Enable detailed logging for troubleshooting authentication issues (sensitive data is masked)</dd>
     </dl>
     
-    <h3>Common Errors</h3>
-    <dl>
-        <dt>"Unauthorized client" or "invalid_client"</dt>
-        <dd>Your Client ID or Client Secret is incorrect, or your application is not properly configured in the Developer Portal. Verify your credentials and that scopes are correctly set.</dd>
-        
-        <dt>"Invalid scope"</dt>
-        <dd>The scopes you've entered don't match what's configured in your Developer Portal application. Ensure you've selected <code>IoT User</code> and <code>offline_access</code> scopes when creating your app.</dd>
-        
-        <dt>"Access denied"</dt>
-        <dd>You may need to complete user consent/authorization steps in the Viessmann Developer Portal or through an interactive OAuth2 flow. Check that your Viessmann account is properly linked to the application.</dd>
-    </dl>
-    
-    <h3>Authentication Details</h3>
-    <p>This node uses OAuth2 client credentials flow with the following endpoint: <code>https://iam.viessmann.com/idp/v3/token</code></p>
+    <h3>Authentication</h3>
+    <p>This node uses OAuth2 client credentials flow with the endpoint: <code>https://iam.viessmann.com/idp/v3/token</code></p>
     <p>Tokens are automatically refreshed before expiration. All credentials and tokens are stored securely using Node-RED's credential system.</p>
     
-    <h3>Reference</h3>
-    <p>For more information, see the <a href="https://api.viessmann-climatesolutions.com/documentation/static/authentication" target="_blank">Viessmann API Authentication Documentation</a></p>
+    <h3>Troubleshooting</h3>
+    <p>If authentication fails, enable debug logging to see detailed error messages. Check that your Client ID and Client Secret are correct and that your application is properly configured in the Developer Portal.</p>
 </script>
