@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { setupDependentNode } = require('./viessmann-helpers');
+const { setupDependentNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceListNode(config) {
@@ -43,8 +43,9 @@ module.exports = function(RED) {
                 node.status({fill: 'green', shape: 'dot', text: 'success'});
                 node.send(msg);
             } catch (error) {
-                const errorMsg = error.response?.data?.error || error.message;
-                node.status({fill: 'red', shape: 'dot', text: errorMsg});
+                const errorMsg = extractErrorMessage(error);
+                const statusMsg = truncateForStatus(errorMsg);
+                node.status({fill: 'red', shape: 'dot', text: statusMsg});
                 node.error('Failed to fetch installations: ' + errorMsg, msg);
             }
         });
