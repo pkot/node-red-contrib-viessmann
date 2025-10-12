@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { setupDependentNode } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceListNode(config) {
@@ -11,47 +12,8 @@ module.exports = function(RED) {
         // Viessmann API base URL
         this.apiBaseUrl = 'https://api.viessmann-climatesolutions.com';
         
-        /**
-         * Update node status based on config auth state
-         */
-        this.updateStatus = function() {
-            if (!node.config) {
-                node.status({fill: 'red', shape: 'dot', text: 'no config'});
-                return;
-            }
-            
-            switch (node.config.authState) {
-                case 'authenticated':
-                    node.status({fill: 'green', shape: 'dot', text: 'connected'});
-                    break;
-                case 'authenticating':
-                    node.status({fill: 'yellow', shape: 'ring', text: 'authenticating...'});
-                    break;
-                case 'error':
-                    const errorText = node.config.authError || 'auth failed';
-                    node.status({fill: 'red', shape: 'dot', text: errorText});
-                    break;
-                case 'disconnected':
-                default:
-                    node.status({fill: 'grey', shape: 'ring', text: 'disconnected'});
-                    break;
-            }
-        };
-        
-        // Register with config node to receive auth state updates
-        if (node.config) {
-            node.config.registerDependent(node);
-            node.updateStatus();
-        } else {
-            node.status({fill: 'red', shape: 'dot', text: 'no config'});
-        }
-        
-        // Unregister when node is closed
-        node.on('close', function() {
-            if (node.config) {
-                node.config.unregisterDependent(node);
-            }
-        });
+        // Setup dependent node status and registration
+        setupDependentNode(node);
         
         node.on('input', async function(msg) {
             // Check if config node is available
