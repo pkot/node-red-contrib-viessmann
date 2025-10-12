@@ -34,18 +34,20 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
             expect(n1.credentials).to.have.property('clientId', 'test-client-id');
-            expect(n1.credentials).to.have.property('clientSecret', 'test-client-secret');
+            expect(n1.credentials).to.have.property('accessToken', 'test-access-token');
+            expect(n1.credentials).to.have.property('refreshToken', 'test-refresh-token');
             done();
         });
     });
 
-    it('should authenticate with OAuth2 client credentials', function(done) {
+    it('should use provided access token', function(done) {
         const flow = [{ 
             id: 'n1', 
             type: 'viessmann-config', 
@@ -54,19 +56,10 @@ describe('viessmann-config Node', function() {
         const credentials = {
             n1: {
                 clientId: 'test-client-id',
-                clientSecret: 'test-client-secret'
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
             }
         };
-
-        // Mock the OAuth2 token endpoint
-        nock('https://iam.viessmann.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'test-access-token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                refresh_token: 'test-refresh-token'
-            });
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -74,6 +67,7 @@ describe('viessmann-config Node', function() {
             n1.authenticate().then(() => {
                 expect(n1.accessToken).to.equal('test-access-token');
                 expect(n1.refreshToken).to.equal('test-refresh-token');
+                expect(n1.authState).to.equal('authenticated');
                 done();
             }).catch(done);
         });

@@ -27,15 +27,12 @@ module.exports = function(RED) {
         // Store debug flag from config
         this.enableDebug = config.enableDebug || false;
         
-        // Store OAuth2 scope (default to IoT User offline_access if not specified)
-        this.scope = config.scope || 'IoT User offline_access';
-        
         // OAuth2 endpoints
-        this.tokenUrl = 'https://iam.viessmann.com/idp/v3/token';
+        this.tokenUrl = 'https://iam.viessmann-climatesolutions.com/idp/v3/token';
         
-        // Token storage
-        this.accessToken = null;
-        this.refreshToken = null;
+        // Token storage - initialize from credentials if provided
+        this.accessToken = node.credentials.accessToken || null;
+        this.refreshToken = node.credentials.refreshToken || null;
         this.tokenExpiry = null;
         
         // Authentication state
@@ -44,6 +41,14 @@ module.exports = function(RED) {
         
         // List of dependent nodes
         this.dependentNodes = [];
+        
+        // Initialize token expiry tracking if we have an access token
+        if (this.accessToken) {
+            // Assume token expires in 1 hour (default for Viessmann) minus buffer
+            // This will trigger a refresh on first use if refresh token is available
+            this.tokenExpiry = Date.now() + (3600 * 1000);
+            updateAuthState('authenticated');
+        }
         
         /**
          * Log debug information if debug mode is enabled
@@ -94,76 +99,20 @@ module.exports = function(RED) {
         };
         
         /**
-         * Authenticate using OAuth2 client credentials flow
+         * Validate that we have an access token
          * @returns {Promise<void>}
          */
         this.authenticate = async function() {
-            try {
-                updateAuthState('authenticating');
-                debugLog('Starting authentication with Viessmann API');
-                debugLog('Token URL: ' + node.tokenUrl);
-                debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
-                debugLog('Scope: ' + node.scope);
-                
-                const requestParams = {
-                    grant_type: 'client_credentials',
-                    client_id: node.credentials.clientId,
-                    client_secret: node.credentials.clientSecret,
-                    scope: node.scope
-                };
-                
-                const response = await axios.post(node.tokenUrl, new URLSearchParams(requestParams), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                });
-                
-                node.accessToken = response.data.access_token;
-                node.refreshToken = response.data.refresh_token;
-                node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
-                
-                const expiryDate = new Date(node.tokenExpiry);
-                debugLog('Authentication successful');
-                debugLog('Access token received: ' + maskSensitiveData(node.accessToken));
-                debugLog('Refresh token received: ' + maskSensitiveData(node.refreshToken));
-                debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
-                
-                node.log('Successfully authenticated with Viessmann API');
+            if (node.accessToken) {
+                debugLog('Access token is already available');
                 updateAuthState('authenticated');
-            } catch (error) {
-                debugLog('Authentication failed with error: ' + error.message);
-                if (error.response) {
-                    debugLog('Error status: ' + error.response.status);
-                    debugLog('Error data: ' + JSON.stringify(error.response.data));
-                }
-                
-                // Provide more specific error messages based on the error type
-                let errorMsg = error.response?.data?.error_description || error.message;
-                let userGuidance = '';
-                
-                if (error.response) {
-                    const status = error.response.status;
-                    const errorCode = error.response.data?.error;
-                    
-                    // Check specific error codes first, then fall back to status codes
-                    if (errorCode === 'invalid_client') {
-                        userGuidance = 'Check that your Client ID and Client Secret are correct in the Viessmann Developer Portal.';
-                    } else if (errorCode === 'invalid_scope') {
-                        userGuidance = 'The configured scopes ("' + node.scope + '") do not match your application settings in the Viessmann Developer Portal. Ensure you have selected "IoT User" and "offline_access" scopes when creating your application.';
-                    } else if (errorCode === 'unauthorized_client') {
-                        userGuidance = 'Your application is not authorized. Verify that: 1) Your app is properly configured in the Developer Portal with correct redirect URIs and scopes, 2) Your Client ID and Secret are correct, 3) You have completed any required consent steps.';
-                    } else if (errorCode === 'access_denied' || status === 403) {
-                        userGuidance = 'Access denied. You may need to complete user authorization/consent steps in the Viessmann Developer Portal or ensure your Viessmann account is properly linked to the application.';
-                    } else if (status === 401) {
-                        userGuidance = 'Check that your Client ID and Client Secret are correct in the Viessmann Developer Portal.';
-                    }
-                }
-                
-                const fullErrorMsg = errorMsg + (userGuidance ? ' → ' + userGuidance : '');
-                node.error('Authentication failed: ' + fullErrorMsg);
-                updateAuthState('error', fullErrorMsg);
-                throw error;
+                return;
             }
+            
+            const errorMsg = 'No access token configured. Please generate an access token using the PKCE flow and configure it in the node settings.';
+            node.error(errorMsg);
+            updateAuthState('error', errorMsg);
+            throw new Error(errorMsg);
         };
         
         /**
@@ -171,6 +120,14 @@ module.exports = function(RED) {
          * @returns {Promise<void>}
          */
         this.refreshAccessToken = async function() {
+            if (!node.refreshToken) {
+                debugLog('No refresh token available, cannot refresh');
+                const errorMsg = 'Access token expired and no refresh token available. Please generate new tokens.';
+                node.error(errorMsg);
+                updateAuthState('error', errorMsg);
+                throw new Error(errorMsg);
+            }
+            
             try {
                 updateAuthState('authenticating');
                 debugLog('Starting token refresh');
@@ -180,7 +137,6 @@ module.exports = function(RED) {
                 const response = await axios.post(node.tokenUrl, new URLSearchParams({
                     grant_type: 'refresh_token',
                     client_id: node.credentials.clientId,
-                    client_secret: node.credentials.clientSecret,
                     refresh_token: node.refreshToken
                 }), {
                     headers: {
@@ -191,6 +147,8 @@ module.exports = function(RED) {
                 node.accessToken = response.data.access_token;
                 if (response.data.refresh_token) {
                     node.refreshToken = response.data.refresh_token;
+                    // Update the stored refresh token in credentials
+                    node.credentials.refreshToken = response.data.refresh_token;
                 }
                 node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
                 
@@ -211,11 +169,10 @@ module.exports = function(RED) {
                     debugLog('Error data: ' + JSON.stringify(error.response.data));
                 }
                 const errorMsg = error.response?.data?.error_description || error.message;
-                node.error('Token refresh failed: ' + errorMsg);
-                updateAuthState('error', errorMsg);
-                // If refresh fails, try to re-authenticate
-                debugLog('Attempting re-authentication after refresh failure');
-                await node.authenticate();
+                const fullErrorMsg = 'Token refresh failed: ' + errorMsg + '. You may need to generate new tokens.';
+                node.error(fullErrorMsg);
+                updateAuthState('error', fullErrorMsg);
+                throw error;
             }
         };
         
@@ -258,7 +215,8 @@ module.exports = function(RED) {
     RED.nodes.registerType("viessmann-config", ViessmannConfigNode, {
         credentials: {
             clientId: { type: "text" },
-            clientSecret: { type: "password" }
+            accessToken: { type: "password" },
+            refreshToken: { type: "password" }
         }
     });
 };
