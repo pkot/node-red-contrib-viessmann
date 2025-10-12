@@ -42,12 +42,21 @@ jobs:
         run: |
           if grep -q '"test"' package.json; then
             echo "Running tests..."
-            if npm test 2>&1 | grep -q "Error: no test specified"; then
+            # Capture test output and exit code
+            set +e
+            npm test 2>&1 | tee /tmp/test-output.txt
+            TEST_EXIT_CODE=${PIPESTATUS[0]}
+            set -e
+            
+            # Check if it's the default placeholder test script
+            if grep -q "Error: no test specified" /tmp/test-output.txt; then
               echo "Warning: Test script exists but no tests are configured yet"
               echo "Please add tests to ensure code quality"
-            else
-              npm test
+              exit 0
             fi
+            
+            # Return the original test exit code
+            exit $TEST_EXIT_CODE
           else
             echo "Warning: No test script found in package.json"
             echo "Please add tests to ensure code quality"
