@@ -1,0 +1,37 @@
+<script type="text/javascript">
+    RED.nodes.registerType('viessmann-config', {
+        category: 'config',
+        defaults: {
+            name: { value: "" }
+        },
+        credentials: {
+            clientId: { type: "text" },
+            clientSecret: { type: "password" }
+        },
+        label: function() {
+            return this.name || "Viessmann Config";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="viessmann-config">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-clientId"><i class="fa fa-user"></i> Client ID</label>
+        <input type="text" id="node-config-input-clientId" placeholder="Client ID">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-clientSecret"><i class="fa fa-lock"></i> Client Secret</label>
+        <input type="password" id="node-config-input-clientSecret" placeholder="Client Secret">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="viessmann-config">
+    <p>Configuration node for Viessmann API authentication.</p>
+    <h3>Details</h3>
+    <p>Stores API credentials (client_id, client_secret) securely and handles OAuth2 authentication/token refresh.</p>
+    <p>This configuration is shared across all Viessmann nodes.</p>
+</script>
