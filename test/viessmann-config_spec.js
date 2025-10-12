@@ -496,7 +496,8 @@ describe('viessmann-config Node', function() {
                 done(new Error('Should have failed authentication'));
             }).catch(() => {
                 expect(n1.authState).to.equal('error');
-                expect(n1.authError).to.equal('Invalid client credentials');
+                expect(n1.authError).to.include('Invalid client credentials');
+                expect(n1.authError).to.include('Client ID and Client Secret');
                 done();
             });
         });
@@ -542,6 +543,153 @@ describe('viessmann-config Node', function() {
                 expect(statusUpdateCount).to.be.greaterThan(0);
                 done();
             }).catch(done);
+        });
+    });
+
+    it('should include scope in authentication request', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config',
+            scope: 'IoT User offline_access'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                clientSecret: 'test-client-secret'
+            }
+        };
+
+        // Mock authentication endpoint
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'test-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'test-refresh-token'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            // Verify scope is stored
+            expect(n1.scope).to.equal('IoT User offline_access');
+            
+            n1.authenticate().then(() => {
+                done();
+            }).catch(done);
+        });
+    });
+
+    it('should use default scope if not configured', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                clientSecret: 'test-client-secret'
+            }
+        };
+
+        // Mock authentication endpoint
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'test-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'test-refresh-token'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            // Verify default scope is set
+            expect(n1.scope).to.equal('IoT User offline_access');
+            
+            n1.authenticate().then(() => {
+                done();
+            }).catch(done);
+        });
+    });
+
+    it('should provide helpful error for invalid_scope', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config',
+            scope: 'invalid_scope'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                clientSecret: 'test-client-secret'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(400, {
+                error: 'invalid_scope',
+                error_description: 'Invalid scope'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            n1.authenticate().then(() => {
+                done(new Error('Should have failed authentication'));
+            }).catch(() => {
+                expect(n1.authState).to.equal('error');
+                expect(n1.authError).to.include('Invalid scope');
+                expect(n1.authError).to.include('Developer Portal');
+                expect(n1.authError).to.include('invalid_scope');
+                done();
+            });
+        });
+    });
+
+    it('should provide helpful error for unauthorized_client', function(done) {
+        this.timeout(5000); // Increase timeout
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                clientSecret: 'test-client-secret'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(401, {
+                error: 'unauthorized_client',
+                error_description: 'Unauthorized client'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            n1.authenticate().then(() => {
+                done(new Error('Should have failed authentication'));
+            }).catch((err) => {
+                try {
+                    expect(n1.authState).to.equal('error');
+                    expect(n1.authError).to.include('Unauthorized client');
+                    expect(n1.authError).to.include('redirect URIs');
+                    expect(n1.authError).to.include('consent');
+                    done();
+                } catch (e) {
+                    done(e);
+                }
+            });
         });
     });
 });

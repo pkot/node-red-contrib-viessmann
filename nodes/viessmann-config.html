@@ -3,7 +3,8 @@
         category: 'config',
         defaults: {
             name: { value: "" },
-            enableDebug: { value: false }
+            enableDebug: { value: false },
+            scope: { value: "IoT User offline_access" }
         },
         credentials: {
             clientId: { type: "text" },
@@ -29,19 +30,72 @@
         <input type="password" id="node-config-input-clientSecret" placeholder="Client Secret">
     </div>
     <div class="form-row">
+        <label for="node-config-input-scope"><i class="fa fa-key"></i> OAuth2 Scopes</label>
+        <input type="text" id="node-config-input-scope" placeholder="IoT User offline_access">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-enableDebug"><i class="fa fa-bug"></i> Enable Debug Logging</label>
         <input type="checkbox" id="node-config-input-enableDebug" style="display:inline-block; width:auto; vertical-align:baseline;">
     </div>
 </script>
 
 <script type="text/html" data-help-name="viessmann-config">
-    <p>Configuration node for Viessmann API authentication.</p>
-    <h3>Details</h3>
-    <p>Stores API credentials (client_id, client_secret) securely and handles OAuth2 authentication/token refresh.</p>
-    <p>This configuration is shared across all Viessmann nodes.</p>
-    <h3>Debug Logging</h3>
-    <p>When <b>Enable Debug Logging</b> is checked, the node will output detailed debug information about authentication, 
-    token refresh, and config usage operations. Sensitive data (client_id, client_secret, tokens) will be masked to show 
-    only the last 4 characters for security purposes.</p>
-    <p>By default, debug logging is disabled. Enable it only when troubleshooting authentication issues.</p>
+    <p>Configuration node for Viessmann API authentication using OAuth2.</p>
+    
+    <h3>Required Setup - Viessmann Developer Portal</h3>
+    <p><strong>Before using this node, you must complete these steps in the Viessmann Developer Portal:</strong></p>
+    <ol>
+        <li>Visit <a href="https://developer.viessmann.com/" target="_blank">Viessmann Developer Portal</a> and log in with your Viessmann account</li>
+        <li>Create a new application (or use an existing one)</li>
+        <li><strong>Important:</strong> Configure your application with the following settings:
+            <ul>
+                <li><strong>Redirect URI:</strong> Set to <code>http://localhost:4200/auth/callback</code> or your specific callback URL (consult Viessmann documentation)</li>
+                <li><strong>Scopes:</strong> Select <code>IoT User</code> and <code>offline_access</code> scopes (required for device access and token refresh)</li>
+            </ul>
+        </li>
+        <li>Note your <strong>Client ID</strong> and <strong>Client Secret</strong> from the application details</li>
+        <li>You may need to complete manual authorization or consent steps for your Viessmann account before the API will accept requests</li>
+    </ol>
+    
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Name <span class="property-type">string</span></dt>
+        <dd>Optional friendly name for this configuration</dd>
+        
+        <dt>Client ID <span class="property-type">string</span></dt>
+        <dd>Your application's Client ID from the Viessmann Developer Portal</dd>
+        
+        <dt>Client Secret <span class="property-type">string</span></dt>
+        <dd>Your application's Client Secret from the Viessmann Developer Portal (stored securely)</dd>
+        
+        <dt>OAuth2 Scopes <span class="property-type">string</span></dt>
+        <dd>Space-separated OAuth2 scopes. Default: <code>IoT User offline_access</code>
+            <ul>
+                <li><code>IoT User</code> - Required for accessing device data</li>
+                <li><code>offline_access</code> - Required for token refresh capability</li>
+            </ul>
+        </dd>
+        
+        <dt>Enable Debug Logging <span class="property-type">boolean</span></dt>
+        <dd>Enable detailed logging for troubleshooting authentication issues (sensitive data is masked)</dd>
+    </dl>
+    
+    <h3>Common Errors</h3>
+    <dl>
+        <dt>"Unauthorized client" or "invalid_client"</dt>
+        <dd>Your Client ID or Client Secret is incorrect, or your application is not properly configured in the Developer Portal. Verify your credentials and that scopes are correctly set.</dd>
+        
+        <dt>"Invalid scope"</dt>
+        <dd>The scopes you've entered don't match what's configured in your Developer Portal application. Ensure you've selected <code>IoT User</code> and <code>offline_access</code> scopes when creating your app.</dd>
+        
+        <dt>"Access denied"</dt>
+        <dd>You may need to complete user consent/authorization steps in the Viessmann Developer Portal or through an interactive OAuth2 flow. Check that your Viessmann account is properly linked to the application.</dd>
+    </dl>
+    
+    <h3>Authentication Details</h3>
+    <p>This node uses OAuth2 client credentials flow with the following endpoint: <code>https://iam.viessmann.com/idp/v3/token</code></p>
+    <p>Tokens are automatically refreshed before expiration. All credentials and tokens are stored securely using Node-RED's credential system.</p>
+    
+    <h3>Reference</h3>
+    <p>For more information, see the <a href="https://api.viessmann-climatesolutions.com/documentation/static/authentication" target="_blank">Viessmann API Authentication Documentation</a></p>
 </script>

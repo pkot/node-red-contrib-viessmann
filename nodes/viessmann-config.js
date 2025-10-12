@@ -27,6 +27,9 @@ module.exports = function(RED) {
         // Store debug flag from config
         this.enableDebug = config.enableDebug || false;
         
+        // Store OAuth2 scope (default to IoT User offline_access if not specified)
+        this.scope = config.scope || 'IoT User offline_access';
+        
         // OAuth2 endpoints
         this.tokenUrl = 'https://iam.viessmann.com/idp/v3/token';
         
@@ -100,12 +103,20 @@ module.exports = function(RED) {
                 debugLog('Starting authentication with Viessmann API');
                 debugLog('Token URL: ' + node.tokenUrl);
                 debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
+                debugLog('Scope: ' + node.scope);
                 
-                const response = await axios.post(node.tokenUrl, new URLSearchParams({
+                const requestParams = {
                     grant_type: 'client_credentials',
                     client_id: node.credentials.clientId,
                     client_secret: node.credentials.clientSecret
-                }), {
+                };
+                
+                // Add scope if configured
+                if (node.scope) {
+                    requestParams.scope = node.scope;
+                }
+                
+                const response = await axios.post(node.tokenUrl, new URLSearchParams(requestParams), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
@@ -129,9 +140,32 @@ module.exports = function(RED) {
                     debugLog('Error status: ' + error.response.status);
                     debugLog('Error data: ' + JSON.stringify(error.response.data));
                 }
-                const errorMsg = error.response?.data?.error_description || error.message;
-                node.error('Authentication failed: ' + errorMsg);
-                updateAuthState('error', errorMsg);
+                
+                // Provide more specific error messages based on the error type
+                let errorMsg = error.response?.data?.error_description || error.message;
+                let userGuidance = '';
+                
+                if (error.response) {
+                    const status = error.response.status;
+                    const errorCode = error.response.data?.error;
+                    
+                    // Check specific error codes first, then fall back to status codes
+                    if (errorCode === 'invalid_client') {
+                        userGuidance = 'Check that your Client ID and Client Secret are correct in the Viessmann Developer Portal.';
+                    } else if (errorCode === 'invalid_scope') {
+                        userGuidance = 'The configured scopes ("' + node.scope + '") do not match your application settings in the Viessmann Developer Portal. Ensure you have selected "IoT User" and "offline_access" scopes when creating your application.';
+                    } else if (errorCode === 'unauthorized_client') {
+                        userGuidance = 'Your application is not authorized. Verify that: 1) Your app is properly configured in the Developer Portal with correct redirect URIs and scopes, 2) Your Client ID and Secret are correct, 3) You have completed any required consent steps.';
+                    } else if (errorCode === 'access_denied' || status === 403) {
+                        userGuidance = 'Access denied. You may need to complete user authorization/consent steps in the Viessmann Developer Portal or ensure your Viessmann account is properly linked to the application.';
+                    } else if (status === 401) {
+                        userGuidance = 'Check that your Client ID and Client Secret are correct in the Viessmann Developer Portal.';
+                    }
+                }
+                
+                const fullErrorMsg = errorMsg + (userGuidance ? ' → ' + userGuidance : '');
+                node.error('Authentication failed: ' + fullErrorMsg);
+                updateAuthState('error', fullErrorMsg);
                 throw error;
             }
         };
