@@ -39,6 +39,7 @@ jobs:
           fi
 
       - name: Run tests
+        shell: bash
         run: |
           if grep -q '"test"' package.json; then
             echo "Running tests..."
