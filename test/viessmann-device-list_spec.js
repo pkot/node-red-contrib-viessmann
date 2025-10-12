@@ -162,4 +162,97 @@ describe('viessmann-device-list Node', function() {
             n1.receive({ payload: {} });
         });
     });
+
+    it('should update status based on config auth state', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-device-list', name: 'test device list', config: 'c1' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                clientSecret: 'test-client-secret'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'test-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'test-refresh-token'
+            });
+
+        helper.load([configNode, deviceListNode], flow, credentials, function() {
+            const c1 = helper.getNode('c1');
+            const n1 = helper.getNode('n1');
+            
+            // Track status updates
+            let statusCalls = [];
+            const originalStatus = n1.status;
+            n1.status = function(status) {
+                statusCalls.push(status);
+                originalStatus.call(n1, status);
+            };
+            
+            // Authenticate to trigger status update
+            c1.authenticate().then(() => {
+                // Should have updated status
+                expect(statusCalls.length).to.be.greaterThan(0);
+                
+                // Last status should be green/connected
+                const lastStatus = statusCalls[statusCalls.length - 1];
+                expect(lastStatus.fill).to.equal('green');
+                expect(lastStatus.text).to.equal('connected');
+                
+                done();
+            }).catch(done);
+        });
+    });
+
+    it('should show error status when auth fails', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-device-list', name: 'test device list', config: 'c1' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'invalid-client-id',
+                clientSecret: 'invalid-client-secret'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(401, {
+                error: 'invalid_client',
+                error_description: 'Invalid client credentials'
+            });
+
+        helper.load([configNode, deviceListNode], flow, credentials, function() {
+            const c1 = helper.getNode('c1');
+            const n1 = helper.getNode('n1');
+            
+            // Track status updates
+            let statusCalls = [];
+            const originalStatus = n1.status;
+            n1.status = function(status) {
+                statusCalls.push(status);
+                originalStatus.call(n1, status);
+            };
+            
+            // Authenticate to trigger status update (will fail)
+            c1.authenticate().catch(() => {
+                // Should have updated status to error
+                expect(statusCalls.length).to.be.greaterThan(0);
+                
+                // Last status should be red/error
+                const lastStatus = statusCalls[statusCalls.length - 1];
+                expect(lastStatus.fill).to.equal('red');
+                
+                done();
+            });
+        });
+    });
 });

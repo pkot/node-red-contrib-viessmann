@@ -433,4 +433,115 @@ describe('viessmann-config Node', function() {
             }).catch(done);
         });
     });
+
+    it('should update auth state to authenticated on successful authentication', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                clientSecret: 'test-client-secret'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'test-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'test-refresh-token'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            expect(n1.authState).to.equal('disconnected');
+            
+            n1.authenticate().then(() => {
+                expect(n1.authState).to.equal('authenticated');
+                expect(n1.authError).to.be.null;
+                done();
+            }).catch(done);
+        });
+    });
+
+    it('should update auth state to error on authentication failure', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'invalid-client-id',
+                clientSecret: 'invalid-client-secret'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(401, {
+                error: 'invalid_client',
+                error_description: 'Invalid client credentials'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            n1.authenticate().then(() => {
+                done(new Error('Should have failed authentication'));
+            }).catch(() => {
+                expect(n1.authState).to.equal('error');
+                expect(n1.authError).to.equal('Invalid client credentials');
+                done();
+            });
+        });
+    });
+
+    it('should notify dependent nodes on auth state change', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                clientSecret: 'test-client-secret'
+            }
+        };
+
+        nock('https://iam.viessmann.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'test-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'test-refresh-token'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            // Mock dependent node
+            let statusUpdateCount = 0;
+            const mockDepNode = {
+                updateStatus: function() {
+                    statusUpdateCount++;
+                }
+            };
+            
+            n1.registerDependent(mockDepNode);
+            
+            n1.authenticate().then(() => {
+                // Should have been called during authenticating and authenticated states
+                expect(statusUpdateCount).to.be.greaterThan(0);
+                done();
+            }).catch(done);
+        });
+    });
 });

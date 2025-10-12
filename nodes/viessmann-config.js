@@ -35,6 +35,13 @@ module.exports = function(RED) {
         this.refreshToken = null;
         this.tokenExpiry = null;
         
+        // Authentication state
+        this.authState = 'disconnected'; // 'disconnected', 'authenticating', 'authenticated', 'error'
+        this.authError = null;
+        
+        // List of dependent nodes
+        this.dependentNodes = [];
+        
         /**
          * Log debug information if debug mode is enabled
          * @param {string} message - The debug message to log
@@ -46,11 +53,50 @@ module.exports = function(RED) {
         };
         
         /**
+         * Update authentication state and notify dependent nodes
+         * @param {string} state - New authentication state
+         * @param {string} error - Optional error message
+         */
+        const updateAuthState = function(state, error) {
+            node.authState = state;
+            node.authError = error || null;
+            
+            // Notify all dependent nodes
+            node.dependentNodes.forEach(depNode => {
+                if (depNode && typeof depNode.updateStatus === 'function') {
+                    depNode.updateStatus();
+                }
+            });
+        };
+        
+        /**
+         * Register a dependent node to receive auth state updates
+         * @param {object} depNode - The dependent node to register
+         */
+        this.registerDependent = function(depNode) {
+            if (!node.dependentNodes.includes(depNode)) {
+                node.dependentNodes.push(depNode);
+            }
+        };
+        
+        /**
+         * Unregister a dependent node
+         * @param {object} depNode - The dependent node to unregister
+         */
+        this.unregisterDependent = function(depNode) {
+            const index = node.dependentNodes.indexOf(depNode);
+            if (index > -1) {
+                node.dependentNodes.splice(index, 1);
+            }
+        };
+        
+        /**
          * Authenticate using OAuth2 client credentials flow
          * @returns {Promise<void>}
          */
         this.authenticate = async function() {
             try {
+                updateAuthState('authenticating');
                 debugLog('Starting authentication with Viessmann API');
                 debugLog('Token URL: ' + node.tokenUrl);
                 debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
@@ -76,13 +122,16 @@ module.exports = function(RED) {
                 debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
                 
                 node.log('Successfully authenticated with Viessmann API');
+                updateAuthState('authenticated');
             } catch (error) {
                 debugLog('Authentication failed with error: ' + error.message);
                 if (error.response) {
                     debugLog('Error status: ' + error.response.status);
                     debugLog('Error data: ' + JSON.stringify(error.response.data));
                 }
-                node.error('Authentication failed: ' + (error.response?.data?.error_description || error.message));
+                const errorMsg = error.response?.data?.error_description || error.message;
+                node.error('Authentication failed: ' + errorMsg);
+                updateAuthState('error', errorMsg);
                 throw error;
             }
         };
@@ -93,6 +142,7 @@ module.exports = function(RED) {
          */
         this.refreshAccessToken = async function() {
             try {
+                updateAuthState('authenticating');
                 debugLog('Starting token refresh');
                 debugLog('Current refresh token: ' + maskSensitiveData(node.refreshToken));
                 debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
@@ -123,13 +173,16 @@ module.exports = function(RED) {
                 debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
                 
                 node.log('Successfully refreshed access token');
+                updateAuthState('authenticated');
             } catch (error) {
                 debugLog('Token refresh failed with error: ' + error.message);
                 if (error.response) {
                     debugLog('Error status: ' + error.response.status);
                     debugLog('Error data: ' + JSON.stringify(error.response.data));
                 }
-                node.error('Token refresh failed: ' + (error.response?.data?.error_description || error.message));
+                const errorMsg = error.response?.data?.error_description || error.message;
+                node.error('Token refresh failed: ' + errorMsg);
+                updateAuthState('error', errorMsg);
                 // If refresh fails, try to re-authenticate
                 debugLog('Attempting re-authentication after refresh failure');
                 await node.authenticate();
