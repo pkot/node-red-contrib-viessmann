@@ -62,6 +62,27 @@ Sets values for writable device parameters.
 
 This module is under active development. See [SPEC.md](SPEC.md) for detailed functional specifications.
 
+## Continuous Integration
+
+This project uses GitHub Actions for continuous integration. The CI workflow automatically:
+
+- Runs on all pushes and pull requests to `main` and `feature/**` branches
+- Sets up Node.js version 14 (as specified in `package.json` engines field)
+- Installs dependencies using `npm ci`
+- Runs the linter (if `npm run lint` is configured)
+- Runs the test suite (if `npm test` is configured)
+- Runs the build process (if `npm run build` is configured)
+
+The workflow will fail if any configured step fails. If linter or test scripts are not yet configured, the workflow will pass with a warning message encouraging their addition.
+
+To run these checks locally:
+```bash
+npm install
+npm run lint   # if configured
+npm test       # if configured
+npm run build  # if configured
+```
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details
