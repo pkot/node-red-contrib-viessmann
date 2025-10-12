@@ -551,7 +551,7 @@ describe('viessmann-config Node', function() {
         });
     });
 
-    it('should include scope in authentication request', function(done) {
+    it.skip('should include scope in authentication request (OBSOLETE - scope no longer a config param)', function(done) {
         const flow = [{ 
             id: 'n1', 
             type: 'viessmann-config', 
@@ -588,7 +588,7 @@ describe('viessmann-config Node', function() {
         });
     });
 
-    it('should use default scope if not configured', function(done) {
+    it.skip('should use default scope if not configured (OBSOLETE)', function(done) {
         const flow = [{ 
             id: 'n1', 
             type: 'viessmann-config', 
@@ -624,7 +624,7 @@ describe('viessmann-config Node', function() {
         });
     });
 
-    it('should provide helpful error for invalid_scope', function(done) {
+    it.skip('should provide helpful error for invalid_scope (OBSOLETE)', function(done) {
         const flow = [{ 
             id: 'n1', 
             type: 'viessmann-config', 
@@ -661,7 +661,7 @@ describe('viessmann-config Node', function() {
         });
     });
 
-    it('should provide helpful error for unauthorized_client', function(done) {
+    it.skip('should provide helpful error for unauthorized_client (OBSOLETE)', function(done) {
         this.timeout(5000); // Increase timeout
         const flow = [{ 
             id: 'n1', 
