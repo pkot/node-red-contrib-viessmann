@@ -24,6 +24,23 @@ Or install via Node-RED's palette manager.
 ### Configuration Node: `viessmann-config`
 Stores API credentials (client_id, client_secret) securely and handles authentication/token refresh. This configuration is shared across all Viessmann nodes.
 
+**Configuration:**
+1. **Name** (optional): A friendly name for this configuration
+2. **Client ID** (required): Your Viessmann API client ID
+3. **Client Secret** (required): Your Viessmann API client secret
+
+**How to obtain API credentials:**
+1. Visit the [Viessmann Developer Portal](https://developer.viessmann.com/)
+2. Register or log in to your developer account
+3. Create a new application to receive your client ID and client secret
+4. The credentials will be stored securely using Node-RED's credential system
+
+**Authentication Details:**
+- Uses OAuth2 client credentials flow
+- Automatically handles token refresh before expiration
+- Tokens are cached in memory and automatically renewed when needed
+- Token endpoint: `https://iam.viessmann.com/idp/v3/token`
+
 ### Device Discovery Node: `viessmann-device-list`
 Lists all accessible Viessmann installations, gateways, devices, and their features.
 
@@ -67,7 +84,7 @@ This module is under active development. See [SPEC.md](SPEC.md) for detailed fun
 This project uses GitHub Actions for continuous integration. The CI workflow automatically:
 
 - Runs on all pushes and pull requests to `main` and `feature/**` branches
-- Sets up Node.js version 14 (as specified in `package.json` engines field)
+- Sets up Node.js version 20 (as specified in `package.json` engines field)
 - Installs dependencies using `npm ci`
 - Runs the linter (if `npm run lint` is configured)
 - Runs the test suite (if `npm test` is configured)
