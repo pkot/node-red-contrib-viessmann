@@ -160,11 +160,22 @@ describe('viessmann-gateway-list Node', function() {
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
             
+            let errorCount = 0;
+            const expectedErrors = 5;
+            
             n1.on('call:error', function() {
-                done();
+                errorCount++;
+                if (errorCount === expectedErrors) {
+                    done();
+                }
             });
 
+            // Test various invalid inputs
             n1.receive({ installationId: 'invalid' });
+            n1.receive({ installationId: '123abc' });
+            n1.receive({ installationId: -1 });
+            n1.receive({ installationId: 0 });
+            n1.receive({ installationId: 1.5 });
         });
     });
 

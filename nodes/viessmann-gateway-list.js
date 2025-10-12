@@ -24,17 +24,17 @@ module.exports = function(RED) {
             }
             
             // Check if installationId is provided
-            if (!msg.installationId) {
+            if (!msg.installationId && msg.installationId !== 0) {
                 node.status({fill: 'red', shape: 'dot', text: 'no installationId'});
                 node.error('No installationId provided. Please provide msg.installationId.', msg);
                 return;
             }
             
-            // Validate installationId is a number
-            const installationId = parseInt(msg.installationId, 10);
-            if (isNaN(installationId) || installationId <= 0) {
+            // Validate installationId is a valid positive number
+            const installationId = Number(msg.installationId);
+            if (!Number.isInteger(installationId) || installationId <= 0) {
                 node.status({fill: 'red', shape: 'dot', text: 'invalid installationId'});
-                node.error('Invalid installationId. Must be a positive number.', msg);
+                node.error('Invalid installationId. Must be a positive integer.', msg);
                 return;
             }
             
