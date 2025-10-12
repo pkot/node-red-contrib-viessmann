@@ -5,7 +5,9 @@ A Node-RED module for integrating Viessmann heating devices via the official Vie
 ## Features
 
 - **OAuth2 Authentication**: Secure authentication with Viessmann API using client credentials or device flow
-- **Device Discovery**: List all accessible installations, gateways, devices, and their features
+- **Installation Discovery**: List all accessible Viessmann installations for your account
+- **Gateway Discovery**: List all gateways for a specific installation
+- **Device Discovery**: List all devices and their features (coming soon)
 - **Read Data**: Read specific data points from Viessmann devices (e.g., temperature, state)
 - **Write Data**: Set writable parameters (e.g., temperature setpoint, operation modes)
 
@@ -144,6 +146,50 @@ Lists all accessible Viessmann installations for the authenticated account.
 - Uses `GET /iot/v2/equipment/installations` from the Viessmann API
 - Base URL: `https://api.viessmann-climatesolutions.com`
 
+### Gateway List Node: `viessmann-gateway-list`
+Lists all gateways for a specific Viessmann installation.
+
+**Inputs:**
+- `msg.installationId` (required): The installation ID to list gateways for
+
+**Outputs:**
+- `msg.payload`: Array of gateway objects with the following structure:
+  ```json
+  [
+    {
+      "serial": "7571381573112225",
+      "version": "1.2.3.4",
+      "gatewayType": "VitoconnectOPTO2",
+      "aggregatedStatus": "WorksProperly",
+      "description": "My description",
+      "installationId": 518,
+      "autoUpdate": false,
+      "firmwareUpdateFailureCounter": 435,
+      "targetRealm": "DC",
+      "otaOngoing": false,
+      "createdAt": "2025-09-18T13:56:08.9374248+00:00",
+      "producedAt": "2025-09-18T13:56:08.9374519+00:00",
+      "registeredAt": "2025-09-18T13:56:08.9375793+00:00",
+      "lastStatusChangedAt": "2025-09-18T13:56:08.9374752+00:00"
+    }
+  ]
+  ```
+
+**Error Handling:**
+- Emits an error if the config node is not configured
+- Emits an error if `msg.installationId` is not provided
+- Emits an error if the API request fails (e.g., installation not found)
+- Error details are available in the debug panel
+
+**Example Usage:**
+1. Use `viessmann-device-list` to get installation IDs
+2. Pass the installation ID in `msg.installationId` to `viessmann-gateway-list`
+3. View the list of gateways in the debug panel
+
+**API Endpoint:**
+- Uses `GET /iot/v2/equipment/installations/{installationId}/gateways` from the Viessmann API
+- Base URL: `https://api.viessmann-climatesolutions.com`
+
 ### Data Read Node: `viessmann-read`
 Reads specific data points from a selected device.
 
@@ -168,9 +214,10 @@ Sets values for writable device parameters.
 ## Usage
 
 1. Add a `viessmann-config` node and configure your API credentials
-2. Use `viessmann-device-list` to discover available devices
-3. Use `viessmann-read` to read data from devices
-4. Use `viessmann-write` to control device parameters
+2. Use `viessmann-device-list` to discover available installations
+3. Use `viessmann-gateway-list` to list gateways for a specific installation
+4. Use `viessmann-read` to read data from devices
+5. Use `viessmann-write` to control device parameters
 
 ## Development
 
