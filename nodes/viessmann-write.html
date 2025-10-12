@@ -1,0 +1,47 @@
+<script type="text/javascript">
+    RED.nodes.registerType('viessmann-write', {
+        category: 'Viessmann',
+        color: '#E60000',
+        defaults: {
+            name: { value: "" },
+            config: { value: "", type: "viessmann-config", required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-upload",
+        label: function() {
+            return this.name || "write";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="viessmann-write">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-config" placeholder="Viessmann Config">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="viessmann-write">
+    <p>Sets values for writable Viessmann device parameters.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>deviceId <span class="property-type">string</span></dt>
+        <dd>Required. The device ID to write to.</dd>
+        <dt>feature <span class="property-type">string</span></dt>
+        <dd>Required. The feature to write to.</dd>
+        <dt class="optional">datapoint <span class="property-type">string</span></dt>
+        <dd>Required. The specific datapoint to write to.</dd>
+        <dt>value <span class="property-type">any</span></dt>
+        <dd>Required. The new value to set.</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>API response or success/failure status.</dd>
+    </dl>
+</script>
