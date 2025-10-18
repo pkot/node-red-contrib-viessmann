@@ -27,21 +27,86 @@
 </script>
 
 <script type="text/html" data-help-name="viessmann-write">
-    <p>Sets values for writable Viessmann device parameters.</p>
+    <p>Sets values for writable Viessmann device parameters by executing commands on features.</p>
+    
     <h3>Inputs</h3>
     <dl class="message-properties">
+        <dt>installationId <span class="property-type">number</span></dt>
+        <dd>The installation ID (required).</dd>
+        <dt>gatewaySerial <span class="property-type">string</span></dt>
+        <dd>The gateway serial number (required).</dd>
         <dt>deviceId <span class="property-type">string</span></dt>
-        <dd>Required. The device ID to write to.</dd>
+        <dd>The device ID (required).</dd>
         <dt>feature <span class="property-type">string</span></dt>
-        <dd>Required. The feature to write to.</dd>
+        <dd>Required. The feature to write to (e.g., "heating.circuits.0.operating.modes.active").</dd>
         <dt>datapoint <span class="property-type">string</span></dt>
-        <dd>Required. The specific datapoint to write to.</dd>
-        <dt>value <span class="property-type">any</span></dt>
-        <dd>Required. The new value to set.</dd>
+        <dd>Alias for feature parameter. The specific datapoint to write to.</dd>
+        <dt>command <span class="property-type">string</span></dt>
+        <dd>Required. The command to execute on the feature (e.g., "setMode", "setTemperature").</dd>
+        <dt>params <span class="property-type">object</span></dt>
+        <dd>Required. Parameters for the command (e.g., { mode: "dhw" }, { temperature: 22 }).</dd>
     </dl>
+    
     <h3>Outputs</h3>
     <dl class="message-properties">
         <dt>payload <span class="property-type">object</span></dt>
-        <dd>API response or success/failure status.</dd>
+        <dd>Success status object containing:
+            <ul>
+                <li><code>success</code> - Boolean indicating success</li>
+                <li><code>installationId</code> - The installation ID</li>
+                <li><code>gatewaySerial</code> - The gateway serial</li>
+                <li><code>deviceId</code> - The device ID</li>
+                <li><code>feature</code> - The feature that was written to</li>
+                <li><code>command</code> - The command that was executed</li>
+                <li><code>params</code> - The parameters that were sent</li>
+            </ul>
+        </dd>
     </dl>
+    
+    <h3>Details</h3>
+    <p>This node writes data to a Viessmann device by executing commands on writable features using the Viessmann API.</p>
+    <p>The node requires a configured <code>viessmann-config</code> node for authentication.</p>
+    <p>All required parameters must be provided: <code>msg.installationId</code>, <code>msg.gatewaySerial</code>, <code>msg.deviceId</code>, <code>msg.feature</code> (or <code>msg.datapoint</code>), <code>msg.command</code>, and <code>msg.params</code>. You can obtain available commands and their parameters using:</p>
+    <ul>
+        <li><code>viessmann-device-list</code> node to get installation IDs</li>
+        <li><code>viessmann-gateway-list</code> node to get gateway serials</li>
+        <li><code>viessmann-gateway-devices</code> node to get device IDs</li>
+        <li><code>viessmann-device-features</code> or <code>viessmann-read</code> node to discover available features and their writable commands</li>
+    </ul>
+    
+    <h3>API Endpoint</h3>
+    <p>Uses: <code>POST /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}/commands/{command}</code></p>
+    
+    <h3>Examples</h3>
+    <p><strong>Setting operation mode:</strong></p>
+    <pre>msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+msg.feature = "heating.circuits.0.operating.modes.active";
+msg.command = "setMode";
+msg.params = { mode: "dhw" };
+return msg;</pre>
+    
+    <p><strong>Setting temperature:</strong></p>
+    <pre>msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+msg.feature = "heating.circuits.0.temperature";
+msg.command = "setTemperature";
+msg.params = { temperature: 22 };
+return msg;</pre>
+    
+    <h3>Error Handling</h3>
+    <p>The node will emit an error if:</p>
+    <ul>
+        <li>The config node is not configured</li>
+        <li>The installationId is not provided or invalid</li>
+        <li>The gatewaySerial is not provided or invalid</li>
+        <li>The deviceId is not provided or invalid</li>
+        <li>The feature/datapoint is not provided</li>
+        <li>The command is not provided</li>
+        <li>The params is not provided</li>
+        <li>The API request fails (e.g., command not found, invalid parameters, network error)</li>
+    </ul>
+    <p>Error details are available in the debug panel.</p>
 </script>

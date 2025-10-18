@@ -472,15 +472,125 @@ msg.deviceId = "0";
 - Base URL: `https://api.viessmann-climatesolutions.com`
 
 ### Data Write Node: `viessmann-write`
-Sets values for writable device parameters.
+Sets values for writable Viessmann device parameters by executing commands on features.
 
 **Inputs:**
-- `msg.deviceId` (required)
-- `msg.feature` or `msg.datapoint` (required)
-- `msg.value` (required: new value to set)
+- `msg.installationId` (required): The installation ID (number)
+- `msg.gatewaySerial` (required): The gateway serial number (string)
+- `msg.deviceId` (required): The device ID (string)
+- `msg.feature` or `msg.datapoint` (required): The feature to write to (string, e.g., "heating.circuits.0.operating.modes.active")
+- `msg.command` (required): The command to execute on the feature (string, e.g., "setMode", "setTemperature")
+- `msg.params` (required): Parameters for the command (object, e.g., `{ mode: "dhw" }`, `{ temperature: 22 }`)
 
 **Outputs:**
-- `msg.payload`: API response or success/failure status
+- `msg.payload`: Success status object with the following structure:
+  ```json
+  {
+    "success": true,
+    "installationId": 123456,
+    "gatewaySerial": "7571381573112225",
+    "deviceId": "0",
+    "feature": "heating.circuits.0.operating.modes.active",
+    "command": "setMode",
+    "params": {
+      "mode": "dhw"
+    }
+  }
+  ```
+
+**Understanding Commands and Parameters:**
+
+To write data to a Viessmann device, you need to execute a command on a writable feature. Each feature may have one or more commands available, and each command requires specific parameters.
+
+**Discovering Available Commands:**
+
+Use the `viessmann-device-features` or `viessmann-read` node to discover which commands are available for a feature. The response includes a `commands` object that lists all executable commands and their required parameters:
+
+```json
+{
+  "feature": "heating.circuits.0.operating.modes.active",
+  "commands": {
+    "setMode": {
+      "uri": "/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
+      "name": "setMode",
+      "isExecutable": true,
+      "params": {
+        "mode": {
+          "type": "string",
+          "required": true,
+          "constraints": {
+            "enum": ["standby", "dhw", "dhwAndHeating"]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Common Commands:**
+
+- **`setMode`**: Change operation mode (e.g., standby, dhw, dhwAndHeating)
+  - Parameters: `{ mode: "dhw" }`
+- **`setTemperature`**: Set target temperature
+  - Parameters: `{ temperature: 22 }`
+- **`activate`**: Activate a feature
+  - Parameters: May vary by feature
+- **`deactivate`**: Deactivate a feature
+  - Parameters: May vary by feature
+
+**Error Handling:**
+- Emits an error if the config node is not configured
+- Emits an error if `msg.installationId` is not provided or invalid
+- Emits an error if `msg.gatewaySerial` is not provided or invalid
+- Emits an error if `msg.deviceId` is not provided or invalid
+- Emits an error if `msg.feature` or `msg.datapoint` is not provided
+- Emits an error if `msg.command` is not provided
+- Emits an error if `msg.params` is not provided
+- Emits an error if the API request fails (e.g., command not found, invalid parameters, network error)
+- Error details are available in the debug panel
+
+**Example Usage:**
+
+*Setting operation mode to DHW (Domestic Hot Water):*
+1. Use `viessmann-device-list` to get installation IDs
+2. Use `viessmann-gateway-list` to get gateway serial numbers for an installation
+3. Use `viessmann-gateway-devices` to get device IDs for a gateway
+4. Use `viessmann-device-features` or `viessmann-read` to discover available features and commands
+5. Pass all required parameters to `viessmann-write`
+
+Example flow:
+```javascript
+// Discover available commands first
+msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+// Pass to viessmann-read or viessmann-device-features to get commands
+
+// Then execute a command
+msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+msg.feature = "heating.circuits.0.operating.modes.active";
+msg.command = "setMode";
+msg.params = { mode: "dhw" };
+// Returns: { success: true, installationId: 123456, ... }
+```
+
+*Setting a temperature setpoint:*
+```javascript
+msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+msg.feature = "heating.circuits.0.temperature";
+msg.command = "setTemperature";
+msg.params = { temperature: 22 };
+return msg;
+```
+
+**API Endpoint:**
+- Uses `POST /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}/commands/{command}` from the Viessmann API
+- Base URL: `https://api.viessmann-climatesolutions.com`
 
 ## Usage
 
