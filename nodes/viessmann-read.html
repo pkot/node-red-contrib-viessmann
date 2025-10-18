@@ -28,18 +28,78 @@
 
 <script type="text/html" data-help-name="viessmann-read">
     <p>Reads specific data points from a selected Viessmann device.</p>
+    
     <h3>Inputs</h3>
     <dl class="message-properties">
+        <dt>installationId <span class="property-type">number</span></dt>
+        <dd>The installation ID (required).</dd>
+        <dt>gatewaySerial <span class="property-type">string</span></dt>
+        <dd>The gateway serial number (required).</dd>
         <dt>deviceId <span class="property-type">string</span></dt>
-        <dd>Required. The device ID to read from.</dd>
+        <dd>The device ID (required).</dd>
         <dt class="optional">feature <span class="property-type">string</span></dt>
-        <dd>Optional. The feature to read.</dd>
+        <dd>Optional. The specific feature to read (e.g., "heating.circuits.0.temperature"). If not provided, all features are returned.</dd>
         <dt class="optional">datapoint <span class="property-type">string</span></dt>
-        <dd>Optional. The specific datapoint to read.</dd>
+        <dd>Optional. Alias for feature parameter. The specific datapoint to read.</dd>
     </dl>
+    
     <h3>Outputs</h3>
     <dl class="message-properties">
-        <dt>payload <span class="property-type">object</span></dt>
-        <dd>Value(s) read from the device/feature.</dd>
+        <dt>payload <span class="property-type">object | array</span></dt>
+        <dd>When a specific feature is requested, returns a single feature object. When no feature is specified, returns an array of all features. Each feature object contains:
+            <ul>
+                <li><code>feature</code> - Feature identifier</li>
+                <li><code>gatewayId</code> - Associated gateway serial number</li>
+                <li><code>deviceId</code> - Associated device ID</li>
+                <li><code>isEnabled</code> - Whether the feature is enabled</li>
+                <li><code>isReady</code> - Whether the feature is ready</li>
+                <li><code>properties</code> - Object containing feature properties with values, types, and units</li>
+                <li><code>commands</code> - Object containing available commands for writable features</li>
+                <li><code>timestamp</code> - ISO 8601 timestamp of last update</li>
+            </ul>
+        </dd>
     </dl>
+    
+    <h3>Details</h3>
+    <p>This node reads data from a Viessmann device using the Viessmann API.</p>
+    <p>The node requires a configured <code>viessmann-config</code> node for authentication.</p>
+    <p>All three parameters must be provided: <code>msg.installationId</code>, <code>msg.gatewaySerial</code>, and <code>msg.deviceId</code>. You can obtain these values using:</p>
+    <ul>
+        <li><code>viessmann-device-list</code> node to get installation IDs</li>
+        <li><code>viessmann-gateway-list</code> node to get gateway serials</li>
+        <li><code>viessmann-gateway-devices</code> node to get device IDs</li>
+        <li><code>viessmann-device-features</code> node to list available features</li>
+    </ul>
+    
+    <h3>API Endpoints</h3>
+    <p>Depending on whether a feature is specified:</p>
+    <ul>
+        <li>Specific feature: <code>GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}</code></li>
+        <li>All features: <code>GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features</code></li>
+    </ul>
+    
+    <h3>Examples</h3>
+    <p><strong>Reading a specific feature:</strong></p>
+    <pre>msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+msg.feature = "heating.circuits.0.temperature";
+return msg;</pre>
+    
+    <p><strong>Reading all features:</strong></p>
+    <pre>msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+return msg;</pre>
+    
+    <h3>Error Handling</h3>
+    <p>The node will emit an error if:</p>
+    <ul>
+        <li>The config node is not configured</li>
+        <li>The installationId is not provided or invalid</li>
+        <li>The gatewaySerial is not provided or invalid</li>
+        <li>The deviceId is not provided or invalid</li>
+        <li>The API request fails (e.g., device/feature not found, network error)</li>
+    </ul>
+    <p>Error details are available in the debug panel.</p>
 </script>
