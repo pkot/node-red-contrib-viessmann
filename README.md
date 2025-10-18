@@ -335,11 +335,141 @@ Each feature object contains:
 Reads specific data points from a selected device.
 
 **Inputs:**
-- `msg.deviceId` (required)
-- `msg.feature` or `msg.datapoint` (optional: what to read)
+- `msg.installationId` (required): The installation ID (number)
+- `msg.gatewaySerial` (required): The gateway serial number (string)
+- `msg.deviceId` (required): The device ID (string)
+- `msg.feature` or `msg.datapoint` (optional): The specific feature to read. If not provided, all features are returned.
 
 **Outputs:**
-- `msg.payload`: Value(s) read from the device/feature
+- `msg.payload`: When a specific feature is requested, returns a single feature object with the following structure:
+  ```json
+  {
+    "feature": "heating.circuits.0.temperature",
+    "gatewayId": "7571381573112225",
+    "deviceId": "0",
+    "isEnabled": true,
+    "isReady": true,
+    "properties": {
+      "value": {
+        "type": "number",
+        "value": 21.5,
+        "unit": "celsius"
+      }
+    },
+    "commands": {},
+    "timestamp": "2025-10-18T14:30:00.000Z"
+  }
+  ```
+
+  When no feature is specified, returns an array of all feature objects (same structure as `viessmann-device-features`):
+  ```json
+  [
+    {
+      "feature": "heating.circuits.0.temperature",
+      "gatewayId": "7571381573112225",
+      "deviceId": "0",
+      "isEnabled": true,
+      "isReady": true,
+      "properties": {
+        "value": {
+          "type": "number",
+          "value": 21.5,
+          "unit": "celsius"
+        }
+      },
+      "commands": {},
+      "timestamp": "2025-10-18T14:30:00.000Z"
+    },
+    {
+      "feature": "heating.circuits.0.operating.modes.active",
+      "gatewayId": "7571381573112225",
+      "deviceId": "0",
+      "isEnabled": true,
+      "isReady": true,
+      "properties": {
+        "value": {
+          "type": "string",
+          "value": "dhw"
+        }
+      },
+      "commands": {
+        "setMode": {
+          "uri": "/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
+          "name": "setMode",
+          "isExecutable": true,
+          "params": {
+            "mode": {
+              "type": "string",
+              "required": true,
+              "constraints": {
+                "enum": ["standby", "dhw", "dhwAndHeating"]
+              }
+            }
+          }
+        }
+      },
+      "timestamp": "2025-10-18T14:30:00.000Z"
+    }
+  ]
+  ```
+
+**Feature Object Structure:**
+Each feature object contains:
+- `feature`: The feature identifier (e.g., "heating.circuits.0.temperature")
+- `gatewayId`: Associated gateway serial number
+- `deviceId`: Associated device ID
+- `isEnabled`: Whether the feature is enabled
+- `isReady`: Whether the feature is ready
+- `properties`: Object containing feature properties with values, types, and units
+- `commands`: Object containing available commands for writable features (empty for read-only features)
+- `timestamp`: ISO 8601 timestamp of last update
+
+**Error Handling:**
+- Emits an error if the config node is not configured
+- Emits an error if `msg.installationId` is not provided or invalid
+- Emits an error if `msg.gatewaySerial` is not provided or invalid
+- Emits an error if `msg.deviceId` is not provided or invalid
+- Emits an error if the API request fails (e.g., device/feature not found, network error)
+- Error details are available in the debug panel
+
+**Example Usage:**
+
+*Reading a specific feature:*
+1. Use `viessmann-device-list` to get installation IDs
+2. Use `viessmann-gateway-list` to get gateway serial numbers for an installation
+3. Use `viessmann-gateway-devices` to get device IDs for a gateway
+4. Use `viessmann-device-features` to list available features (optional, to discover feature names)
+5. Pass `msg.installationId`, `msg.gatewaySerial`, `msg.deviceId`, and `msg.feature` to `viessmann-read`
+6. The node returns the data for the specified feature in `msg.payload`
+
+Example flow:
+```javascript
+// Set the identifiers
+msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+msg.feature = "heating.circuits.0.temperature";
+// Returns: { feature: "heating.circuits.0.temperature", properties: { value: { value: 21.5, unit: "celsius" } }, ... }
+```
+
+*Reading all features:*
+1. Follow steps 1-3 above
+2. Pass only `msg.installationId`, `msg.gatewaySerial`, and `msg.deviceId` to `viessmann-read` (without `msg.feature`)
+3. The node returns an array of all features in `msg.payload`
+
+Example flow:
+```javascript
+// Set the identifiers
+msg.installationId = 123456;
+msg.gatewaySerial = "7571381573112225";
+msg.deviceId = "0";
+// Returns: [ { feature: "...", ... }, { feature: "...", ... }, ... ]
+```
+
+**API Endpoints:**
+- Specific feature: `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}`
+- All features: `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features`
+- Base URL: `https://api.viessmann-climatesolutions.com`
 
 ### Data Write Node: `viessmann-write`
 Sets values for writable device parameters.
