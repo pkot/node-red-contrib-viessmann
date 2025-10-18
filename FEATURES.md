@@ -498,9 +498,9 @@ Most features follow predictable patterns:
 ## Additional Resources
 
 - [Viessmann API Documentation](https://api.viessmann-climatesolutions.com/)
-- [Example Flows](../examples/)
-- [Main README](../README.md)
-- [Contributing Guide](../CONTRIBUTING.md)
+- [Example Flows](examples/)
+- [Main README](README.md)
+- [Contributing Guide](CONTRIBUTING.md)
 
 ## Notes
 
