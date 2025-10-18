@@ -173,7 +173,7 @@ msg.deviceId = "0";
 ## Additional Resources
 
 - [Node-RED Documentation](https://nodered.org/docs/)
-- [Viessmann API Documentation Portal](https://api.viessmann-climatesolutions.com/documentation) (requires login to Viessmann Developer Portal)
+- [Viessmann API Documentation](https://api.viessmann-climatesolutions.com/documentation) (requires login to Viessmann Developer Portal)
 - [Viessmann Developer Portal](https://developer.viessmann.com/)
 
 ## Contributing
