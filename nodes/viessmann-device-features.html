@@ -1,0 +1,81 @@
+<script type="text/javascript">
+    RED.nodes.registerType('viessmann-device-features', {
+        category: 'Viessmann',
+        color: '#E60000',
+        defaults: {
+            name: { value: "" },
+            config: { value: "", type: "viessmann-config", required: true }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-list",
+        label: function() {
+            return this.name || "device features";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="viessmann-device-features">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-config"><i class="fa fa-cog"></i> Config</label>
+        <input type="text" id="node-input-config" placeholder="Viessmann Config">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="viessmann-device-features">
+    <p>Lists all available features/services for a specific device on a gateway.</p>
+    
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>installationId <span class="property-type">number</span></dt>
+        <dd>The installation ID (required).</dd>
+        <dt>gatewaySerial <span class="property-type">string</span></dt>
+        <dd>The gateway serial number (required).</dd>
+        <dt>deviceId <span class="property-type">string</span></dt>
+        <dd>The device ID (required).</dd>
+    </dl>
+    
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">array</span></dt>
+        <dd>Array of feature objects. Each feature contains:
+            <ul>
+                <li><code>feature</code> - Feature identifier (e.g., "heating.circuits.0.temperature")</li>
+                <li><code>gatewayId</code> - Associated gateway serial number</li>
+                <li><code>deviceId</code> - Associated device ID</li>
+                <li><code>isEnabled</code> - Whether the feature is enabled</li>
+                <li><code>isReady</code> - Whether the feature is ready</li>
+                <li><code>properties</code> - Object containing feature properties with values, types, and units</li>
+                <li><code>commands</code> - Object containing available commands for writable features</li>
+                <li><code>timestamp</code> - ISO 8601 timestamp of last update</li>
+            </ul>
+        </dd>
+    </dl>
+    
+    <h3>Details</h3>
+    <p>This node fetches all features/services available for a specific device from the Viessmann API.</p>
+    <p>Features represent data points and services that can be read or controlled on the device, such as temperature readings, operating modes, and system states.</p>
+    <p>The node requires a configured <code>viessmann-config</code> node for authentication.</p>
+    <p>All three parameters must be provided: <code>msg.installationId</code>, <code>msg.gatewaySerial</code>, and <code>msg.deviceId</code>. You can obtain these values using:</p>
+    <ul>
+        <li><code>viessmann-device-list</code> node to get installation IDs</li>
+        <li><code>viessmann-gateway-list</code> node to get gateway serials</li>
+        <li><code>viessmann-gateway-devices</code> node to get device IDs</li>
+    </ul>
+    <p>API endpoint: <code>GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features</code></p>
+    
+    <h3>Error Handling</h3>
+    <p>The node will emit an error if:</p>
+    <ul>
+        <li>The config node is not configured</li>
+        <li>The installationId is not provided or invalid</li>
+        <li>The gatewaySerial is not provided or invalid</li>
+        <li>The deviceId is not provided or invalid</li>
+        <li>The API request fails (e.g., device not found, network error)</li>
+    </ul>
+    <p>Error details are available in the debug panel.</p>
+</script>
