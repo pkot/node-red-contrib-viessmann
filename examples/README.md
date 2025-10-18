@@ -166,7 +166,7 @@ msg.deviceId = "0";
 2. **Use the device-features node** to discover what's available on your device
 3. **Enable debug logging** in the viessmann-config node for troubleshooting
 4. **Check the Viessmann API documentation**: 
-   - [Viessmann API Documentation Portal](https://api.viessmann-climatesolutions.com/documentation) (requires login to Viessmann Developer Portal)
+   - [Viessmann API Documentation](https://api.viessmann-climatesolutions.com/documentation) (requires login to Viessmann Developer Portal)
    - [Viessmann API Base](https://api.viessmann-climatesolutions.com/)
 5. **Report issues** on GitHub: https://github.com/pkot/node-red-contrib-viessmann/issues
 
