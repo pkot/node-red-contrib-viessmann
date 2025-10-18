@@ -602,9 +602,96 @@ return msg;
 6. Use `viessmann-read` to read data from device features
 7. Use `viessmann-write` to control device parameters
 
+## Examples
+
+Practical example flows are available in the [examples/](examples/) directory:
+
+- **[Complete Discovery Flow](examples/01-complete-discovery-flow.json)** - Discover installations, gateways, devices, and features
+- **[Read DHW Temperature](examples/02-read-dhw-temperature.json)** - Read domestic hot water temperature sensors
+- **[Control DHW On/Off](examples/03-control-dhw-onoff.json)** - Turn domestic hot water on and off
+- **[Control Heating On/Off](examples/04-control-heating-onoff.json)** - Control heating circuit operating modes
+
+See the [examples README](examples/README.md) for detailed instructions on importing and using these flows.
+
+## Available Features
+
+The Viessmann API provides hundreds of features for monitoring and controlling your heating system. See [FEATURES.md](FEATURES.md) for a comprehensive list of available features including:
+
+- **Device features**: Information, status, configuration, sensors, maintenance
+- **Gateway features**: Connection status, device lists, WiFi information
+- **Heating features**: Boiler, buffer, burners, circuits, DHW, power consumption, and more
+
+Not all features are available on all devices. Use the `viessmann-device-features` node to discover what your specific device supports.
+
 ## Development
 
-This module is under active development. See [SPEC.md](SPEC.md) for detailed functional specifications.
+### For Contributors
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Development setup instructions
+- Coding standards and best practices
+- Testing guidelines
+- Pull request process
+- Documentation requirements
+
+### Test Strategy
+
+The module uses **Mocha** and **Chai** for unit testing with **Sinon** for mocking and **Nock** for HTTP mocking.
+
+**Running tests:**
+```bash
+npm test
+```
+
+**Test coverage:**
+- All nodes have comprehensive unit tests
+- Tests cover happy path, error handling, and edge cases
+- HTTP requests are mocked to avoid requiring real API access
+- Tests use the `node-red-node-test-helper` for Node-RED specific testing
+
+**Key test areas:**
+- Authentication and token refresh
+- API request handling
+- Input validation
+- Error handling and messaging
+- Node status updates
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed testing guidelines.
+
+### Code Style
+
+The project follows standard JavaScript conventions:
+- **Indentation**: 4 spaces
+- **Async operations**: async/await preferred
+- **Error handling**: Always provide helpful, actionable error messages
+- **Node status**: Keep users informed with status updates
+- **Documentation**: Update help text when changing node behavior
+
+### Project Structure
+
+```
+node-red-contrib-viessmann/
+├── nodes/                      # Node implementations
+│   ├── viessmann-config.js    # OAuth2 configuration
+│   ├── viessmann-read.js      # Read node
+│   ├── viessmann-write.js     # Write node
+│   └── ...                    # Other nodes
+├── test/                       # Unit tests
+├── examples/                   # Example flows
+├── scripts/                    # Utility scripts
+├── README.md                   # This file
+├── SPEC.md                     # Functional specification
+├── FEATURES.md                 # API features reference
+└── CONTRIBUTING.md             # Contribution guidelines
+```
+
+### Functional Specification
+
+See [SPEC.md](SPEC.md) for detailed functional specifications including:
+- Node designs and requirements
+- Authentication flow
+- API integration patterns
+- Error handling strategies
 
 ## Continuous Integration
 

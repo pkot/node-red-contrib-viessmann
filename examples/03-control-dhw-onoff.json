@@ -1,0 +1,313 @@
+[
+    {
+        "id": "dhw-control-flow",
+        "type": "tab",
+        "label": "Control DHW On/Off",
+        "disabled": false,
+        "info": "This flow demonstrates how to turn Domestic Hot Water (DHW) on and off.\n\n**Setup:**\n1. Configure the viessmann-config node with your credentials\n2. Update the function nodes with your actual installation ID, gateway serial, and device ID\n3. Use the inject nodes to turn DHW on or off\n\n**DHW Operating Modes:**\nThe exact feature and commands depend on your device, but common patterns are:\n\n- **Feature:** `heating.dhw.operating.modes.active`\n  - **Commands:** `setMode` with params like `{ mode: \"off\" }` or `{ mode: \"dhw\" }`\n  \n- **Feature:** `heating.circuits.0.operating.modes.active`\n  - **Commands:** `setMode` with params like `{ mode: \"standby\" }`, `{ mode: \"dhw\" }`, or `{ mode: \"dhwAndHeating\" }`\n\n**Note:** Always use the device-features node first to discover the exact feature names and available commands for your specific device model."
+    },
+    {
+        "id": "inject-dhw-on",
+        "type": "inject",
+        "z": "dhw-control-flow",
+        "name": "Turn DHW ON",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 100,
+        "wires": [
+            [
+                "set-dhw-on-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-dhw-on-params",
+        "type": "function",
+        "z": "dhw-control-flow",
+        "name": "Set DHW ON Parameters",
+        "func": "// TODO: Replace these with your actual device parameters\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\n// DHW operating mode feature\n// Common options (check your device with device-features node):\n// Option 1: heating.dhw.operating.modes.active\n// Option 2: heating.circuits.0.operating.modes.active\nmsg.feature = \"heating.dhw.operating.modes.active\";\n\n// Command to execute\nmsg.command = \"setMode\";\n\n// Parameters - turn DHW on\n// Common modes: \"off\", \"dhw\", \"comfort\", \"eco\", \"balanced\"\n// For heating circuits: \"standby\", \"dhw\", \"dhwAndHeating\"\nmsg.params = {\n    mode: \"dhw\"  // or \"comfort\" depending on your device\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 100,
+        "wires": [
+            [
+                "write-dhw-mode"
+            ]
+        ]
+    },
+    {
+        "id": "inject-dhw-off",
+        "type": "inject",
+        "z": "dhw-control-flow",
+        "name": "Turn DHW OFF",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 120,
+        "y": 180,
+        "wires": [
+            [
+                "set-dhw-off-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-dhw-off-params",
+        "type": "function",
+        "z": "dhw-control-flow",
+        "name": "Set DHW OFF Parameters",
+        "func": "// TODO: Replace these with your actual device parameters\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\n// DHW operating mode feature\nmsg.feature = \"heating.dhw.operating.modes.active\";\n\n// Command to execute\nmsg.command = \"setMode\";\n\n// Parameters - turn DHW off\nmsg.params = {\n    mode: \"off\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 180,
+        "wires": [
+            [
+                "write-dhw-mode"
+            ]
+        ]
+    },
+    {
+        "id": "write-dhw-mode",
+        "type": "viessmann-write",
+        "z": "dhw-control-flow",
+        "name": "Write DHW Mode",
+        "config": "viessmann-config-1",
+        "x": 620,
+        "y": 140,
+        "wires": [
+            [
+                "debug-write-result",
+                "read-current-mode"
+            ]
+        ]
+    },
+    {
+        "id": "debug-write-result",
+        "type": "debug",
+        "z": "dhw-control-flow",
+        "name": "Write Result",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "read-current-mode",
+        "type": "function",
+        "z": "dhw-control-flow",
+        "name": "Prepare Read Current Mode",
+        "func": "// After writing, read back the current mode to verify\n// Keep the same device parameters from the write\nmsg.feature = \"heating.dhw.operating.modes.active\";\n\n// Remove write-specific properties\ndelete msg.command;\ndelete msg.params;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 890,
+        "y": 140,
+        "wires": [
+            [
+                "read-dhw-mode"
+            ]
+        ]
+    },
+    {
+        "id": "read-dhw-mode",
+        "type": "viessmann-read",
+        "z": "dhw-control-flow",
+        "name": "Read Current DHW Mode",
+        "config": "viessmann-config-1",
+        "x": 640,
+        "y": 200,
+        "wires": [
+            [
+                "debug-current-mode"
+            ]
+        ]
+    },
+    {
+        "id": "debug-current-mode",
+        "type": "debug",
+        "z": "dhw-control-flow",
+        "name": "Current DHW Mode",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 870,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "comment-1",
+        "type": "comment",
+        "z": "dhw-control-flow",
+        "name": "Alternative: Using heating circuit operating modes",
+        "info": "Some devices control DHW through the heating circuit operating modes.\n\nFor those devices, use:\n\n**Feature:** heating.circuits.0.operating.modes.active\n\n**Available modes:**\n- \"standby\" - System is on standby (heating and DHW off)\n- \"dhw\" - Only DHW is active (heating off)\n- \"dhwAndHeating\" - Both DHW and heating are active\n\nExample:\n```javascript\nmsg.feature = \"heating.circuits.0.operating.modes.active\";\nmsg.command = \"setMode\";\nmsg.params = { mode: \"dhw\" };  // Only DHW on\n```",
+        "x": 220,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "inject-dhw-only",
+        "type": "inject",
+        "z": "dhw-control-flow",
+        "name": "DHW Only (No Heating)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 340,
+        "wires": [
+            [
+                "set-dhw-only-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-dhw-only-params",
+        "type": "function",
+        "z": "dhw-control-flow",
+        "name": "Set DHW Only Mode",
+        "func": "// For devices that use heating circuit modes\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\nmsg.feature = \"heating.circuits.0.operating.modes.active\";\nmsg.command = \"setMode\";\nmsg.params = {\n    mode: \"dhw\"  // Only DHW, no heating\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 340,
+        "wires": [
+            [
+                "write-circuit-mode"
+            ]
+        ]
+    },
+    {
+        "id": "inject-dhw-and-heating",
+        "type": "inject",
+        "z": "dhw-control-flow",
+        "name": "DHW + Heating ON",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 400,
+        "wires": [
+            [
+                "set-dhw-heating-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-dhw-heating-params",
+        "type": "function",
+        "z": "dhw-control-flow",
+        "name": "Set DHW + Heating Mode",
+        "func": "// For devices that use heating circuit modes\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\nmsg.feature = \"heating.circuits.0.operating.modes.active\";\nmsg.command = \"setMode\";\nmsg.params = {\n    mode: \"dhwAndHeating\"  // Both DHW and heating\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 400,
+        "wires": [
+            [
+                "write-circuit-mode"
+            ]
+        ]
+    },
+    {
+        "id": "write-circuit-mode",
+        "type": "viessmann-write",
+        "z": "dhw-control-flow",
+        "name": "Write Circuit Mode",
+        "config": "viessmann-config-1",
+        "x": 690,
+        "y": 370,
+        "wires": [
+            [
+                "debug-circuit-result"
+            ]
+        ]
+    },
+    {
+        "id": "debug-circuit-result",
+        "type": "debug",
+        "z": "dhw-control-flow",
+        "name": "Circuit Mode Result",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 920,
+        "y": 370,
+        "wires": []
+    },
+    {
+        "id": "viessmann-config-1",
+        "type": "viessmann-config",
+        "name": "My Viessmann"
+    }
+]

@@ -1,0 +1,223 @@
+[
+    {
+        "id": "discovery-flow",
+        "type": "tab",
+        "label": "Complete Discovery Flow",
+        "disabled": false,
+        "info": "This flow demonstrates how to discover all available Viessmann installations, gateways, devices, and their features.\n\nSteps:\n1. Trigger the flow with the inject node\n2. Get list of installations\n3. Get gateways for first installation\n4. Get devices for first gateway\n5. Get features for first device\n\nEach step outputs debug information showing what was discovered."
+    },
+    {
+        "id": "inject-start",
+        "type": "inject",
+        "z": "discovery-flow",
+        "name": "Start Discovery",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 140,
+        "y": 100,
+        "wires": [
+            [
+                "device-list"
+            ]
+        ]
+    },
+    {
+        "id": "device-list",
+        "type": "viessmann-device-list",
+        "z": "discovery-flow",
+        "name": "Get Installations",
+        "config": "viessmann-config-1",
+        "x": 340,
+        "y": 100,
+        "wires": [
+            [
+                "debug-installations",
+                "extract-installation-id"
+            ]
+        ]
+    },
+    {
+        "id": "debug-installations",
+        "type": "debug",
+        "z": "discovery-flow",
+        "name": "Installations",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 570,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "extract-installation-id",
+        "type": "function",
+        "z": "discovery-flow",
+        "name": "Extract Installation ID",
+        "func": "// Get the first installation ID\nif (msg.payload && msg.payload.length > 0) {\n    msg.installationId = msg.payload[0].id;\n    node.status({fill:\"green\", shape:\"dot\", text:`Installation: ${msg.installationId}`});\n    return msg;\n} else {\n    node.error(\"No installations found\");\n    return null;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 100,
+        "wires": [
+            [
+                "gateway-list"
+            ]
+        ]
+    },
+    {
+        "id": "gateway-list",
+        "type": "viessmann-gateway-list",
+        "z": "discovery-flow",
+        "name": "Get Gateways",
+        "config": "viessmann-config-1",
+        "x": 340,
+        "y": 180,
+        "wires": [
+            [
+                "debug-gateways",
+                "extract-gateway-serial"
+            ]
+        ]
+    },
+    {
+        "id": "debug-gateways",
+        "type": "debug",
+        "z": "discovery-flow",
+        "name": "Gateways",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 560,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "extract-gateway-serial",
+        "type": "function",
+        "z": "discovery-flow",
+        "name": "Extract Gateway Serial",
+        "func": "// Get the first gateway serial\nif (msg.payload && msg.payload.length > 0) {\n    msg.gatewaySerial = msg.payload[0].serial;\n    node.status({fill:\"green\", shape:\"dot\", text:`Gateway: ${msg.gatewaySerial}`});\n    return msg;\n} else {\n    node.error(\"No gateways found\");\n    return null;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 570,
+        "y": 180,
+        "wires": [
+            [
+                "gateway-devices"
+            ]
+        ]
+    },
+    {
+        "id": "gateway-devices",
+        "type": "viessmann-gateway-devices",
+        "z": "discovery-flow",
+        "name": "Get Devices",
+        "config": "viessmann-config-1",
+        "x": 340,
+        "y": 260,
+        "wires": [
+            [
+                "debug-devices",
+                "extract-device-id"
+            ]
+        ]
+    },
+    {
+        "id": "debug-devices",
+        "type": "debug",
+        "z": "discovery-flow",
+        "name": "Devices",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 550,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "extract-device-id",
+        "type": "function",
+        "z": "discovery-flow",
+        "name": "Extract Device ID",
+        "func": "// Get the first device ID\nif (msg.payload && msg.payload.length > 0) {\n    msg.deviceId = msg.payload[0].id;\n    node.status({fill:\"green\", shape:\"dot\", text:`Device: ${msg.deviceId}`});\n    return msg;\n} else {\n    node.error(\"No devices found\");\n    return null;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 560,
+        "y": 260,
+        "wires": [
+            [
+                "device-features"
+            ]
+        ]
+    },
+    {
+        "id": "device-features",
+        "type": "viessmann-device-features",
+        "z": "discovery-flow",
+        "name": "Get Features",
+        "config": "viessmann-config-1",
+        "x": 340,
+        "y": 340,
+        "wires": [
+            [
+                "debug-features"
+            ]
+        ]
+    },
+    {
+        "id": "debug-features",
+        "type": "debug",
+        "z": "discovery-flow",
+        "name": "Features",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 550,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "viessmann-config-1",
+        "type": "viessmann-config",
+        "name": "My Viessmann"
+    }
+]

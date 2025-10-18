@@ -1,0 +1,338 @@
+[
+    {
+        "id": "heating-control-flow",
+        "type": "tab",
+        "label": "Control Heating On/Off",
+        "disabled": false,
+        "info": "This flow demonstrates how to turn heating on and off for a heating circuit.\n\n**Setup:**\n1. Configure the viessmann-config node with your credentials\n2. Update the function nodes with your actual installation ID, gateway serial, and device ID\n3. Use the inject nodes to control the heating mode\n\n**Heating Circuit Operating Modes:**\nMost Viessmann systems control heating through operating modes:\n\n- **Feature:** `heating.circuits.0.operating.modes.active` (replace 0 with your circuit number)\n  - **Common modes:**\n    - `standby` - Heating off (may keep DHW active)\n    - `dhw` - Only DHW, heating off\n    - `dhwAndHeating` - Both DHW and heating active\n    - `forcedReduced` - Reduced heating mode\n    - `forcedNormal` - Normal heating mode\n\n**Note:** Circuit numbers start at 0. If you have multiple circuits, replace 0 with 1, 2, etc.\n\n**Always discover available modes first:**\nUse the device-features node to see which modes are available for your specific device."
+    },
+    {
+        "id": "inject-heating-on",
+        "type": "inject",
+        "z": "heating-control-flow",
+        "name": "Turn Heating ON (with DHW)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 180,
+        "y": 100,
+        "wires": [
+            [
+                "set-heating-on-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-heating-on-params",
+        "type": "function",
+        "z": "heating-control-flow",
+        "name": "Set Heating ON Parameters",
+        "func": "// TODO: Replace these with your actual device parameters\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\n// Heating circuit operating mode\n// Replace 0 with your circuit number (0, 1, 2, etc.)\nmsg.feature = \"heating.circuits.0.operating.modes.active\";\n\n// Command to execute\nmsg.command = \"setMode\";\n\n// Turn on both heating and DHW\nmsg.params = {\n    mode: \"dhwAndHeating\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 100,
+        "wires": [
+            [
+                "write-heating-mode"
+            ]
+        ]
+    },
+    {
+        "id": "inject-heating-off",
+        "type": "inject",
+        "z": "heating-control-flow",
+        "name": "Turn Heating OFF (DHW only)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 180,
+        "y": 160,
+        "wires": [
+            [
+                "set-heating-off-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-heating-off-params",
+        "type": "function",
+        "z": "heating-control-flow",
+        "name": "Set Heating OFF Parameters",
+        "func": "// TODO: Replace these with your actual device parameters\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\n// Heating circuit operating mode\nmsg.feature = \"heating.circuits.0.operating.modes.active\";\n\n// Command to execute\nmsg.command = \"setMode\";\n\n// Turn off heating, keep DHW active\nmsg.params = {\n    mode: \"dhw\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 160,
+        "wires": [
+            [
+                "write-heating-mode"
+            ]
+        ]
+    },
+    {
+        "id": "inject-standby",
+        "type": "inject",
+        "z": "heating-control-flow",
+        "name": "Standby (All OFF)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 220,
+        "wires": [
+            [
+                "set-standby-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-standby-params",
+        "type": "function",
+        "z": "heating-control-flow",
+        "name": "Set Standby Parameters",
+        "func": "// TODO: Replace these with your actual device parameters\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\n// Heating circuit operating mode\nmsg.feature = \"heating.circuits.0.operating.modes.active\";\n\n// Command to execute\nmsg.command = \"setMode\";\n\n// Turn everything off (standby mode)\nmsg.params = {\n    mode: \"standby\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 220,
+        "wires": [
+            [
+                "write-heating-mode"
+            ]
+        ]
+    },
+    {
+        "id": "write-heating-mode",
+        "type": "viessmann-write",
+        "z": "heating-control-flow",
+        "name": "Write Heating Mode",
+        "config": "viessmann-config-1",
+        "x": 740,
+        "y": 160,
+        "wires": [
+            [
+                "debug-write-result",
+                "delay-before-read"
+            ]
+        ]
+    },
+    {
+        "id": "debug-write-result",
+        "type": "debug",
+        "z": "heating-control-flow",
+        "name": "Write Result",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 980,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "delay-before-read",
+        "type": "delay",
+        "z": "heating-control-flow",
+        "name": "Wait 2s",
+        "pauseType": "delay",
+        "timeout": "2",
+        "timeoutUnits": "seconds",
+        "rate": "1",
+        "nbRateUnits": "1",
+        "rateUnits": "second",
+        "randomFirst": "1",
+        "randomLast": "5",
+        "randomUnits": "seconds",
+        "drop": false,
+        "allowrate": false,
+        "outputs": 1,
+        "x": 960,
+        "y": 160,
+        "wires": [
+            [
+                "prepare-read-mode"
+            ]
+        ]
+    },
+    {
+        "id": "prepare-read-mode",
+        "type": "function",
+        "z": "heating-control-flow",
+        "name": "Prepare Read Current Mode",
+        "func": "// After writing, read back the current mode to verify\nmsg.feature = \"heating.circuits.0.operating.modes.active\";\n\n// Remove write-specific properties\ndelete msg.command;\ndelete msg.params;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 750,
+        "y": 220,
+        "wires": [
+            [
+                "read-heating-mode"
+            ]
+        ]
+    },
+    {
+        "id": "read-heating-mode",
+        "type": "viessmann-read",
+        "z": "heating-control-flow",
+        "name": "Read Current Mode",
+        "config": "viessmann-config-1",
+        "x": 1000,
+        "y": 220,
+        "wires": [
+            [
+                "debug-current-mode"
+            ]
+        ]
+    },
+    {
+        "id": "debug-current-mode",
+        "type": "debug",
+        "z": "heating-control-flow",
+        "name": "Current Heating Mode",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1230,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "comment-1",
+        "type": "comment",
+        "z": "heating-control-flow",
+        "name": "Advanced: Set Temperature Setpoint",
+        "info": "To change the target heating temperature, you can use the temperature feature.\n\n**Feature:** heating.circuits.0.heating.curve (for curve-based systems)\n**Feature:** heating.circuits.0.heating.schedule (for schedule-based systems)\n\nMost modern systems allow direct temperature setting:\n\n**Feature:** heating.circuits.0.heating.curve.setTemperature\n**Command:** setTemperature\n**Params:** { temperature: 22 }\n\nExample:\n```javascript\nmsg.feature = \"heating.circuits.0.heating.curve\";\nmsg.command = \"setTemperature\";\nmsg.params = { temperature: 22 };\n```\n\nNote: The exact feature depends on your heating system configuration.",
+        "x": 210,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "inject-set-temp",
+        "type": "inject",
+        "z": "heating-control-flow",
+        "name": "Set Temperature 22°C",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 380,
+        "wires": [
+            [
+                "set-temp-params"
+            ]
+        ]
+    },
+    {
+        "id": "set-temp-params",
+        "type": "function",
+        "z": "heating-control-flow",
+        "name": "Set Temperature Parameters",
+        "func": "// TODO: Replace these with your actual device parameters\nmsg.installationId = 123456;\nmsg.gatewaySerial = \"7571381573112225\";\nmsg.deviceId = \"0\";\n\n// Temperature setpoint feature\n// The exact feature name varies by device:\n// - heating.circuits.0.heating.curve\n// - heating.circuits.0.heating.curve.setpoint\n// Use device-features to find the correct one\nmsg.feature = \"heating.circuits.0.heating.curve\";\n\n// Command to set temperature\nmsg.command = \"setTemperature\";\n\n// Set target temperature in Celsius\nmsg.params = {\n    temperature: 22\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 380,
+        "wires": [
+            [
+                "write-temperature"
+            ]
+        ]
+    },
+    {
+        "id": "write-temperature",
+        "type": "viessmann-write",
+        "z": "heating-control-flow",
+        "name": "Write Temperature",
+        "config": "viessmann-config-1",
+        "x": 690,
+        "y": 380,
+        "wires": [
+            [
+                "debug-temp-result"
+            ]
+        ]
+    },
+    {
+        "id": "debug-temp-result",
+        "type": "debug",
+        "z": "heating-control-flow",
+        "name": "Temperature Result",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 920,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "viessmann-config-1",
+        "type": "viessmann-config",
+        "name": "My Viessmann"
+    }
+]
