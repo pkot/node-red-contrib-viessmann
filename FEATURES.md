@@ -497,7 +497,8 @@ Most features follow predictable patterns:
 
 ## Additional Resources
 
-- [Viessmann API Documentation](https://api.viessmann-climatesolutions.com/)
+- [Viessmann API Documentation Portal](https://api.viessmann-climatesolutions.com/documentation) (requires login to Viessmann Developer Portal)
+- [Viessmann API Base](https://api.viessmann-climatesolutions.com/)
 - [Example Flows](examples/)
 - [Main README](README.md)
 - [Contributing Guide](CONTRIBUTING.md)

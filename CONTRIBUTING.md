@@ -368,7 +368,8 @@ Releases are managed by the maintainers. The process typically includes:
 ## Additional Resources
 
 - [Node-RED Creating Nodes](https://nodered.org/docs/creating-nodes/)
-- [Viessmann API Documentation](https://api.viessmann-climatesolutions.com/)
+- [Viessmann API Documentation Portal](https://api.viessmann-climatesolutions.com/documentation) (requires login to Viessmann Developer Portal)
+- [Viessmann API Base](https://api.viessmann-climatesolutions.com/)
 - [Mocha Documentation](https://mochajs.org/)
 - [Chai Assertions](https://www.chaijs.com/)
 - [Semantic Versioning](https://semver.org/)

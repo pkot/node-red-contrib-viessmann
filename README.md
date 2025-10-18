@@ -107,6 +107,9 @@ If you encounter errors:
 
 For more information, see the [Viessmann API Authentication Documentation](https://api.viessmann-climatesolutions.com/documentation/static/authentication).
 
+**Additional Resources:**
+- [Viessmann API Documentation Portal](https://api.viessmann-climatesolutions.com/documentation) (requires login to Viessmann Developer Portal)
+
 ### Device Discovery Node: `viessmann-device-list`
 Lists all accessible Viessmann installations for the authenticated account.
 
