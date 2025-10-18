@@ -8,6 +8,7 @@ A Node-RED module for integrating Viessmann heating devices via the official Vie
 - **Installation Discovery**: List all accessible Viessmann installations for your account
 - **Gateway Discovery**: List all gateways for a specific installation
 - **Device Discovery**: List all devices attached to a specific gateway
+- **Feature Discovery**: List all available features/services for a specific device
 - **Read Data**: Read specific data points from Viessmann devices (e.g., temperature, state)
 - **Write Data**: Set writable parameters (e.g., temperature setpoint, operation modes)
 
@@ -238,6 +239,98 @@ Lists all devices attached to a specific gateway in a Viessmann installation.
 - Uses `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices` from the Viessmann API
 - Base URL: `https://api.viessmann-climatesolutions.com`
 
+### Device Features Node: `viessmann-device-features`
+Lists all available features/services for a specific device on a gateway.
+
+**Inputs:**
+- `msg.installationId` (required): The installation ID (number)
+- `msg.gatewaySerial` (required): The gateway serial number (string)
+- `msg.deviceId` (required): The device ID (string)
+
+**Outputs:**
+- `msg.payload`: Array of feature objects with the following structure:
+  ```json
+  [
+    {
+      "feature": "heating.circuits.0.temperature",
+      "gatewayId": "7571381573112225",
+      "deviceId": "0",
+      "isEnabled": true,
+      "isReady": true,
+      "properties": {
+        "value": {
+          "type": "number",
+          "value": 21.5,
+          "unit": "celsius"
+        }
+      },
+      "commands": {},
+      "timestamp": "2025-10-18T14:30:00.000Z"
+    },
+    {
+      "feature": "heating.circuits.0.operating.modes.active",
+      "gatewayId": "7571381573112225",
+      "deviceId": "0",
+      "isEnabled": true,
+      "isReady": true,
+      "properties": {
+        "value": {
+          "type": "string",
+          "value": "dhw"
+        }
+      },
+      "commands": {
+        "setMode": {
+          "uri": "/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
+          "name": "setMode",
+          "isExecutable": true,
+          "params": {
+            "mode": {
+              "type": "string",
+              "required": true,
+              "constraints": {
+                "enum": ["standby", "dhw", "dhwAndHeating"]
+              }
+            }
+          }
+        }
+      },
+      "timestamp": "2025-10-18T14:30:00.000Z"
+    }
+  ]
+  ```
+
+**Feature Structure:**
+Each feature object contains:
+- `feature`: The feature identifier (e.g., "heating.circuits.0.temperature")
+- `gatewayId`: Associated gateway serial number
+- `deviceId`: Associated device ID
+- `isEnabled`: Whether the feature is enabled
+- `isReady`: Whether the feature is ready
+- `properties`: Object containing feature properties with values, types, and units
+- `commands`: Object containing available commands for writable features (empty for read-only features)
+- `timestamp`: ISO 8601 timestamp of last update
+
+**Error Handling:**
+- Emits an error if the config node is not configured
+- Emits an error if `msg.installationId` is not provided or invalid
+- Emits an error if `msg.gatewaySerial` is not provided or invalid
+- Emits an error if `msg.deviceId` is not provided or invalid
+- Emits an error if the API request fails (e.g., device not found)
+- Error details are available in the debug panel
+
+**Example Usage:**
+1. Use `viessmann-device-list` to get installation IDs
+2. Use `viessmann-gateway-list` to get gateway serial numbers for an installation
+3. Use `viessmann-gateway-devices` to get device IDs for a gateway
+4. Pass `msg.installationId`, `msg.gatewaySerial`, and `msg.deviceId` to `viessmann-device-features`
+5. View the list of available features/services in the debug panel
+6. Use the feature identifiers with `viessmann-read` or `viessmann-write` nodes to interact with specific features
+
+**API Endpoint:**
+- Uses `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features` from the Viessmann API
+- Base URL: `https://api.viessmann-climatesolutions.com`
+
 ### Data Read Node: `viessmann-read`
 Reads specific data points from a selected device.
 
@@ -265,8 +358,9 @@ Sets values for writable device parameters.
 2. Use `viessmann-device-list` to discover available installations
 3. Use `viessmann-gateway-list` to list gateways for a specific installation
 4. Use `viessmann-gateway-devices` to list devices attached to a gateway
-5. Use `viessmann-read` to read data from devices
-6. Use `viessmann-write` to control device parameters
+5. Use `viessmann-device-features` to list all available features/services for a device
+6. Use `viessmann-read` to read data from device features
+7. Use `viessmann-write` to control device parameters
 
 ## Development
 
