@@ -109,6 +109,8 @@ module.exports = function(RED) {
                 });
                 
                 // Set payload to the data
+                // For single feature reads, API returns { data: {...} }
+                // For all features reads, API returns { data: [...] }
                 msg.payload = response.data.data || response.data;
                 
                 node.status({fill: 'green', shape: 'dot', text: 'success'});

@@ -257,22 +257,25 @@ describe('viessmann-read Node', function() {
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
             
+            // Test various invalid inputs: string, alphanumeric, negative, zero, float
+            const invalidInputs = [
+                { installationId: 'invalid', gatewaySerial: '7571381573112225', deviceId: '0' },
+                { installationId: '123abc', gatewaySerial: '7571381573112225', deviceId: '0' },
+                { installationId: -1, gatewaySerial: '7571381573112225', deviceId: '0' },
+                { installationId: 0, gatewaySerial: '7571381573112225', deviceId: '0' },
+                { installationId: 1.5, gatewaySerial: '7571381573112225', deviceId: '0' }
+            ];
+            
             let errorCount = 0;
-            const expectedErrors = 5;
             
             n1.on('call:error', function() {
                 errorCount++;
-                if (errorCount === expectedErrors) {
+                if (errorCount === invalidInputs.length) {
                     done();
                 }
             });
 
-            // Test various invalid inputs
-            n1.receive({ installationId: 'invalid', gatewaySerial: '7571381573112225', deviceId: '0' });
-            n1.receive({ installationId: '123abc', gatewaySerial: '7571381573112225', deviceId: '0' });
-            n1.receive({ installationId: -1, gatewaySerial: '7571381573112225', deviceId: '0' });
-            n1.receive({ installationId: 0, gatewaySerial: '7571381573112225', deviceId: '0' });
-            n1.receive({ installationId: 1.5, gatewaySerial: '7571381573112225', deviceId: '0' });
+            invalidInputs.forEach(input => n1.receive(input));
         });
     });
 
@@ -292,21 +295,24 @@ describe('viessmann-read Node', function() {
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
             
+            // Test various invalid inputs: number, empty string, whitespace-only, null
+            const invalidInputs = [
+                { installationId: 123456, gatewaySerial: 12345, deviceId: '0' },
+                { installationId: 123456, gatewaySerial: '', deviceId: '0' },
+                { installationId: 123456, gatewaySerial: '   ', deviceId: '0' },
+                { installationId: 123456, gatewaySerial: null, deviceId: '0' }
+            ];
+            
             let errorCount = 0;
-            const expectedErrors = 4;
             
             n1.on('call:error', function() {
                 errorCount++;
-                if (errorCount === expectedErrors) {
+                if (errorCount === invalidInputs.length) {
                     done();
                 }
             });
 
-            // Test various invalid inputs
-            n1.receive({ installationId: 123456, gatewaySerial: 12345, deviceId: '0' });
-            n1.receive({ installationId: 123456, gatewaySerial: '', deviceId: '0' });
-            n1.receive({ installationId: 123456, gatewaySerial: '   ', deviceId: '0' });
-            n1.receive({ installationId: 123456, gatewaySerial: null, deviceId: '0' });
+            invalidInputs.forEach(input => n1.receive(input));
         });
     });
 
@@ -326,21 +332,24 @@ describe('viessmann-read Node', function() {
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
             
+            // Test various invalid inputs: number, empty string, whitespace-only, null
+            const invalidInputs = [
+                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: 12345 },
+                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '' },
+                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '   ' },
+                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: null }
+            ];
+            
             let errorCount = 0;
-            const expectedErrors = 4;
             
             n1.on('call:error', function() {
                 errorCount++;
-                if (errorCount === expectedErrors) {
+                if (errorCount === invalidInputs.length) {
                     done();
                 }
             });
 
-            // Test various invalid inputs
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225', deviceId: 12345 });
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '' });
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '   ' });
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225', deviceId: null });
+            invalidInputs.forEach(input => n1.receive(input));
         });
     });
 
