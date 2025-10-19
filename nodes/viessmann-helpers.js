@@ -203,6 +203,39 @@ function validateDeviceId(node, msg) {
 }
 
 /**
+ * Execute an API request with automatic token refresh on 401 error
+ * @param {object} node - The Node-RED node instance
+ * @param {Function} requestFn - Function that executes the API request
+ * @returns {Promise<object>} Response data
+ */
+async function executeWithTokenRefresh(node, requestFn) {
+    try {
+        return await requestFn();
+    } catch (error) {
+        // Check if error is 401 Unauthorized (invalid token)
+        if (error.response && error.response.status === 401) {
+            node.debug('Received 401 error, attempting to refresh token and retry');
+            
+            try {
+                // Attempt to refresh the token
+                await node.config.refreshAccessToken();
+                
+                node.debug('Retrying request with refreshed token');
+                
+                // Retry the request with the new token
+                return await requestFn();
+            } catch (refreshError) {
+                // If refresh fails, throw the original error
+                node.debug(`Token refresh failed: ${refreshError.message}`);
+                throw error;
+            }
+        }
+        
+        throw error;
+    }
+}
+
+/**
  * Execute an API GET request with standard error handling
  * @param {object} node - The Node-RED node instance
  * @param {object} msg - The incoming message
@@ -217,17 +250,17 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         
-        // Get valid access token
-        const token = await node.config.getValidToken();
-        
         node.debug(`Executing GET ${url}`);
         
-        // Fetch data from Viessmann API
-        const response = await axios.get(url, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
+        // Execute request with automatic token refresh on 401
+        const response = await executeWithTokenRefresh(node, async () => {
+            const token = await node.config.getValidToken();
+            return await axios.get(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
         });
         
         node.status({fill: 'green', shape: 'dot', text: 'success'});
@@ -257,18 +290,18 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         
-        // Get valid access token
-        const token = await node.config.getValidToken();
-        
         node.debug(`Executing POST ${url} with data: ${JSON.stringify(data)}`);
 
-        // Post data to Viessmann API
-        const response = await axios.post(url, data, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
+        // Execute request with automatic token refresh on 401
+        const response = await executeWithTokenRefresh(node, async () => {
+            const token = await node.config.getValidToken();
+            return await axios.post(url, data, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
         });
         
         node.status({fill: 'green', shape: 'dot', text: 'success'});

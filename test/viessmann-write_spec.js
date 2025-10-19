@@ -518,4 +518,118 @@ describe('viessmann-write Node', function() {
             done();
         });
     });
+
+    it('should refresh token and retry on 401 error', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-write', name: 'test write', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'expired-access-token',
+                refreshToken: 'valid-refresh-token'
+            }
+        };
+
+        // First request with expired token returns 401
+        nock('https://api.viessmann-climatesolutions.com')
+            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .reply(401, {
+                error: 'Unauthorized',
+                message: 'Invalid or expired token'
+            });
+
+        // Token refresh endpoint
+        nock('https://iam.viessmann-climatesolutions.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'new-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'new-refresh-token'
+            });
+
+        // Retry with new token succeeds
+        nock('https://api.viessmann-climatesolutions.com')
+            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .reply(200, {});
+
+        helper.load([configNode, writeNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg).to.have.property('payload');
+                    expect(msg.payload).to.have.property('success', true);
+                    expect(msg.payload).to.have.property('installationId', 123456);
+                    expect(msg.payload).to.have.property('gatewaySerial', '7571381573112225');
+                    expect(msg.payload).to.have.property('deviceId', '0');
+                    expect(msg.payload).to.have.property('feature', 'heating.circuits.0.operating.modes.active');
+                    expect(msg.payload).to.have.property('command', 'setMode');
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({ 
+                installationId: 123456, 
+                gatewaySerial: '7571381573112225', 
+                deviceId: '0',
+                feature: 'heating.circuits.0.operating.modes.active',
+                command: 'setMode',
+                params: { mode: 'dhw' }
+            });
+        });
+    });
+
+    it('should fail if token refresh fails on 401 error', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-write', name: 'test write', config: 'c1' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'expired-access-token',
+                refreshToken: 'invalid-refresh-token'
+            }
+        };
+
+        // First request with expired token returns 401
+        nock('https://api.viessmann-climatesolutions.com')
+            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .reply(401, {
+                error: 'Unauthorized',
+                message: 'Invalid or expired token'
+            });
+
+        // Token refresh fails
+        nock('https://iam.viessmann-climatesolutions.com')
+            .post('/idp/v3/token')
+            .reply(401, {
+                error: 'invalid_grant',
+                error_description: 'Invalid refresh token'
+            });
+
+        helper.load([configNode, writeNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            n1.on('call:error', function() {
+                done();
+            });
+
+            n1.receive({ 
+                installationId: 123456, 
+                gatewaySerial: '7571381573112225', 
+                deviceId: '0',
+                feature: 'heating.circuits.0.operating.modes.active',
+                command: 'setMode',
+                params: { mode: 'dhw' }
+            });
+        });
+    });
 });
