@@ -42,23 +42,24 @@ module.exports = function(RED) {
                 
                 // Set status based on the read result
                 if (feature && msg.payload.properties) {
-                    // Try to get value from various property paths
+                    // Collect values from all available property paths
                     // Order matters: check most specific/common properties first
                     const propertyNames = ['value', 'status', 'temperature', 'strength', 'active', 'hours', 'starts'];
-                    let valueObj = null;
+                    const statusParts = [];
                     
                     for (const propName of propertyNames) {
-                        if (msg.payload.properties[propName]) {
-                            valueObj = msg.payload.properties[propName];
-                            break;
+                        const valueObj = msg.payload.properties[propName];
+                        if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
+                            const value = valueObj.value;
+                            const unit = valueObj.unit;
+                            const part = unit ? `${value}${unit}` : String(value);
+                            statusParts.push(part);
                         }
                     }
                     
-                    if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
-                        // Single feature read - show value and unit
-                        const value = valueObj.value;
-                        const unit = valueObj.unit;
-                        const statusText = unit ? `${value}${unit}` : String(value);
+                    if (statusParts.length > 0) {
+                        // Single feature read - show all values separated by /
+                        const statusText = statusParts.join('/');
                         node.status({fill: 'green', shape: 'dot', text: statusText});
                     } else {
                         // No value property - show success
