@@ -1,52 +1,30 @@
-const axios = require('axios');
-const { setupDependentNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceListNode(config) {
-        RED.nodes.createNode(this, config);
+        initializeViessmannNode(RED, this, config);
         const node = this;
-        
-        // Get the config node
-        this.config = RED.nodes.getNode(config.config);
-        
-        // Viessmann API base URL
-        this.apiBaseUrl = 'https://api.viessmann-climatesolutions.com';
-        
-        // Setup dependent node status and registration
-        setupDependentNode(node);
         
         node.on('input', async function(msg) {
             // Check if config node is available
-            if (!node.config) {
-                node.status({fill: 'red', shape: 'dot', text: 'no config'});
-                node.error('No configuration node found. Please configure the Viessmann config node.', msg);
+            if (!validateConfigNode(node, msg)) {
                 return;
             }
             
             try {
-                node.status({fill: 'yellow', shape: 'ring', text: 'fetching...'});
-                
-                // Get valid access token
-                const token = await node.config.getValidToken();
-                
-                // Fetch installations from Viessmann API
-                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
+                const response = await executeApiGet(
+                    node,
+                    msg,
+                    `${node.apiBaseUrl}/iot/v2/equipment/installations`,
+                    'fetching...',
+                    'Failed to fetch installations'
+                );
                 
                 // Set payload to the installations data
                 msg.payload = response.data.data || [];
-                
-                node.status({fill: 'green', shape: 'dot', text: 'success'});
                 node.send(msg);
             } catch (error) {
-                const errorMsg = extractErrorMessage(error);
-                const statusMsg = truncateForStatus(errorMsg);
-                node.status({fill: 'red', shape: 'dot', text: statusMsg});
-                node.error('Failed to fetch installations: ' + errorMsg, msg);
+                // Error already handled by executeApiGet
             }
         });
     }
