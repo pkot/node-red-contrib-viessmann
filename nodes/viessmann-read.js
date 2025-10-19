@@ -42,19 +42,24 @@ module.exports = function(RED) {
                 
                 // Set status based on the read result
                 if (feature && msg.payload.properties) {
-                    // Try to get value from properties.value or properties.status
-                    let valueObj = null;
-                    if (msg.payload.properties.value) {
-                        valueObj = msg.payload.properties.value;
-                    } else if (msg.payload.properties.status) {
-                        valueObj = msg.payload.properties.status;
+                    // Collect values from all available property paths
+                    // Order matters: check most specific/common properties first
+                    const propertyNames = ['value', 'status', 'temperature', 'strength', 'active', 'hours', 'starts'];
+                    const statusParts = [];
+                    
+                    for (const propName of propertyNames) {
+                        const valueObj = msg.payload.properties[propName];
+                        if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
+                            const value = valueObj.value;
+                            const unit = valueObj.unit;
+                            const part = unit ? `${value}${unit}` : String(value);
+                            statusParts.push(part);
+                        }
                     }
                     
-                    if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
-                        // Single feature read - show value and unit
-                        const value = valueObj.value;
-                        const unit = valueObj.unit;
-                        const statusText = unit ? `${value}${unit}` : String(value);
+                    if (statusParts.length > 0) {
+                        // Single feature read - show all values separated by /
+                        const statusText = statusParts.join('/');
                         node.status({fill: 'green', shape: 'dot', text: statusText});
                     } else {
                         // No value property - show success
