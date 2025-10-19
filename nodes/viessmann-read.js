@@ -46,7 +46,7 @@ module.exports = function(RED) {
                     // Single feature read - show value and unit
                     const value = msg.payload.properties.value.value;
                     const unit = msg.payload.properties.value.unit;
-                    const statusText = unit ? `${value} ${unit}` : String(value);
+                    const statusText = unit ? `${value}${unit}` : String(value);
                     node.status({fill: 'green', shape: 'dot', text: statusText});
                 } else {
                     // All features read or no value property - show success
