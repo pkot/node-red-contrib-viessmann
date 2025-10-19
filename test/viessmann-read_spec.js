@@ -591,7 +591,7 @@ describe('viessmann-read Node', function() {
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
-                    expect(status).to.have.property('text', '21.5 celsius');
+                    expect(status).to.have.property('text', '21.5celsius');
                     
                     done();
                 } catch (err) {
