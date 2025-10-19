@@ -147,11 +147,11 @@ module.exports = function(RED) {
                 // Update tokens in both node and credentials for persistence
                 node.accessToken = response.data.access_token;
                 node.credentials.accessToken = response.data.access_token;
-                debugLog('Updated access token in credentials for persistence');
+                debugLog('Updated access token in credentials for persistence: ' + maskSensitiveData(response.data.access_token));
                 if (response.data.refresh_token) {
                     node.refreshToken = response.data.refresh_token;
                     node.credentials.refreshToken = response.data.refresh_token;
-                    debugLog('Updated refresh token in credentials for persistence');
+                    debugLog('Updated refresh token in credentials for persistence: ' + maskSensitiveData(response.data.refresh_token));
                 }
                 node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
                 
