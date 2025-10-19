@@ -35,19 +35,25 @@ The Viessmann API uses **OAuth2 with PKCE flow**, which requires browser-based a
 
 **Option 1: Use the Helper Script (Recommended)**
 
-Run the provided token generator script:
+1. **Get your Client ID** from the [Viessmann Developer Portal](https://developer.viessmann.com/)
+   - Log in with your Viessmann account
+   - Go to "My Dashboard" → "Your clients"
+   - Create a new client or use an existing one
+   - Note your Client ID
+   - Set redirect URI to: `http://localhost:4200/`
 
-```bash
-cd ~/.node-red
-node node_modules/node-red-contrib-viessmann/scripts/get-viessmann-tokens.js
-```
+2. **Run the provided token generator script**:
 
-The script will:
-1. Ask for your Client ID
-2. Open your browser for Viessmann login
-3. Automatically capture the authorization code
-4. Exchange it for access and refresh tokens
-5. Display the tokens to copy into Node-RED
+  ```bash
+  cd ~/.node-red
+  node node_modules/node-red-contrib-viessmann/scripts/get-viessmann-tokens.js
+  ```
+  The script will:
+  1. Ask for your Client ID
+  2. Open your browser for Viessmann login
+  3. Automatically capture the authorization code
+  4. Exchange it for access and refresh tokens
+  5. Display the tokens to copy into Node-RED
 
 **Option 2: Manual Token Generation**
 
