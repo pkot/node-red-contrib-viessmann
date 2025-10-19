@@ -233,6 +233,40 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
     } catch (error) {
+        // Check if error is 401 Unauthorized (invalid token)
+        if (error.response && error.response.status === 401) {
+            node.debug('Received 401 error, attempting to refresh token and retry');
+            
+            try {
+                // Attempt to refresh the token
+                await node.config.refreshAccessToken();
+                
+                // Get the new token
+                const newToken = await node.config.getValidToken();
+                
+                node.debug(`Retrying GET ${url} with refreshed token`);
+                
+                // Retry the request with the new token
+                const response = await axios.get(url, {
+                    headers: {
+                        'Authorization': `Bearer ${newToken}`,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                node.status({fill: 'green', shape: 'dot', text: 'success'});
+                return response;
+            } catch (refreshError) {
+                // If refresh fails, throw the original error
+                node.debug(`Token refresh failed: ${refreshError.message}`);
+                const errorMsg = extractErrorMessage(error);
+                const statusMsg = truncateForStatus(errorMsg);
+                node.status({fill: 'red', shape: 'dot', text: statusMsg});
+                node.error(`${errorPrefix}: ${errorMsg}`, msg);
+                throw error;
+            }
+        }
+        
         const errorMsg = extractErrorMessage(error);
         const statusMsg = truncateForStatus(errorMsg);
         node.status({fill: 'red', shape: 'dot', text: statusMsg});
@@ -274,6 +308,41 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
     } catch (error) {
+        // Check if error is 401 Unauthorized (invalid token)
+        if (error.response && error.response.status === 401) {
+            node.debug('Received 401 error, attempting to refresh token and retry');
+            
+            try {
+                // Attempt to refresh the token
+                await node.config.refreshAccessToken();
+                
+                // Get the new token
+                const newToken = await node.config.getValidToken();
+                
+                node.debug(`Retrying POST ${url} with refreshed token`);
+                
+                // Retry the request with the new token
+                const response = await axios.post(url, data, {
+                    headers: {
+                        'Authorization': `Bearer ${newToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                node.status({fill: 'green', shape: 'dot', text: 'success'});
+                return response;
+            } catch (refreshError) {
+                // If refresh fails, throw the original error
+                node.debug(`Token refresh failed: ${refreshError.message}`);
+                const errorMsg = extractErrorMessage(error);
+                const statusMsg = truncateForStatus(errorMsg);
+                node.status({fill: 'red', shape: 'dot', text: statusMsg});
+                node.error(`${errorPrefix}: ${errorMsg}`, msg);
+                throw error;
+            }
+        }
+        
         const errorMsg = extractErrorMessage(error);
         const statusMsg = truncateForStatus(errorMsg);
         node.status({fill: 'red', shape: 'dot', text: statusMsg});
