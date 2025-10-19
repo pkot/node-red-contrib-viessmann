@@ -1,5 +1,4 @@
-const axios = require('axios');
-const { initializeViessmannNode, validateConfigNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceListNode(config) {
@@ -13,29 +12,19 @@ module.exports = function(RED) {
             }
             
             try {
-                node.status({fill: 'yellow', shape: 'ring', text: 'fetching...'});
-                
-                // Get valid access token
-                const token = await node.config.getValidToken();
-                
-                // Fetch installations from Viessmann API
-                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
+                const response = await executeApiGet(
+                    node,
+                    msg,
+                    `${node.apiBaseUrl}/iot/v2/equipment/installations`,
+                    'fetching...',
+                    'Failed to fetch installations'
+                );
                 
                 // Set payload to the installations data
                 msg.payload = response.data.data || [];
-                
-                node.status({fill: 'green', shape: 'dot', text: 'success'});
                 node.send(msg);
             } catch (error) {
-                const errorMsg = extractErrorMessage(error);
-                const statusMsg = truncateForStatus(errorMsg);
-                node.status({fill: 'red', shape: 'dot', text: statusMsg});
-                node.error('Failed to fetch installations: ' + errorMsg, msg);
+                // Error already handled by executeApiGet
             }
         });
     }

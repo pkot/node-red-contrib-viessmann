@@ -1,5 +1,4 @@
-const axios = require('axios');
-const { initializeViessmannNode, validateConfigNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateInstallationId, validateGatewaySerial, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannGatewayDevicesNode(config) {
@@ -12,67 +11,32 @@ module.exports = function(RED) {
                 return;
             }
             
-            // Check if installationId is provided
-            if (msg.installationId === null || msg.installationId === undefined) {
-                node.status({fill: 'red', shape: 'dot', text: 'no installationId'});
-                node.error('No installationId provided. Please provide msg.installationId.', msg);
+            // Validate installationId
+            const installationId = validateInstallationId(node, msg);
+            if (installationId === null) {
                 return;
             }
             
-            // Validate installationId is a valid positive number
-            const installationId = Number(msg.installationId);
-            if (!Number.isInteger(installationId) || installationId <= 0) {
-                node.status({fill: 'red', shape: 'dot', text: 'invalid installationId'});
-                node.error('Invalid installationId. Must be a positive integer.', msg);
-                return;
-            }
-            
-            // Check if gatewaySerial is provided
-            if (msg.gatewaySerial === null || msg.gatewaySerial === undefined) {
-                node.status({fill: 'red', shape: 'dot', text: 'no gatewaySerial'});
-                node.error('No gatewaySerial provided. Please provide msg.gatewaySerial.', msg);
-                return;
-            }
-            
-            // Validate gatewaySerial is a string
-            if (typeof msg.gatewaySerial !== 'string') {
-                node.status({fill: 'red', shape: 'dot', text: 'invalid gatewaySerial'});
-                node.error('Invalid gatewaySerial. Must be a string.', msg);
-                return;
-            }
-            
-            // Validate gatewaySerial is not empty after trimming
-            const gatewaySerial = msg.gatewaySerial.trim();
-            if (gatewaySerial === '') {
-                node.status({fill: 'red', shape: 'dot', text: 'invalid gatewaySerial'});
-                node.error('Invalid gatewaySerial. Must be a non-empty string.', msg);
+            // Validate gatewaySerial
+            const gatewaySerial = validateGatewaySerial(node, msg);
+            if (gatewaySerial === null) {
                 return;
             }
             
             try {
-                node.status({fill: 'yellow', shape: 'ring', text: 'fetching...'});
-                
-                // Get valid access token
-                const token = await node.config.getValidToken();
-                
-                // Fetch devices from Viessmann API
-                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways/${gatewaySerial}/devices`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
+                const response = await executeApiGet(
+                    node,
+                    msg,
+                    `${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways/${gatewaySerial}/devices`,
+                    'fetching...',
+                    'Failed to fetch gateway devices'
+                );
                 
                 // Set payload to the devices data
                 msg.payload = response.data.data || [];
-                
-                node.status({fill: 'green', shape: 'dot', text: 'success'});
                 node.send(msg);
             } catch (error) {
-                const errorMsg = extractErrorMessage(error);
-                const statusMsg = truncateForStatus(errorMsg);
-                node.status({fill: 'red', shape: 'dot', text: statusMsg});
-                node.error('Failed to fetch gateway devices: ' + errorMsg, msg);
+                // Error already handled by executeApiGet
             }
         });
     }

@@ -1,5 +1,4 @@
-const axios = require('axios');
-const { initializeViessmannNode, validateConfigNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateInstallationId, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannGatewayListNode(config) {
@@ -12,45 +11,26 @@ module.exports = function(RED) {
                 return;
             }
             
-            // Check if installationId is provided
-            if (msg.installationId === null || msg.installationId === undefined) {
-                node.status({fill: 'red', shape: 'dot', text: 'no installationId'});
-                node.error('No installationId provided. Please provide msg.installationId.', msg);
-                return;
-            }
-            
-            // Validate installationId is a valid positive number
-            const installationId = Number(msg.installationId);
-            if (!Number.isInteger(installationId) || installationId <= 0) {
-                node.status({fill: 'red', shape: 'dot', text: 'invalid installationId'});
-                node.error('Invalid installationId. Must be a positive integer.', msg);
+            // Validate installationId
+            const installationId = validateInstallationId(node, msg);
+            if (installationId === null) {
                 return;
             }
             
             try {
-                node.status({fill: 'yellow', shape: 'ring', text: 'fetching...'});
-                
-                // Get valid access token
-                const token = await node.config.getValidToken();
-                
-                // Fetch gateways from Viessmann API
-                const response = await axios.get(`${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Accept': 'application/json'
-                    }
-                });
+                const response = await executeApiGet(
+                    node,
+                    msg,
+                    `${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways`,
+                    'fetching...',
+                    'Failed to fetch gateways'
+                );
                 
                 // Set payload to the gateways data
                 msg.payload = response.data.data || [];
-                
-                node.status({fill: 'green', shape: 'dot', text: 'success'});
                 node.send(msg);
             } catch (error) {
-                const errorMsg = extractErrorMessage(error);
-                const statusMsg = truncateForStatus(errorMsg);
-                node.status({fill: 'red', shape: 'dot', text: statusMsg});
-                node.error('Failed to fetch gateways: ' + errorMsg, msg);
+                // Error already handled by executeApiGet
             }
         });
     }
