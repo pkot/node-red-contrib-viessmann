@@ -115,6 +115,98 @@ describe('viessmann-config Node', function() {
         });
     });
 
+    it('should update credentials when tokens are refreshed', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                accessToken: 'initial-access-token',
+                refreshToken: 'initial-refresh-token'
+            }
+        };
+
+        // Mock token refresh
+        nock('https://iam.viessmann-climatesolutions.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'new-access-token',
+                token_type: 'Bearer',
+                expires_in: 3600,
+                refresh_token: 'new-refresh-token'
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            // Verify initial credentials
+            expect(n1.credentials.accessToken).to.equal('initial-access-token');
+            expect(n1.credentials.refreshToken).to.equal('initial-refresh-token');
+            
+            // Trigger token refresh
+            n1.refreshAccessToken().then(() => {
+                // Verify that credentials are updated with new tokens
+                expect(n1.credentials.accessToken).to.equal('new-access-token');
+                expect(n1.credentials.refreshToken).to.equal('new-refresh-token');
+                
+                // Also verify the node properties are updated
+                expect(n1.accessToken).to.equal('new-access-token');
+                expect(n1.refreshToken).to.equal('new-refresh-token');
+                done();
+            }).catch(done);
+        });
+    });
+
+    it('should update access token in credentials even when refresh token is not returned', function(done) {
+        const flow = [{ 
+            id: 'n1', 
+            type: 'viessmann-config', 
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                accessToken: 'initial-access-token',
+                refreshToken: 'initial-refresh-token'
+            }
+        };
+
+        // Mock token refresh that only returns new access token
+        nock('https://iam.viessmann-climatesolutions.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'new-access-token-only',
+                token_type: 'Bearer',
+                expires_in: 3600
+                // No refresh_token in response
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            
+            // Verify initial credentials
+            expect(n1.credentials.accessToken).to.equal('initial-access-token');
+            expect(n1.credentials.refreshToken).to.equal('initial-refresh-token');
+            
+            // Trigger token refresh
+            n1.refreshAccessToken().then(() => {
+                // Verify that access token credential is updated
+                expect(n1.credentials.accessToken).to.equal('new-access-token-only');
+                
+                // Verify that refresh token credential remains unchanged
+                expect(n1.credentials.refreshToken).to.equal('initial-refresh-token');
+                
+                // Also verify the node properties
+                expect(n1.accessToken).to.equal('new-access-token-only');
+                expect(n1.refreshToken).to.equal('initial-refresh-token');
+                done();
+            }).catch(done);
+        });
+    });
+
     it('should provide valid token to requesting nodes', function(done) {
         const flow = [{ 
             id: 'n1', 

@@ -145,6 +145,7 @@ module.exports = function(RED) {
                 });
                 
                 node.accessToken = response.data.access_token;
+                node.credentials.accessToken = response.data.access_token;
                 if (response.data.refresh_token) {
                     node.refreshToken = response.data.refresh_token;
                     // Update the stored refresh token in credentials
