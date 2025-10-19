@@ -41,7 +41,8 @@ module.exports = function(RED) {
                 msg.payload = response.data.data || response.data;
                 
                 // Set status based on the read result
-                if (feature && msg.payload.properties && msg.payload.properties.value) {
+                if (feature && msg.payload.properties && msg.payload.properties.value && 
+                    msg.payload.properties.value.value !== null && msg.payload.properties.value.value !== undefined) {
                     // Single feature read - show value and unit
                     const value = msg.payload.properties.value.value;
                     const unit = msg.payload.properties.value.unit;
