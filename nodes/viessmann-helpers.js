@@ -3,6 +3,45 @@
  */
 
 /**
+ * Viessmann API base URL constant
+ */
+const VIESSMANN_API_BASE_URL = 'https://api.viessmann-climatesolutions.com';
+
+/**
+ * Initialize a Viessmann node with common setup
+ * @param {object} RED - The Node-RED runtime
+ * @param {object} node - The Node-RED node instance (this)
+ * @param {object} config - The node configuration
+ */
+function initializeViessmannNode(RED, node, config) {
+    RED.nodes.createNode(node, config);
+    
+    // Get the config node
+    node.config = RED.nodes.getNode(config.config);
+    
+    // Viessmann API base URL
+    node.apiBaseUrl = VIESSMANN_API_BASE_URL;
+    
+    // Setup dependent node status and registration
+    setupDependentNode(node);
+}
+
+/**
+ * Validate that config node is available
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @returns {boolean} True if config is valid, false otherwise
+ */
+function validateConfigNode(node, msg) {
+    if (!node.config) {
+        node.status({fill: 'red', shape: 'dot', text: 'no config'});
+        node.error('No configuration node found. Please configure the Viessmann config node.', msg);
+        return false;
+    }
+    return true;
+}
+
+/**
  * Create a status update function for dependent nodes
  * @param {object} node - The Node-RED node instance
  * @returns {function} Status update function
@@ -83,6 +122,9 @@ function truncateForStatus(text, maxLength = 30) {
 }
 
 module.exports = {
+    VIESSMANN_API_BASE_URL,
+    initializeViessmannNode,
+    validateConfigNode,
     createStatusUpdater,
     setupDependentNode,
     extractErrorMessage,

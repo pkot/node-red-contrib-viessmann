@@ -1,25 +1,14 @@
 const axios = require('axios');
-const { setupDependentNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, extractErrorMessage, truncateForStatus } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceFeaturesNode(config) {
-        RED.nodes.createNode(this, config);
+        initializeViessmannNode(RED, this, config);
         const node = this;
-        
-        // Get the config node
-        this.config = RED.nodes.getNode(config.config);
-        
-        // Viessmann API base URL
-        this.apiBaseUrl = 'https://api.viessmann-climatesolutions.com';
-        
-        // Setup dependent node status and registration
-        setupDependentNode(node);
         
         node.on('input', async function(msg) {
             // Check if config node is available
-            if (!node.config) {
-                node.status({fill: 'red', shape: 'dot', text: 'no config'});
-                node.error('No configuration node found. Please configure the Viessmann config node.', msg);
+            if (!validateConfigNode(node, msg)) {
                 return;
             }
             
