@@ -540,6 +540,207 @@ describe('viessmann-read Node', function() {
         });
     });
 
+    it('should set status with value and unit for single feature read', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        // Mock feature endpoint
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .reply(200, {
+                data: {
+                    feature: 'heating.circuits.0.temperature',
+                    gatewayId: '7571381573112225',
+                    deviceId: '0',
+                    isEnabled: true,
+                    isReady: true,
+                    properties: {
+                        value: {
+                            type: 'number',
+                            value: 21.5,
+                            unit: 'celsius'
+                        }
+                    },
+                    commands: {},
+                    timestamp: '2025-10-18T14:30:00.000Z'
+                }
+            });
+
+        helper.load([configNode, readNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg).to.have.property('payload');
+                    expect(msg.payload).to.have.property('feature', 'heating.circuits.0.temperature');
+                    expect(msg.payload.properties.value).to.have.property('value', 21.5);
+                    expect(msg.payload.properties.value).to.have.property('unit', 'celsius');
+                    
+                    // Check that status was set with value and unit
+                    const status = n1.status.lastCall.args[0];
+                    expect(status).to.have.property('fill', 'green');
+                    expect(status).to.have.property('shape', 'dot');
+                    expect(status).to.have.property('text', '21.5 celsius');
+                    
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({ 
+                installationId: 123456, 
+                gatewaySerial: '7571381573112225', 
+                deviceId: '0',
+                feature: 'heating.circuits.0.temperature'
+            });
+        });
+    });
+
+    it('should set status with value only when unit is missing', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        // Mock feature endpoint - no unit
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active')
+            .reply(200, {
+                data: {
+                    feature: 'heating.circuits.0.operating.modes.active',
+                    gatewayId: '7571381573112225',
+                    deviceId: '0',
+                    isEnabled: true,
+                    isReady: true,
+                    properties: {
+                        value: {
+                            type: 'string',
+                            value: 'dhw'
+                        }
+                    },
+                    commands: {},
+                    timestamp: '2025-10-18T14:30:00.000Z'
+                }
+            });
+
+        helper.load([configNode, readNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg).to.have.property('payload');
+                    expect(msg.payload).to.have.property('feature', 'heating.circuits.0.operating.modes.active');
+                    expect(msg.payload.properties.value).to.have.property('value', 'dhw');
+                    
+                    // Check that status was set with value only
+                    const status = n1.status.lastCall.args[0];
+                    expect(status).to.have.property('fill', 'green');
+                    expect(status).to.have.property('shape', 'dot');
+                    expect(status).to.have.property('text', 'dhw');
+                    
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({ 
+                installationId: 123456, 
+                gatewaySerial: '7571381573112225', 
+                deviceId: '0',
+                feature: 'heating.circuits.0.operating.modes.active'
+            });
+        });
+    });
+
+    it('should set status to success when reading all features', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        // Mock features endpoint
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .reply(200, {
+                data: [
+                    {
+                        feature: 'heating.circuits.0.temperature',
+                        gatewayId: '7571381573112225',
+                        deviceId: '0',
+                        isEnabled: true,
+                        isReady: true,
+                        properties: {
+                            value: {
+                                type: 'number',
+                                value: 21.5,
+                                unit: 'celsius'
+                            }
+                        },
+                        commands: {},
+                        timestamp: '2025-10-18T14:30:00.000Z'
+                    }
+                ]
+            });
+
+        helper.load([configNode, readNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg).to.have.property('payload');
+                    expect(msg.payload).to.be.an('array');
+                    
+                    // Check that status was set to success for all features read
+                    const status = n1.status.lastCall.args[0];
+                    expect(status).to.have.property('fill', 'green');
+                    expect(status).to.have.property('shape', 'dot');
+                    expect(status).to.have.property('text', 'success');
+                    
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({ 
+                installationId: 123456, 
+                gatewaySerial: '7571381573112225', 
+                deviceId: '0'
+            });
+        });
+    });
+
     it('should fail if token refresh fails on 401 error', function(done) {
         const flow = [
             { id: 'c1', type: 'viessmann-config', name: 'test config' },

@@ -39,6 +39,19 @@ module.exports = function(RED) {
                 // For single feature reads, API returns { data: {...} }
                 // For all features reads, API returns { data: [...] }
                 msg.payload = response.data.data || response.data;
+                
+                // Set status based on the read result
+                if (feature && msg.payload.properties && msg.payload.properties.value) {
+                    // Single feature read - show value and unit
+                    const value = msg.payload.properties.value.value;
+                    const unit = msg.payload.properties.value.unit;
+                    const statusText = unit ? `${value} ${unit}` : String(value);
+                    node.status({fill: 'green', shape: 'dot', text: statusText});
+                } else {
+                    // All features read or no value property - show success
+                    node.status({fill: 'green', shape: 'dot', text: 'success'});
+                }
+                
                 node.send(msg);
             } catch (error) {
                 // Error already handled by executeApiGet
