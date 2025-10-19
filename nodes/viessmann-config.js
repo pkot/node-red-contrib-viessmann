@@ -147,9 +147,11 @@ module.exports = function(RED) {
                 // Update tokens in both node and credentials for persistence
                 node.accessToken = response.data.access_token;
                 node.credentials.accessToken = response.data.access_token;
+                debugLog('Updated access token in credentials for persistence');
                 if (response.data.refresh_token) {
                     node.refreshToken = response.data.refresh_token;
                     node.credentials.refreshToken = response.data.refresh_token;
+                    debugLog('Updated refresh token in credentials for persistence');
                 }
                 node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
                 
@@ -161,7 +163,7 @@ module.exports = function(RED) {
                 }
                 debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
                 
-                node.log('Successfully refreshed access token');
+                node.log('Successfully refreshed access token and updated credentials');
                 updateAuthState('authenticated');
             } catch (error) {
                 debugLog('Token refresh failed with error: ' + error.message);
