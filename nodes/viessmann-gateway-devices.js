@@ -6,23 +6,13 @@ module.exports = function(RED) {
         const node = this;
         
         node.on('input', async function(msg) {
-            // Check if config node is available
-            if (!validateConfigNode(node, msg)) {
-                return;
-            }
-            
-            // Validate installationId
             const installationId = validateInstallationId(node, msg);
-            if (installationId === null) {
-                return;
-            }
-            
-            // Validate gatewaySerial
             const gatewaySerial = validateGatewaySerial(node, msg);
-            if (gatewaySerial === null) {
+            
+            if (!validateConfigNode(node, msg) || !installationId || !gatewaySerial) {
                 return;
             }
-            
+                        
             try {
                 const response = await executeApiGet(
                     node,

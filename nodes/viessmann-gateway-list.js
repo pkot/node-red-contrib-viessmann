@@ -6,17 +6,12 @@ module.exports = function(RED) {
         const node = this;
         
         node.on('input', async function(msg) {
-            // Check if config node is available
-            if (!validateConfigNode(node, msg)) {
-                return;
-            }
-            
-            // Validate installationId
             const installationId = validateInstallationId(node, msg);
-            if (installationId === null) {
+            
+            if (!validateConfigNode(node, msg) || !installationId) {
                 return;
             }
-            
+                        
             try {
                 const response = await executeApiGet(
                     node,
