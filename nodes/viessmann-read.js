@@ -42,12 +42,16 @@ module.exports = function(RED) {
                 
                 // Set status based on the read result
                 if (feature && msg.payload.properties) {
-                    // Try to get value from properties.value or properties.status
+                    // Try to get value from various property paths
+                    // Order matters: check most specific/common properties first
+                    const propertyNames = ['value', 'status', 'temperature', 'strength', 'active', 'hours', 'starts'];
                     let valueObj = null;
-                    if (msg.payload.properties.value) {
-                        valueObj = msg.payload.properties.value;
-                    } else if (msg.payload.properties.status) {
-                        valueObj = msg.payload.properties.status;
+                    
+                    for (const propName of propertyNames) {
+                        if (msg.payload.properties[propName]) {
+                            valueObj = msg.payload.properties[propName];
+                            break;
+                        }
                     }
                     
                     if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
