@@ -18,7 +18,7 @@ module.exports = function(RED) {
                 const response = await executeApiGet(
                     node,
                     msg,
-                    `${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features`,
+                    `${node.apiBaseUrl}/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features`,
                     'fetching...',
                     'Failed to fetch device features'
                 );
