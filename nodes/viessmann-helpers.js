@@ -220,6 +220,8 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
         // Get valid access token
         const token = await node.config.getValidToken();
         
+        node.debug(`Executing GET ${url}`);
+        
         // Fetch data from Viessmann API
         const response = await axios.get(url, {
             headers: {
@@ -258,6 +260,8 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
         // Get valid access token
         const token = await node.config.getValidToken();
         
+        node.debug(`Executing POST ${url} with data: ${JSON.stringify(data)}`);
+
         // Post data to Viessmann API
         const response = await axios.post(url, data, {
             headers: {

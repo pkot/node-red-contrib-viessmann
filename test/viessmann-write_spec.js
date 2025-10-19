@@ -45,7 +45,7 @@ describe('viessmann-write Node', function() {
 
         // Mock command execution endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(200, {});
 
         helper.load([configNode, writeNode], flow, credentials, function() {
@@ -89,7 +89,7 @@ describe('viessmann-write Node', function() {
 
         // Mock command execution endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(200, {});
 
         helper.load([configNode, writeNode], flow, credentials, function() {
@@ -421,7 +421,7 @@ describe('viessmann-write Node', function() {
 
         // Mock API error
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(404, {
                 error: 'Command not found'
             });

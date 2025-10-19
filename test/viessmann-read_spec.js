@@ -45,7 +45,7 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
             .reply(200, {
                 data: {
                     feature: 'heating.circuits.0.temperature',
@@ -107,7 +107,7 @@ describe('viessmann-read Node', function() {
 
         // Mock features endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices/0/features')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
             .reply(200, {
                 data: [
                     {
@@ -368,7 +368,7 @@ describe('viessmann-read Node', function() {
 
         // Mock API error
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices/0/features')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
             .reply(404, {
                 error: 'Device not found'
             });
