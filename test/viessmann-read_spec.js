@@ -674,6 +674,73 @@ describe('viessmann-read Node', function() {
         });
     });
 
+    it('should set status with value and unit from properties.status', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        // Mock feature endpoint with properties.status instead of properties.value
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/device.status')
+            .reply(200, {
+                data: {
+                    feature: 'device.status',
+                    gatewayId: '7571381573112225',
+                    deviceId: '0',
+                    isEnabled: true,
+                    isReady: true,
+                    properties: {
+                        status: {
+                            type: 'string',
+                            value: 'OK',
+                            unit: ''
+                        }
+                    },
+                    commands: {},
+                    timestamp: '2025-10-18T14:30:00.000Z'
+                }
+            });
+
+        helper.load([configNode, readNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg).to.have.property('payload');
+                    expect(msg.payload).to.have.property('feature', 'device.status');
+                    expect(msg.payload.properties.status).to.have.property('value', 'OK');
+                    
+                    // Check that status was set with value from properties.status
+                    const status = n1.status.lastCall.args[0];
+                    expect(status).to.have.property('fill', 'green');
+                    expect(status).to.have.property('shape', 'dot');
+                    expect(status).to.have.property('text', 'OK');
+                    
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({ 
+                installationId: 123456, 
+                gatewaySerial: '7571381573112225', 
+                deviceId: '0',
+                feature: 'device.status'
+            });
+        });
+    });
+
     it('should set status to success when value is null or undefined', function(done) {
         const flow = [
             { id: 'c1', type: 'viessmann-config', name: 'test config' },

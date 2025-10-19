@@ -41,15 +41,27 @@ module.exports = function(RED) {
                 msg.payload = response.data.data || response.data;
                 
                 // Set status based on the read result
-                if (feature && msg.payload.properties && msg.payload.properties.value && 
-                    msg.payload.properties.value.value !== null && msg.payload.properties.value.value !== undefined) {
-                    // Single feature read - show value and unit
-                    const value = msg.payload.properties.value.value;
-                    const unit = msg.payload.properties.value.unit;
-                    const statusText = unit ? `${value}${unit}` : String(value);
-                    node.status({fill: 'green', shape: 'dot', text: statusText});
+                if (feature && msg.payload.properties) {
+                    // Try to get value from properties.value or properties.status
+                    let valueObj = null;
+                    if (msg.payload.properties.value) {
+                        valueObj = msg.payload.properties.value;
+                    } else if (msg.payload.properties.status) {
+                        valueObj = msg.payload.properties.status;
+                    }
+                    
+                    if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
+                        // Single feature read - show value and unit
+                        const value = valueObj.value;
+                        const unit = valueObj.unit;
+                        const statusText = unit ? `${value}${unit}` : String(value);
+                        node.status({fill: 'green', shape: 'dot', text: statusText});
+                    } else {
+                        // No value property - show success
+                        node.status({fill: 'green', shape: 'dot', text: 'success'});
+                    }
                 } else {
-                    // All features read or no value property - show success
+                    // All features read - show success
                     node.status({fill: 'green', shape: 'dot', text: 'success'});
                 }
                 
