@@ -388,6 +388,85 @@ describe('viessmann-read Node', function() {
         });
     });
 
+    it('should handle network connection refused error', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .replyWithError('connect ECONNREFUSED 127.0.0.1:443');
+
+        helper.load([configNode, readNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+
+            // Override error to capture it since call:error may not fire for network errors
+            const origError = n1.error;
+            n1.error = function(msg, origMsg) {
+                origError.call(n1, msg, origMsg);
+                try {
+                    expect(msg).to.include('ECONNREFUSED');
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            };
+
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '7571381573112225',
+                deviceId: '0'
+            });
+        });
+    });
+
+    it('should handle network timeout error', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .replyWithError('connect ETIMEDOUT 10.0.0.1:443');
+
+        helper.load([configNode, readNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+
+            const origError = n1.error;
+            n1.error = function(msg, origMsg) {
+                origError.call(n1, msg, origMsg);
+                try {
+                    expect(msg).to.include('ETIMEDOUT');
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            };
+
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '7571381573112225',
+                deviceId: '0'
+            });
+        });
+    });
+
     it('should handle missing config node', function(done) {
         const flow = [
             { id: 'n1', type: 'viessmann-read', name: 'test read' }
@@ -395,14 +474,14 @@ describe('viessmann-read Node', function() {
 
         helper.load([readNode], flow, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '7571381573112225',
                 deviceId: '0'
             });
         });
