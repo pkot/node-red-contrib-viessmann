@@ -2,6 +2,8 @@
  * Helper functions for Viessmann nodes
  */
 
+const axios = require('axios');
+
 /**
  * Viessmann API base URL constant
  */
@@ -245,8 +247,6 @@ async function executeWithTokenRefresh(node, requestFn) {
  * @returns {Promise<object>} Response data
  */
 async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPrefix = 'Failed to fetch data') {
-    const axios = require('axios');
-    
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         
@@ -285,8 +285,6 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
  * @returns {Promise<object>} Response data
  */
 async function executeApiPost(node, msg, url, data, statusText = 'writing...', errorPrefix = 'Failed to write data') {
-    const axios = require('axios');
-    
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         
