@@ -16,7 +16,7 @@ module.exports = function(RED) {
                 const response = await executeApiGet(
                     node,
                     msg,
-                    `${node.apiBaseUrl}/iot/v2/equipment/installations/${installationId}/gateways`,
+                    `${node.apiBaseUrl}/iot/v2/equipment/installations/${encodeURIComponent(installationId)}/gateways`,
                     'fetching...',
                     'Failed to fetch gateways'
                 );

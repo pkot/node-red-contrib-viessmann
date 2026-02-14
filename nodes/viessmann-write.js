@@ -37,7 +37,7 @@ module.exports = function(RED) {
             }
             
             try {
-                const endpoint = `${node.apiBaseUrl}/iot/v2/features/installations/${installationId}/gateways/${gatewaySerial}/devices/${deviceId}/features/${feature}/commands/${msg.command}`;
+                const endpoint = `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features/${encodeURIComponent(feature)}/commands/${encodeURIComponent(msg.command)}`;
                 
                 await executeApiPost(
                     node,
