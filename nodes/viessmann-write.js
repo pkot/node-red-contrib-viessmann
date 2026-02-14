@@ -29,10 +29,16 @@ module.exports = function(RED) {
                 return;
             }
             
-            // Check if params is provided
+            // Check if params is provided and is an object
             if (!msg.params) {
                 node.status({fill: 'red', shape: 'dot', text: 'no params'});
                 node.error('No params provided. Please provide msg.params.', msg);
+                return;
+            }
+
+            if (typeof msg.params !== 'object' || Array.isArray(msg.params)) {
+                node.status({fill: 'red', shape: 'dot', text: 'invalid params'});
+                node.error('Invalid params. msg.params must be a plain object (e.g., {temperature: 22}).', msg);
                 return;
             }
             

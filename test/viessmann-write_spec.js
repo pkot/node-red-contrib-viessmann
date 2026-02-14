@@ -297,6 +297,41 @@ describe('viessmann-write Node', function() {
         });
     });
 
+    it('should handle invalid params type', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-write', name: 'test write', config: 'c1' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        helper.load([configNode, writeNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+
+            const invalidInputs = [
+                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: 'string-params' },
+                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: [1, 2, 3] },
+                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: 42 }
+            ];
+
+            let errorCount = 0;
+
+            n1.on('call:error', function() {
+                errorCount++;
+                if (errorCount === invalidInputs.length) {
+                    done();
+                }
+            });
+
+            invalidInputs.forEach(input => n1.receive(input));
+        });
+    });
+
     it('should handle invalid installationId', function(done) {
         const flow = [
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
@@ -312,7 +347,7 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             const invalidInputs = [
                 { installationId: 'invalid', gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: '123abc', gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
