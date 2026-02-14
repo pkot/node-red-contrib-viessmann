@@ -337,7 +337,7 @@ Each feature object contains:
 6. Use the feature identifiers with `viessmann-read` or `viessmann-write` nodes to interact with specific features
 
 **API Endpoint:**
-- Uses `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features` from the Viessmann API
+- Uses `GET /iot/v2/features/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features` from the Viessmann API
 - Base URL: `https://api.viessmann-climatesolutions.com`
 
 ### Data Read Node: `viessmann-read`
@@ -476,8 +476,8 @@ msg.deviceId = "0";
 ```
 
 **API Endpoints:**
-- Specific feature: `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}`
-- All features: `GET /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features`
+- Specific feature: `GET /iot/v2/features/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}`
+- All features: `GET /iot/v2/features/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features`
 - Base URL: `https://api.viessmann-climatesolutions.com`
 
 ### Data Write Node: `viessmann-write`
@@ -598,7 +598,7 @@ return msg;
 ```
 
 **API Endpoint:**
-- Uses `POST /iot/v2/equipment/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}/commands/{command}` from the Viessmann API
+- Uses `POST /iot/v2/features/installations/{installationId}/gateways/{gatewaySerial}/devices/{deviceId}/features/{feature}/commands/{command}` from the Viessmann API
 - Base URL: `https://api.viessmann-climatesolutions.com`
 
 ## Usage
@@ -702,6 +702,29 @@ See [SPEC.md](SPEC.md) for detailed functional specifications including:
 - API integration patterns
 - Error handling strategies
 
+## Building & Installing from Package
+
+To build a `.tgz` package that can be installed on any Node-RED server:
+
+```bash
+# Clone and install dependencies
+git clone https://github.com/pkot/node-red-viessmann.git
+cd node-red-viessmann
+npm install
+
+# Run lint and tests, then create the package
+npm pack
+```
+
+This produces a file like `node-red-contrib-viessmann-0.1.0.tgz`. To install it on your Node-RED server:
+
+```bash
+cd ~/.node-red
+npm install /path/to/node-red-contrib-viessmann-0.1.0.tgz
+```
+
+Then restart Node-RED. The Viessmann nodes will appear in the palette.
+
 ## Continuous Integration
 
 This project uses GitHub Actions for continuous integration. The CI workflow automatically:
@@ -709,18 +732,14 @@ This project uses GitHub Actions for continuous integration. The CI workflow aut
 - Runs on all pushes and pull requests to `main` and `feature/**` branches
 - Sets up Node.js version 20 (as specified in `package.json` engines field)
 - Installs dependencies using `npm ci`
-- Runs the linter (if `npm run lint` is configured)
-- Runs the test suite (if `npm test` is configured)
-- Runs the build process (if `npm run build` is configured)
-
-The workflow will fail if any configured step fails. If linter or test scripts are not yet configured, the workflow will pass with a warning message encouraging their addition.
+- Runs the linter (`npm run lint`)
+- Runs the test suite (`npm test`)
 
 To run these checks locally:
 ```bash
 npm install
-npm run lint   # if configured
-npm test       # if configured
-npm run build  # if configured
+npm run lint
+npm test
 ```
 
 ## License

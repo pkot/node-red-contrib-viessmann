@@ -23,7 +23,7 @@ module.exports = function(RED) {
                 // Set payload to the installations data
                 msg.payload = response.data.data || [];
                 node.send(msg);
-            } catch (error) {
+            } catch (_error) {
                 // Error already handled by executeApiGet
             }
         });

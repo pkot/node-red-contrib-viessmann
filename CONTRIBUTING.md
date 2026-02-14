@@ -235,7 +235,7 @@ npm test -- --grep "error handling"
 
 2. **Check code style**: Follow the coding standards
    ```bash
-   npm run lint  # If configured
+   npm run lint
    ```
 
 3. **Update documentation**: Update README.md and help text if needed

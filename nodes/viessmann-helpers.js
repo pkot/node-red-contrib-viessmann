@@ -62,10 +62,11 @@ function createStatusUpdater(node) {
             case 'authenticating':
                 node.status({fill: 'yellow', shape: 'ring', text: 'authenticating...'});
                 break;
-            case 'error':
+            case 'error': {
                 const errorText = node.config.authError || 'auth failed';
                 node.status({fill: 'red', shape: 'dot', text: errorText});
                 break;
+            }
             case 'disconnected':
             default:
                 node.status({fill: 'grey', shape: 'ring', text: 'disconnected'});

@@ -24,7 +24,7 @@ module.exports = function(RED) {
                 // Set payload to the gateways data
                 msg.payload = response.data.data || [];
                 node.send(msg);
-            } catch (error) {
+            } catch (_error) {
                 // Error already handled by executeApiGet
             }
         });

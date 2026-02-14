@@ -66,7 +66,7 @@ module.exports = function(RED) {
                 };
                 
                 node.send(msg);
-            } catch (error) {
+            } catch (_error) {
                 // Error already handled by executeApiPost
             }
         });

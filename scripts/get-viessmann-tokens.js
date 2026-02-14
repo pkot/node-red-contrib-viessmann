@@ -116,7 +116,7 @@ function exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri) {
                     } else {
                         reject(new Error(`Token exchange failed: ${response.error_description || response.error || data}`));
                     }
-                } catch (err) {
+                } catch (_err) {
                     reject(new Error(`Failed to parse response: ${data}`));
                 }
             });
@@ -184,7 +184,7 @@ async function main() {
         setTimeout(() => {
             try {
                 open(authUrl);
-            } catch (err) {
+            } catch (_err) {
                 console.log('\nCould not open browser automatically. Please open the URL manually.');
             }
         }, 1000);
