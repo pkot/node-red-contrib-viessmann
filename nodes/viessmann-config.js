@@ -195,7 +195,18 @@ module.exports = function(RED) {
                         node.credentials.refreshToken = response.data.refresh_token;
                         debugLog('Updated refresh token in credentials for persistence: ' + maskSensitiveData(response.data.refresh_token));
                     }
-                    node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
+                    // The IdP normally returns expires_in (RFC 6749 §4.2.2).
+                    // If it's missing we'd otherwise compute tokenExpiry = NaN,
+                    // which would silently disable future expiry-based refreshes
+                    // (NaN comparisons are always false). Warn the user and
+                    // default to a conservative 1-hour expiry.
+                    const expiresInSeconds = Number(response.data.expires_in);
+                    const validExpiresIn = Number.isFinite(expiresInSeconds) && expiresInSeconds > 0;
+                    if (!validExpiresIn) {
+                        node.warn('Token refresh response did not include a valid expires_in; assuming 1 hour.');
+                    }
+                    const effectiveExpiresIn = validExpiresIn ? expiresInSeconds : 3600;
+                    node.tokenExpiry = Date.now() + (effectiveExpiresIn * 1000);
 
                     const expiryDate = new Date(node.tokenExpiry);
                     debugLog('Token refresh successful');
@@ -203,7 +214,7 @@ module.exports = function(RED) {
                     if (response.data.refresh_token) {
                         debugLog('New refresh token: ' + maskSensitiveData(node.refreshToken));
                     }
-                    debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
+                    debugLog('Token expires in: ' + effectiveExpiresIn + ' seconds (' + expiryDate.toISOString() + ')');
 
                     node.log('Successfully refreshed access token and updated credentials');
                     updateAuthState('authenticated');
