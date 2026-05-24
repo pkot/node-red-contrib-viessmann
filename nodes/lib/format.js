@@ -76,8 +76,44 @@ function truncateForStatus(text, maxLength = 30) {
     return text.substring(0, maxLength - 3) + '...';
 }
 
+/**
+ * Property keys we render into a viessmann-read node's status icon when
+ * present, in display order. Order matters: `/`-joined values use this
+ * sequence, so e.g. a feature with both `value` and `unit` reads as
+ * "21.5celsius" / "active".
+ *
+ * Adding a new known property is a single-line change here.
+ */
+const STATUS_PROPERTY_NAMES = ['value', 'status', 'temperature', 'strength', 'active', 'hours', 'starts'];
+
+/**
+ * Build a status-icon text from a feature's `properties` object. Returns
+ * the `/`-joined value string when any STATUS_PROPERTY_NAMES key has a
+ * non-null value; null otherwise (caller should fall back to 'success').
+ *
+ * Pure - no Node-RED side effects. Unit-testable with table data.
+ *
+ * @param {object} properties - feature.properties from the API response
+ * @returns {string|null}
+ */
+function formatFeatureStatus(properties) {
+    if (!properties || typeof properties !== 'object') return null;
+    const parts = [];
+    for (const name of STATUS_PROPERTY_NAMES) {
+        const slot = properties[name];
+        if (!slot) continue;
+        const value = slot.value;
+        if (value === null || value === undefined) continue;
+        const unit = slot.unit;
+        parts.push(unit ? `${value}${unit}` : String(value));
+    }
+    return parts.length > 0 ? parts.join('/') : null;
+}
+
 module.exports = {
     extractErrorMessage,
     actionableStatusHint,
-    truncateForStatus
+    truncateForStatus,
+    formatFeatureStatus,
+    STATUS_PROPERTY_NAMES
 };

@@ -1,4 +1,5 @@
 const { initializeViessmannNode, validateConfigNode, validateViessmannRef, surfaceUnexpectedError, executeApiGet } = require('./viessmann-helpers');
+const { formatFeatureStatus } = require('./lib/format');
 
 module.exports = function(RED) {
     function ViessmannReadNode(config) {
@@ -37,35 +38,12 @@ module.exports = function(RED) {
                     msg.payload = response.data;
                 }
 
-                // Set status based on the read result
-                if (feature && msg.payload.properties) {
-                    // Collect values from all available property paths
-                    // Order matters: check most specific/common properties first
-                    const propertyNames = ['value', 'status', 'temperature', 'strength', 'active', 'hours', 'starts'];
-                    const statusParts = [];
-
-                    for (const propName of propertyNames) {
-                        const valueObj = msg.payload.properties[propName];
-                        if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
-                            const value = valueObj.value;
-                            const unit = valueObj.unit;
-                            const part = unit ? `${value}${unit}` : String(value);
-                            statusParts.push(part);
-                        }
-                    }
-
-                    if (statusParts.length > 0) {
-                        // Single feature read - show all values separated by /
-                        const statusText = statusParts.join('/');
-                        node.status({fill: 'green', shape: 'dot', text: statusText});
-                    } else {
-                        // No value property - show success
-                        node.status({fill: 'green', shape: 'dot', text: 'success'});
-                    }
-                } else {
-                    // All features read - show success
-                    node.status({fill: 'green', shape: 'dot', text: 'success'});
-                }
+                // For single-feature reads, derive a compact status string
+                // from feature.properties via the pure formatFeatureStatus
+                // helper. For all-features reads (no `feature` requested)
+                // there's nothing to summarize - just show 'success'.
+                const statusText = feature ? formatFeatureStatus(msg.payload && msg.payload.properties) : null;
+                node.status({fill: 'green', shape: 'dot', text: statusText || 'success'});
 
                 node.send(msg);
             } catch (error) {
