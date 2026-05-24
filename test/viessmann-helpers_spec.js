@@ -2,6 +2,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 const {
     VIESSMANN_API_BASE_URL,
+    HTTP_TIMEOUT_MS,
     extractErrorMessage,
     truncateForStatus,
     validateInstallationId,
@@ -14,6 +15,14 @@ describe('viessmann-helpers', function() {
     describe('VIESSMANN_API_BASE_URL', function() {
         it('should be the correct Viessmann API base URL', function() {
             expect(VIESSMANN_API_BASE_URL).to.equal('https://api.viessmann-climatesolutions.com');
+        });
+    });
+
+    describe('HTTP_TIMEOUT_MS', function() {
+        it('should be a positive integer suitable for axios timeout', function() {
+            expect(HTTP_TIMEOUT_MS).to.be.a('number');
+            expect(HTTP_TIMEOUT_MS).to.be.greaterThan(0);
+            expect(Number.isInteger(HTTP_TIMEOUT_MS)).to.equal(true);
         });
     });
 
