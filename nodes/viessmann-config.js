@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { HTTP_TIMEOUT_MS } = require('./viessmann-helpers');
+const { ViessmannClient, HTTP_TIMEOUT_MS } = require('./lib/client');
 
 // Token refresh buffer time (5 minutes before expiration)
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
@@ -42,6 +42,13 @@ module.exports = function(RED) {
         
         // List of dependent nodes
         this.dependentNodes = [];
+
+        // Shared HTTP client. Owns the axios instance, retry policy, and 401
+        // refresh-and-retry. Per-node wrappers (viessmann-helpers.js) layer
+        // status icon and node.error on top.
+        this.client = new ViessmannClient(node, {
+            log: (m) => debugLog(m)
+        });
         
         /**
          * Log debug information if debug mode is enabled

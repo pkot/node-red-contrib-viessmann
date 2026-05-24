@@ -1,29 +1,19 @@
 /**
- * Helper functions for Viessmann nodes
+ * Helper functions for Viessmann nodes.
+ *
+ * Transport, token refresh, and retry policy live on `node.config.client`
+ * (the ViessmannClient instance in nodes/lib/client.js). This file keeps the
+ * Node-RED UI surface: status icons, error surfacing, input validators, node
+ * lifecycle.
  */
 
-const axios = require('axios');
-
-/**
- * Viessmann API base URL constant
- */
-const VIESSMANN_API_BASE_URL = 'https://api.viessmann-climatesolutions.com';
-
-/**
- * Default HTTP request timeout in milliseconds.
- * Bounds every outgoing axios call so a hung connection surfaces as an error
- * instead of blocking the Node-RED flow indefinitely.
- */
-const HTTP_TIMEOUT_MS = 30000;
-
-/**
- * Retry policy for transient API failures. 429 honours Retry-After; the rest
- * use a bounded exponential backoff (1s, 2s, 4s, capped at MAX_RETRY_DELAY_MS).
- */
-const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
-const MAX_RETRIES = 3;
-const BASE_RETRY_DELAY_MS = 1000;
-const MAX_RETRY_DELAY_MS = 30000;
+const {
+    VIESSMANN_API_BASE_URL,
+    HTTP_TIMEOUT_MS,
+    RETRYABLE_STATUSES,
+    MAX_RETRIES,
+    parseRetryAfter
+} = require('./lib/client');
 
 /**
  * Initialize a Viessmann node with common setup
@@ -256,127 +246,33 @@ function validateDeviceId(node, msg) {
 }
 
 /**
- * Parse an HTTP Retry-After header value into milliseconds, or return null if unparseable.
- * Accepts either a delta-seconds number or an HTTP-date.
- * @param {string|undefined} header - The Retry-After header value
- * @returns {number|null} Milliseconds to wait, or null if the header is missing/invalid.
+ * Build a retry-wait callback that reflects the next retry's countdown in the
+ * node's status icon, so users see "fetching... (HTTP 429, retry in 2s)"
+ * instead of a frozen yellow ring.
  */
-function parseRetryAfter(header) {
-    if (header === undefined || header === null || header === '') {
-        return null;
-    }
-    const seconds = Number(header);
-    if (Number.isFinite(seconds) && seconds >= 0) {
-        return Math.min(seconds * 1000, MAX_RETRY_DELAY_MS);
-    }
-    const dateMs = Date.parse(header);
-    if (Number.isFinite(dateMs)) {
-        return Math.max(0, Math.min(dateMs - Date.now(), MAX_RETRY_DELAY_MS));
-    }
-    return null;
+function statusRetryReporter(node, statusText) {
+    return function({ status, delayMs }) {
+        const waitSecs = Math.max(1, Math.ceil(delayMs / 1000));
+        node.status({fill: 'yellow', shape: 'ring', text: `${statusText} (HTTP ${status}, retry in ${waitSecs}s)`});
+    };
 }
 
 /**
- * Exponential backoff delay with mild jitter to avoid thundering herd.
- * @param {number} attempt - 1-indexed attempt number
- * @returns {number} delay in milliseconds
- */
-function backoffDelayMs(attempt) {
-    const jitter = 0.9 + Math.random() * 0.2;
-    return Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1) * jitter, MAX_RETRY_DELAY_MS);
-}
-
-/**
- * Wrap a request function with retry-on-transient-failure (429 / 5xx).
- * 429 honours Retry-After; 5xx and 429-without-Retry-After use exponential backoff.
- * Non-retryable errors are rethrown immediately.
- * @param {object} node - The Node-RED node instance
- * @param {Function} requestFn - Function that performs one request attempt
- * @param {string} statusText - Base text for the node status during retry waits
- * @returns {Promise<object>} Response from the first successful attempt
- */
-async function executeWithRetry(node, requestFn, statusText) {
-    for (let attempt = 0; ; attempt++) {
-        try {
-            return await requestFn();
-        } catch (error) {
-            const status = error.response?.status;
-            if (!RETRYABLE_STATUSES.has(status) || attempt >= MAX_RETRIES) {
-                throw error;
-            }
-            const nextAttempt = attempt + 1;
-            const retryAfterMs = status === 429
-                ? parseRetryAfter(error.response.headers?.['retry-after'])
-                : null;
-            const delayMs = retryAfterMs ?? backoffDelayMs(nextAttempt);
-            const waitSecs = Math.max(1, Math.ceil(delayMs / 1000));
-            node.status({fill: 'yellow', shape: 'ring', text: `${statusText} (HTTP ${status}, retry in ${waitSecs}s)`});
-            node.debug(`HTTP ${status} - retrying in ${delayMs}ms (attempt ${nextAttempt}/${MAX_RETRIES})`);
-            await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
-    }
-}
-
-/**
- * Execute an API request with automatic token refresh on 401 error
- * @param {object} node - The Node-RED node instance
- * @param {Function} requestFn - Function that executes the API request
- * @returns {Promise<object>} Response data
- */
-async function executeWithTokenRefresh(node, requestFn) {
-    try {
-        return await requestFn();
-    } catch (error) {
-        // Check if error is 401 Unauthorized (invalid token)
-        if (error.response && error.response.status === 401) {
-            node.debug('Received 401 error, attempting to refresh token and retry');
-            
-            try {
-                // Attempt to refresh the token
-                await node.config.refreshAccessToken();
-                
-                node.debug('Retrying request with refreshed token');
-                
-                // Retry the request with the new token
-                return await requestFn();
-            } catch (refreshError) {
-                // If refresh fails, throw the original error
-                node.debug(`Token refresh failed: ${refreshError.message}`);
-                throw error;
-            }
-        }
-        
-        throw error;
-    }
-}
-
-/**
- * Execute an API GET request with standard error handling
+ * Execute an API GET via the shared ViessmannClient with UI side effects
+ * (status icon + node.error on failure) layered on top.
  * @param {object} node - The Node-RED node instance
  * @param {object} msg - The incoming message
  * @param {string} url - The API endpoint URL
  * @param {string} statusText - Text to show during operation (default: 'fetching...')
  * @param {string} errorPrefix - Prefix for error messages (default: 'Failed to fetch data')
- * @returns {Promise<object>} Response data
  */
 async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPrefix = 'Failed to fetch data') {
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
-
         node.debug(`Executing GET ${url}`);
-
-        // Retry transient 429/5xx around the token-refresh-aware request.
-        const response = await executeWithRetry(node, () => executeWithTokenRefresh(node, async () => {
-            const token = await node.config.getValidToken();
-            return await axios.get(url, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                },
-                timeout: HTTP_TIMEOUT_MS
-            });
-        }), statusText);
-
+        const response = await node.config.client.get(url, {
+            onRetryWait: statusRetryReporter(node, statusText)
+        });
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
     } catch (error) {
@@ -389,34 +285,15 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
 }
 
 /**
- * Execute an API POST request with standard error handling
- * @param {object} node - The Node-RED node instance
- * @param {object} msg - The incoming message
- * @param {string} url - The API endpoint URL
- * @param {object} data - The data to post
- * @param {string} statusText - Text to show during operation (default: 'writing...')
- * @param {string} errorPrefix - Prefix for error messages (default: 'Failed to write data')
- * @returns {Promise<object>} Response data
+ * Execute an API POST via the shared ViessmannClient with UI side effects.
  */
 async function executeApiPost(node, msg, url, data, statusText = 'writing...', errorPrefix = 'Failed to write data') {
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
-
         node.debug(`Executing POST ${url} with data: ${JSON.stringify(data)}`);
-
-        // Retry transient 429/5xx around the token-refresh-aware request.
-        const response = await executeWithRetry(node, () => executeWithTokenRefresh(node, async () => {
-            const token = await node.config.getValidToken();
-            return await axios.post(url, data, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                timeout: HTTP_TIMEOUT_MS
-            });
-        }), statusText);
-
+        const response = await node.config.client.post(url, data, {
+            onRetryWait: statusRetryReporter(node, statusText)
+        });
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
     } catch (error) {
