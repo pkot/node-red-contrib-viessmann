@@ -51,7 +51,7 @@
     "eslint": "^10.0.0",
     "mocha": "^11.3.0",
     "nock": "^14.0.10",
-    "node-red": "^4.1.7",
+    "node-red": "^4.1.10",
     "node-red-node-test-helper": "^0.3.5",
     "sinon": "^21.0.0"
   }
