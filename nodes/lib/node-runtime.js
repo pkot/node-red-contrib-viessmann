@@ -140,7 +140,7 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
     const controller = trackAbortController(node);
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
-        node.debug(`Executing GET ${url}`);
+        node.config.debugLog(`Executing GET ${url}`);
         const response = await node.config.client.get(url, {
             onRetryWait: statusRetryReporter(node, statusText),
             signal: controller.signal
@@ -174,7 +174,7 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
     const controller = trackAbortController(node);
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
-        node.debug(`Executing POST ${url} with data: ${safeStringifyForDebug(data)}`);
+        node.config.debugLog(`Executing POST ${url} with data: ${safeStringifyForDebug(data)}`);
         const response = await node.config.client.post(url, data, {
             onRetryWait: statusRetryReporter(node, statusText),
             signal: controller.signal
