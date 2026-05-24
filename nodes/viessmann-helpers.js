@@ -246,6 +246,102 @@ function validateDeviceId(node, msg) {
 }
 
 /**
+ * Validate the msg.feature / msg.datapoint field (the two are aliases).
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @returns {string|null} Validated, trimmed feature name, or null on failure
+ *
+ * Side effects: node.error + node.status on failure.
+ */
+function validateFeature(node, msg) {
+    // ?? so msg.feature = null also falls through to datapoint.
+    const raw = msg.feature ?? msg.datapoint;
+    if (raw === null || raw === undefined) {
+        node.status({fill: 'red', shape: 'dot', text: 'no feature'});
+        node.error('No feature/datapoint provided. Please provide msg.feature or msg.datapoint.', msg);
+        return null;
+    }
+    if (typeof raw !== 'string') {
+        node.status({fill: 'red', shape: 'dot', text: 'invalid feature'});
+        node.error('Invalid feature/datapoint. Must be a string.', msg);
+        return null;
+    }
+    const value = raw.trim();
+    if (value === '') {
+        node.status({fill: 'red', shape: 'dot', text: 'invalid feature'});
+        node.error('Invalid feature/datapoint. Must be a non-empty string.', msg);
+        return null;
+    }
+    return value;
+}
+
+/**
+ * Validate the msg.command field.
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @returns {string|null} Validated, trimmed command, or null on failure
+ *
+ * Side effects: node.error + node.status on failure.
+ */
+function validateCommand(node, msg) {
+    if (msg.command === null || msg.command === undefined) {
+        node.status({fill: 'red', shape: 'dot', text: 'no command'});
+        node.error('No command provided. Please provide msg.command.', msg);
+        return null;
+    }
+    if (typeof msg.command !== 'string') {
+        node.status({fill: 'red', shape: 'dot', text: 'invalid command'});
+        node.error('Invalid command. Must be a string.', msg);
+        return null;
+    }
+    const value = msg.command.trim();
+    if (value === '') {
+        node.status({fill: 'red', shape: 'dot', text: 'invalid command'});
+        node.error('Invalid command. Must be a non-empty string.', msg);
+        return null;
+    }
+    return value;
+}
+
+/**
+ * Validate the msg.params field. Must be a plain object (POST body).
+ * Empty objects pass but emit a node.warn so users notice an unusual call.
+ *
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @returns {object|null} The validated params object, or null on failure
+ *
+ * Side effects: node.error + node.status on failure; node.warn on empty.
+ */
+function validateParams(node, msg) {
+    if (msg.params === null || msg.params === undefined) {
+        node.status({fill: 'red', shape: 'dot', text: 'no params'});
+        node.error('No params provided. Please provide msg.params.', msg);
+        return null;
+    }
+    if (typeof msg.params !== 'object' || Array.isArray(msg.params) || !isPlainObject(msg.params)) {
+        node.status({fill: 'red', shape: 'dot', text: 'invalid params'});
+        node.error('Invalid params. msg.params must be a plain object (e.g., {temperature: 22}).', msg);
+        return null;
+    }
+    if (Object.keys(msg.params).length === 0 && typeof node.warn === 'function') {
+        node.warn('Posting empty msg.params - the Viessmann command will be called with no body.');
+    }
+    return msg.params;
+}
+
+/**
+ * A "plain object" is a Record-style object literal: not a class instance,
+ * Date, Buffer, Map, Set, etc. Used by validateParams to reject things that
+ * pass `typeof === 'object'` but JSON-serialize unpredictably.
+ */
+function isPlainObject(value) {
+    if (value === null || typeof value !== 'object') return false;
+    const proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
+}
+
+/**
  * Resolve a msg into a validation-source object: prefers msg.viessmann (the new
  * preferred bundle) when present, otherwise returns the msg itself.
  *
@@ -417,6 +513,9 @@ module.exports = {
     validateGatewaySerial,
     validateDeviceId,
     validateViessmannRef,
+    validateFeature,
+    validateCommand,
+    validateParams,
     viessmannRefSource,
     surfaceUnexpectedError,
     executeApiGet,
