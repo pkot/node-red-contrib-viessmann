@@ -32,7 +32,7 @@ describe('viessmann-write Node', function() {
 
         // Mock command execution endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(200, {});
 
         helper.load([configNode, writeNode], flow, credentials, function() {
@@ -51,7 +51,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -70,7 +70,7 @@ describe('viessmann-write Node', function() {
 
         // Mock command execution endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(200, {});
 
         helper.load([configNode, writeNode], flow, credentials, function() {
@@ -89,7 +89,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 datapoint: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -106,7 +106,7 @@ describe('viessmann-write Node', function() {
         ];
         const credentials = makeCredentials();
 
-        const featurePath = '/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active';
+        const featurePath = '/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active';
         // Schema GET (pre-flight) then command POST.
         nock('https://api.viessmann-climatesolutions.com')
             .get(featurePath)
@@ -137,7 +137,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({
                 installationId: 123456,
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -153,7 +153,7 @@ describe('viessmann-write Node', function() {
         ];
         const credentials = makeCredentials();
 
-        const featurePath = '/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active';
+        const featurePath = '/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active';
         // Only the schema GET; the POST must not be attempted.
         nock('https://api.viessmann-climatesolutions.com')
             .get(featurePath)
@@ -182,7 +182,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({
                 installationId: 123456,
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -206,7 +206,7 @@ describe('viessmann-write Node', function() {
             });
 
             n1.receive({ 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -255,7 +255,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
                 params: { mode: 'dhw' }
@@ -279,7 +279,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 command: 'setMode',
                 params: { mode: 'dhw' }
@@ -303,7 +303,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 params: { mode: 'dhw' }
@@ -327,7 +327,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode'
@@ -346,9 +346,9 @@ describe('viessmann-write Node', function() {
             const n1 = helper.getNode('n1');
 
             const invalidInputs = [
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: 'string-params' },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: [1, 2, 3] },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: 42 }
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: 'string-params' },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: [1, 2, 3] },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: 42 }
             ];
 
             let errorCount = 0;
@@ -375,11 +375,11 @@ describe('viessmann-write Node', function() {
             const n1 = helper.getNode('n1');
 
             const invalidInputs = [
-                { installationId: 'invalid', gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
-                { installationId: '123abc', gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
-                { installationId: -1, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
-                { installationId: 0, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
-                { installationId: 1.5, gatewaySerial: '7571381573112225', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } }
+                { installationId: 'invalid', gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
+                { installationId: '123abc', gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
+                { installationId: -1, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
+                { installationId: 0, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
+                { installationId: 1.5, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } }
             ];
             
             let errorCount = 0;
@@ -436,10 +436,10 @@ describe('viessmann-write Node', function() {
             const n1 = helper.getNode('n1');
             
             const invalidInputs = [
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: 12345, feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '   ', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: null, feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } }
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: 12345, feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '   ', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: null, feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } }
             ];
             
             let errorCount = 0;
@@ -464,7 +464,7 @@ describe('viessmann-write Node', function() {
 
         // Mock API error
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(404, {
                 error: 'Command not found'
             });
@@ -478,7 +478,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -501,7 +501,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -591,7 +591,7 @@ describe('viessmann-write Node', function() {
 
         // First request with expired token returns 401
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(401, {
                 error: 'Unauthorized',
                 message: 'Invalid or expired token'
@@ -609,7 +609,7 @@ describe('viessmann-write Node', function() {
 
         // Retry with new token succeeds
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(200, {});
 
         helper.load([configNode, writeNode], flow, credentials, function() {
@@ -621,7 +621,7 @@ describe('viessmann-write Node', function() {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload).to.have.property('success', true);
                     expect(msg.payload).to.have.property('installationId', 123456);
-                    expect(msg.payload).to.have.property('gatewaySerial', '7571381573112225');
+                    expect(msg.payload).to.have.property('gatewaySerial', '1234567890123456');
                     expect(msg.payload).to.have.property('deviceId', '0');
                     expect(msg.payload).to.have.property('feature', 'heating.circuits.0.operating.modes.active');
                     expect(msg.payload).to.have.property('command', 'setMode');
@@ -633,7 +633,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -657,7 +657,7 @@ describe('viessmann-write Node', function() {
 
         // First request with expired token returns 401
         nock('https://api.viessmann-climatesolutions.com')
-            .post('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
+            .post('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode')
             .reply(401, {
                 error: 'Unauthorized',
                 message: 'Invalid or expired token'
@@ -680,7 +680,7 @@ describe('viessmann-write Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',

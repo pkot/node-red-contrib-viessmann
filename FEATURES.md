@@ -399,7 +399,7 @@ Always use the `viessmann-device-features` node to discover which features are a
 
 ```javascript
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 // Connect to viessmann-device-features node
 ```
@@ -416,7 +416,7 @@ Use the `viessmann-read` node:
 
 ```javascript
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 msg.feature = "heating.dhw.sensors.temperature.dhwCylinder";
 // Connect to viessmann-read node
@@ -428,7 +428,7 @@ Use the `viessmann-write` node with a command:
 
 ```javascript
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 msg.feature = "heating.dhw.operating.modes.active";
 msg.command = "setMode";
