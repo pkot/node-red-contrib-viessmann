@@ -78,7 +78,10 @@ module.exports = function(RED) {
         this.client = new ViessmannClient(node, clientOptions);
 
         /**
-         * Log debug information if debug mode is enabled
+         * Log debug information if debug mode is enabled. Exposed as
+         * `node.debugLog` so consumer nodes (via node-runtime) can route
+         * their debug output through the same toggle - one "Enable Debug
+         * Logging" checkbox controls everything.
          * @param {string} message - The debug message to log
          */
         const debugLog = function(message) {
@@ -86,6 +89,7 @@ module.exports = function(RED) {
                 node.log('[DEBUG] ' + message);
             }
         };
+        this.debugLog = debugLog;
 
         /**
          * Update authentication state and notify subscribers via the
