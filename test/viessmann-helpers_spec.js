@@ -12,7 +12,7 @@ const {
     validateGatewaySerial,
     validateDeviceId,
     validateViessmannRef,
-    handlePostApiError
+    surfaceUnexpectedError
 } = require('../nodes/viessmann-helpers');
 
 describe('viessmann-helpers', function() {
@@ -400,7 +400,7 @@ describe('viessmann-helpers', function() {
         });
     });
 
-    describe('handlePostApiError', function() {
+    describe('surfaceUnexpectedError', function() {
         let node;
         const msg = { _msgid: 'test' };
 
@@ -408,32 +408,24 @@ describe('viessmann-helpers', function() {
             node = { status: sinon.stub(), error: sinon.stub() };
         });
 
-        it('should ignore axios errors (already surfaced by executeApiGet/Post)', function() {
-            const axiosError = new Error('Request failed');
-            axiosError.isAxiosError = true;
-            handlePostApiError(node, msg, axiosError);
-            expect(node.error.called).to.be.false;
-            expect(node.status.called).to.be.false;
-        });
-
-        it('should surface non-axios errors via node.error with the originating msg', function() {
+        it('should call node.error with the originating msg', function() {
             const internalError = new TypeError('Cannot read properties of null');
-            handlePostApiError(node, msg, internalError);
+            surfaceUnexpectedError(node, msg, internalError);
             expect(node.error.calledOnce).to.be.true;
             const [text, passedMsg] = node.error.firstCall.args;
             expect(text).to.include('Cannot read properties of null');
             expect(passedMsg).to.equal(msg);
         });
 
-        it('should set a red node.status for non-axios errors', function() {
-            handlePostApiError(node, msg, new Error('boom'));
+        it('should set a red node.status', function() {
+            surfaceUnexpectedError(node, msg, new Error('boom'));
             expect(node.status.calledOnce).to.be.true;
             const status = node.status.firstCall.args[0];
             expect(status.fill).to.equal('red');
         });
 
         it('should not crash on non-Error thrown values', function() {
-            handlePostApiError(node, msg, 'plain string');
+            surfaceUnexpectedError(node, msg, 'plain string');
             expect(node.error.calledOnce).to.be.true;
             const [text] = node.error.firstCall.args;
             expect(text).to.include('plain string');

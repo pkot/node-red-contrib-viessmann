@@ -1,30 +1,32 @@
-const { initializeViessmannNode, validateConfigNode, handlePostApiError, executeApiGet } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, surfaceUnexpectedError, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceListNode(config) {
         initializeViessmannNode(RED, this, config);
         const node = this;
-        
+
         node.on('input', async function(msg) {
-            // Check if config node is available
-            if (!validateConfigNode(node, msg)) {
-                return;
-            }
-            
+            if (!validateConfigNode(node, msg)) return;
+
+            let response;
             try {
-                const response = await executeApiGet(
+                response = await executeApiGet(
                     node,
                     msg,
                     `${node.apiBaseUrl}/iot/v2/equipment/installations`,
                     'fetching...',
                     'Failed to fetch installations'
                 );
-                
-                // Set payload to the installations data
+            } catch (_apiError) {
+                // executeApiGet already surfaced this via node.error.
+                return;
+            }
+
+            try {
                 msg.payload = response.data.data || [];
                 node.send(msg);
             } catch (error) {
-                handlePostApiError(node, msg, error);
+                surfaceUnexpectedError(node, msg, error);
             }
         });
     }

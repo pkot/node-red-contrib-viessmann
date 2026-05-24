@@ -301,24 +301,33 @@ function validateViessmannRef(node, msg) {
 }
 
 /**
- * Surface an exception from a node's input handler appropriately.
+ * Surface an unexpected error from the payload-processing block of a node's
+ * input handler (the block AFTER executeApiGet/Post returns).
  *
- * executeApiGet/Post already call node.error + node.status for axios
- * failures and rethrow the original error. The node-level catch is there
- * to (a) suppress those (already surfaced) and (b) surface any OTHER
- * error - a TypeError from payload processing, a JSON.stringify on a
- * cyclic body, a bug in our response shaping - that would otherwise be
- * silently swallowed.
+ * executeApiGet/Post handle their own failures (call node.error / node.status
+ * for every thrown error inside them, then rethrow). To avoid double-firing,
+ * the consumer-node pattern is:
+ *
+ *   let response;
+ *   try { response = await executeApiGet(...); }
+ *   catch (_) { return; }              // already surfaced upstream
+ *   try {
+ *     msg.payload = ...response...;
+ *     node.send(msg);
+ *   } catch (error) {
+ *     surfaceUnexpectedError(node, msg, error);
+ *   }
+ *
+ * Anything that reaches this function is something we didn't anticipate -
+ * a TypeError from accessing an unexpected response shape, a cyclic
+ * JSON.stringify, or a bug in our shaping code - and it would otherwise
+ * be silently dropped.
  *
  * @param {object} node - The Node-RED node instance
  * @param {object} msg - The incoming message
  * @param {*} error - The thrown value
  */
-function handlePostApiError(node, msg, error) {
-    if (error && error.isAxiosError) {
-        // Already surfaced via node.error inside executeApiGet/Post.
-        return;
-    }
+function surfaceUnexpectedError(node, msg, error) {
     const message = error && error.message ? error.message : String(error);
     node.status({fill: 'red', shape: 'dot', text: 'internal error'});
     node.error('Internal error: ' + message, msg);
@@ -338,7 +347,14 @@ function statusRetryReporter(node, statusText) {
 
 /**
  * Execute an API GET via the shared ViessmannClient with UI side effects
- * (status icon + node.error on failure) layered on top.
+ * layered on top.
+ *
+ * On *any* thrown error (axios or otherwise) this helper calls node.error
+ * and node.status, then rethrows. Callers should treat the rejected promise
+ * as "already surfaced" and not double-fire node.error on it. For errors
+ * that happen AFTER this returns - e.g. payload-shaping bugs - use
+ * surfaceUnexpectedError in the consumer node.
+ *
  * @param {object} node - The Node-RED node instance
  * @param {object} msg - The incoming message
  * @param {string} url - The API endpoint URL
@@ -365,6 +381,7 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
 
 /**
  * Execute an API POST via the shared ViessmannClient with UI side effects.
+ * Same already-surfaced-on-throw contract as executeApiGet.
  */
 async function executeApiPost(node, msg, url, data, statusText = 'writing...', errorPrefix = 'Failed to write data') {
     try {
@@ -401,7 +418,7 @@ module.exports = {
     validateDeviceId,
     validateViessmannRef,
     viessmannRefSource,
-    handlePostApiError,
+    surfaceUnexpectedError,
     executeApiGet,
     executeApiPost
 };

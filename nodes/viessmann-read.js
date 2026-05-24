@@ -1,4 +1,4 @@
-const { initializeViessmannNode, validateConfigNode, validateViessmannRef, handlePostApiError, executeApiGet } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateViessmannRef, surfaceUnexpectedError, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannReadNode(config) {
@@ -10,40 +10,33 @@ module.exports = function(RED) {
             const ref = validateViessmannRef(node, msg);
             if (!ref) return;
             const { installationId, gatewaySerial, deviceId } = ref;
-            
+
             // Check for feature or datapoint (both are treated the same way)
             const feature = msg.feature || msg.datapoint;
-            
+            const endpoint = feature
+                ? `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features/${encodeURIComponent(feature)}`
+                : `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features`;
+
+            let response;
             try {
-                let endpoint;
-                if (feature) {
-                    // Read specific feature
-                    endpoint = `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features/${encodeURIComponent(feature)}`;
-                } else {
-                    // Read all features
-                    endpoint = `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features`;
-                }
-                
-                const response = await executeApiGet(
-                    node,
-                    msg,
-                    endpoint,
-                    'reading...',
-                    'Failed to read data'
-                );
-                
+                response = await executeApiGet(node, msg, endpoint, 'reading...', 'Failed to read data');
+            } catch (_apiError) {
+                return;
+            }
+
+            try {
                 // Set payload to the data
                 // For single feature reads, API returns { data: {...} }
                 // For all features reads, API returns { data: [...] }
                 msg.payload = response.data.data || response.data;
-                
+
                 // Set status based on the read result
                 if (feature && msg.payload.properties) {
                     // Collect values from all available property paths
                     // Order matters: check most specific/common properties first
                     const propertyNames = ['value', 'status', 'temperature', 'strength', 'active', 'hours', 'starts'];
                     const statusParts = [];
-                    
+
                     for (const propName of propertyNames) {
                         const valueObj = msg.payload.properties[propName];
                         if (valueObj && valueObj.value !== null && valueObj.value !== undefined) {
@@ -53,7 +46,7 @@ module.exports = function(RED) {
                             statusParts.push(part);
                         }
                     }
-                    
+
                     if (statusParts.length > 0) {
                         // Single feature read - show all values separated by /
                         const statusText = statusParts.join('/');
@@ -66,10 +59,10 @@ module.exports = function(RED) {
                     // All features read - show success
                     node.status({fill: 'green', shape: 'dot', text: 'success'});
                 }
-                
+
                 node.send(msg);
             } catch (error) {
-                handlePostApiError(node, msg, error);
+                surfaceUnexpectedError(node, msg, error);
             }
         });
     }
