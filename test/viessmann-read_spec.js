@@ -3,19 +3,12 @@ const readNode = require('../nodes/viessmann-read.js');
 const configNode = require('../nodes/viessmann-config.js');
 const nock = require('nock');
 const { expect } = require('chai');
+const { makeCredentials, useNodeRedHelper } = require('./support/fixtures');
 
 helper.init(require.resolve('node-red'));
 
 describe('viessmann-read Node', function() {
-    beforeEach(function(done) {
-        helper.startServer(done);
-    });
-
-    afterEach(function(done) {
-        helper.unload();
-        helper.stopServer(done);
-        nock.cleanAll();
-    });
+    useNodeRedHelper(helper);
 
     it('should be loaded', function(done) {
         const flow = [
@@ -35,13 +28,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint
         nock('https://api.viessmann-climatesolutions.com')
@@ -97,13 +84,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock features endpoint
         nock('https://api.viessmann-climatesolutions.com')
@@ -174,13 +155,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -198,13 +173,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -222,13 +191,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -246,13 +209,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -284,13 +241,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -321,13 +272,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -358,13 +303,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock API error
         nock('https://api.viessmann-climatesolutions.com')
@@ -393,13 +332,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Real axios decorates connection errors with a `code` property; nock's
         // string form doesn't, so we pass an Error explicitly to mirror reality.
@@ -435,13 +368,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         nock('https://api.viessmann-climatesolutions.com')
             .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
@@ -494,13 +421,7 @@ describe('viessmann-read Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const c1 = helper.getNode('c1');
@@ -648,13 +569,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint
         nock('https://api.viessmann-climatesolutions.com')
@@ -716,13 +631,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint - no unit
         nock('https://api.viessmann-climatesolutions.com')
@@ -782,13 +691,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with properties.status instead of properties.value
         nock('https://api.viessmann-climatesolutions.com')
@@ -849,13 +752,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with null value
         nock('https://api.viessmann-climatesolutions.com')
@@ -915,13 +812,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock features endpoint
         nock('https://api.viessmann-climatesolutions.com')
@@ -1027,13 +918,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with properties.strength
         nock('https://api.viessmann-climatesolutions.com')
@@ -1092,13 +977,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with properties.active
         nock('https://api.viessmann-climatesolutions.com')
@@ -1157,13 +1036,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with properties.hours
         nock('https://api.viessmann-climatesolutions.com')
@@ -1224,13 +1097,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with properties.starts
         nock('https://api.viessmann-climatesolutions.com')
@@ -1289,13 +1156,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with properties.temperature
         nock('https://api.viessmann-climatesolutions.com')
@@ -1356,13 +1217,7 @@ describe('viessmann-read Node', function() {
             { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock feature endpoint with both hours and starts properties
         nock('https://api.viessmann-climatesolutions.com')

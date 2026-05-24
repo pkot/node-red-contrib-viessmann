@@ -3,19 +3,12 @@ const deviceFeaturesNode = require('../nodes/viessmann-device-features.js');
 const configNode = require('../nodes/viessmann-config.js');
 const nock = require('nock');
 const { expect } = require('chai');
+const { makeCredentials, useNodeRedHelper } = require('./support/fixtures');
 
 helper.init(require.resolve('node-red'));
 
 describe('viessmann-device-features Node', function() {
-    beforeEach(function(done) {
-        helper.startServer(done);
-    });
-
-    afterEach(function(done) {
-        helper.unload();
-        helper.stopServer(done);
-        nock.cleanAll();
-    });
+    useNodeRedHelper(helper);
 
     it('should be loaded', function(done) {
         const flow = [
@@ -35,13 +28,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock device features endpoint
         nock('https://api.viessmann-climatesolutions.com')
@@ -128,13 +115,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, deviceFeaturesNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -152,13 +133,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, deviceFeaturesNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -176,13 +151,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, deviceFeaturesNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -200,13 +169,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, deviceFeaturesNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -235,13 +198,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, deviceFeaturesNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -268,13 +225,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, deviceFeaturesNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -301,13 +252,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock device features endpoint with error
         nock('https://api.viessmann-climatesolutions.com')
@@ -348,13 +293,7 @@ describe('viessmann-device-features Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-device-features', name: 'test device features', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, deviceFeaturesNode], flow, credentials, function() {
             const c1 = helper.getNode('c1');
