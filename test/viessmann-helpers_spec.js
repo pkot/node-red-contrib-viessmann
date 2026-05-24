@@ -376,12 +376,26 @@ describe('viessmann-helpers', function() {
             expect(node.error.callCount).to.equal(1);
         });
 
-        it('should pass the original msg to node.error so Catch routes correctly', function() {
-            const originalMsg = { _msgid: 'abc123', installationId: 'not-a-number' };
+        it('should preserve _msgid so Catch nodes route correctly when a bundle is used', function() {
+            // When msg.viessmann is provided, validators see a clone (not the
+            // original msg object) - but the clone copies _msgid so Catch
+            // routing still matches.
+            const originalMsg = {
+                _msgid: 'abc123',
+                viessmann: { installationId: 'not-a-number' }
+            };
             validateViessmannRef(node, originalMsg);
-            // The shim has _msgid copied through, so any Catch wiring still matches.
             const [, passedMsg] = node.error.firstCall.args;
             expect(passedMsg._msgid).to.equal('abc123');
+        });
+
+        it('should pass the original msg by reference when no bundle is provided', function() {
+            // Legacy path - no bundle, no clone, validators see the original
+            // msg object itself.
+            const originalMsg = { _msgid: 'xyz', installationId: 'bad' };
+            validateViessmannRef(node, originalMsg);
+            const [, passedMsg] = node.error.firstCall.args;
+            expect(passedMsg).to.equal(originalMsg);
         });
     });
 });
