@@ -10,7 +10,8 @@ const {
     parseRetryAfter,
     validateInstallationId,
     validateGatewaySerial,
-    validateDeviceId
+    validateDeviceId,
+    validateViessmannRef
 } = require('../nodes/viessmann-helpers');
 
 describe('viessmann-helpers', function() {
@@ -308,6 +309,79 @@ describe('viessmann-helpers', function() {
 
         it('should return null for whitespace-only string', function() {
             expect(validateDeviceId(node, { deviceId: '   ' })).to.be.null;
+        });
+    });
+
+    describe('validateViessmannRef', function() {
+        let node;
+
+        beforeEach(function() {
+            node = {
+                status: sinon.stub(),
+                error: sinon.stub()
+            };
+        });
+
+        it('should accept individual msg fields and return the bundle', function() {
+            const ref = validateViessmannRef(node, {
+                installationId: 12345,
+                gatewaySerial: 'GW-1',
+                deviceId: '0'
+            });
+            expect(ref).to.deep.equal({ installationId: 12345, gatewaySerial: 'GW-1', deviceId: '0' });
+            expect(node.error.called).to.be.false;
+        });
+
+        it('should accept msg.viessmann bundle in preference to individual fields', function() {
+            const ref = validateViessmannRef(node, {
+                viessmann: { installationId: 99, gatewaySerial: 'BUNDLE', deviceId: '7' },
+                installationId: 12345,
+                gatewaySerial: 'IGNORED',
+                deviceId: 'IGNORED'
+            });
+            expect(ref).to.deep.equal({ installationId: 99, gatewaySerial: 'BUNDLE', deviceId: '7' });
+        });
+
+        it('should short-circuit on first invalid field (only one error emitted)', function() {
+            const ref = validateViessmannRef(node, {});
+            expect(ref).to.equal(null);
+            // Only the first validator (installationId) should have surfaced an error.
+            expect(node.error.callCount).to.equal(1);
+        });
+
+        it('should stop at gatewaySerial when installationId is valid but gatewaySerial missing', function() {
+            const ref = validateViessmannRef(node, { installationId: 1 });
+            expect(ref).to.equal(null);
+            expect(node.error.callCount).to.equal(1);
+            // Last status reflects the field that failed.
+            const lastStatus = node.status.lastCall.args[0];
+            expect(lastStatus.text).to.equal('no gatewaySerial');
+        });
+
+        it('should stop at deviceId when first two are valid but deviceId missing', function() {
+            const ref = validateViessmannRef(node, { installationId: 1, gatewaySerial: 'GW' });
+            expect(ref).to.equal(null);
+            expect(node.error.callCount).to.equal(1);
+            const lastStatus = node.status.lastCall.args[0];
+            expect(lastStatus.text).to.equal('no deviceId');
+        });
+
+        it('should reject array msg.viessmann (must be a plain object)', function() {
+            const ref = validateViessmannRef(node, {
+                viessmann: ['nope'],
+                // Fallback fields exist so error path is the same as missing.
+            });
+            // Falls back to msg-level fields; both missing -> first error.
+            expect(ref).to.equal(null);
+            expect(node.error.callCount).to.equal(1);
+        });
+
+        it('should pass the original msg to node.error so Catch routes correctly', function() {
+            const originalMsg = { _msgid: 'abc123', installationId: 'not-a-number' };
+            validateViessmannRef(node, originalMsg);
+            // The shim has _msgid copied through, so any Catch wiring still matches.
+            const [, passedMsg] = node.error.firstCall.args;
+            expect(passedMsg._msgid).to.equal('abc123');
         });
     });
 });

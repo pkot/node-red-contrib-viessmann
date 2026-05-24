@@ -222,6 +222,48 @@ function validateGatewaySerial(node, msg) {
  * @param {object} msg - The incoming message
  * @returns {string|null} Validated deviceId or null if invalid
  */
+/**
+ * Validate the three coordinates that address a Viessmann device.
+ *
+ * Accepts either:
+ *   - msg.viessmann = { installationId, gatewaySerial, deviceId }   (preferred bundle)
+ *   - msg.installationId / msg.gatewaySerial / msg.deviceId         (legacy fields)
+ *
+ * Short-circuits on the first failure so a malformed message produces one
+ * node.error / one status update instead of three. Returns null on any
+ * failure (validators emit their own user-facing errors via node.error).
+ *
+ * Side effects: sets node.status and calls node.error(message, msg) on the
+ * first invalid field, so a downstream Catch node routes correctly.
+ *
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @returns {{installationId: number, gatewaySerial: string, deviceId: string}|null}
+ */
+function validateViessmannRef(node, msg) {
+    const bundle = (msg.viessmann && typeof msg.viessmann === 'object' && !Array.isArray(msg.viessmann))
+        ? msg.viessmann
+        : msg;
+
+    // Shim preserves the original msg's _msgid (and everything else) so Catch
+    // routing in node.error(text, msg) lands on the right flow, while the
+    // validators read the coordinate fields from the bundle.
+    const shim = Object.assign({}, msg, {
+        installationId: bundle.installationId,
+        gatewaySerial: bundle.gatewaySerial,
+        deviceId: bundle.deviceId
+    });
+
+    const installationId = validateInstallationId(node, shim);
+    if (installationId === null) return null;
+    const gatewaySerial = validateGatewaySerial(node, shim);
+    if (gatewaySerial === null) return null;
+    const deviceId = validateDeviceId(node, shim);
+    if (deviceId === null) return null;
+
+    return { installationId, gatewaySerial, deviceId };
+}
+
 function validateDeviceId(node, msg) {
     if (msg.deviceId === null || msg.deviceId === undefined) {
         node.status({fill: 'red', shape: 'dot', text: 'no deviceId'});
@@ -320,6 +362,7 @@ module.exports = {
     validateInstallationId,
     validateGatewaySerial,
     validateDeviceId,
+    validateViessmannRef,
     executeApiGet,
     executeApiPost
 };

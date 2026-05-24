@@ -6,12 +6,11 @@ module.exports = function(RED) {
         const node = this;
         
         node.on('input', async function(msg) {
+            if (!validateConfigNode(node, msg)) return;
             const installationId = validateInstallationId(node, msg);
+            if (!installationId) return;
             const gatewaySerial = validateGatewaySerial(node, msg);
-            
-            if (!validateConfigNode(node, msg) || !installationId || !gatewaySerial) {
-                return;
-            }
+            if (!gatewaySerial) return;
                         
             try {
                 const response = await executeApiGet(
