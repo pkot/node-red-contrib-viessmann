@@ -571,6 +571,36 @@ describe('viessmann-helpers', function() {
         });
     });
 
+    describe('debug-log routing through config.debugLog', function() {
+        let node;
+        const msg = { _msgid: 'debug-test' };
+
+        beforeEach(function() {
+            node = {
+                config: {
+                    debugLog: sinon.stub(),
+                    client: { get: sinon.stub().resolves({ data: { data: [] } }), post: sinon.stub().resolves({ data: { data: {} } }) }
+                },
+                status: sinon.stub(),
+                error: sinon.stub(),
+                send: sinon.stub(),
+                _inflightAbortControllers: new Set()
+            };
+        });
+
+        it('executeApiGet routes "Executing GET ..." through config.debugLog', async function() {
+            await executeApiGet(node, msg, 'https://example.test/x');
+            expect(node.config.debugLog.calledOnce).to.equal(true);
+            expect(node.config.debugLog.firstCall.args[0]).to.include('Executing GET');
+        });
+
+        it('executeApiPost routes "Executing POST ..." through config.debugLog', async function() {
+            await executeApiPost(node, msg, 'https://example.test/x', { a: 1 });
+            expect(node.config.debugLog.calledOnce).to.equal(true);
+            expect(node.config.debugLog.firstCall.args[0]).to.include('Executing POST');
+        });
+    });
+
     describe('executeApiGet / executeApiPost missing-config guard', function() {
         let node;
         const msg = { _msgid: 'guard-test' };
