@@ -43,12 +43,26 @@ module.exports = function(RED) {
         // List of dependent nodes
         this.dependentNodes = [];
 
-        // Shared HTTP client. Owns the axios instance, retry policy, and 401
-        // refresh-and-retry. Per-node wrappers (viessmann-helpers.js) layer
-        // status icon and node.error on top.
-        this.client = new ViessmannClient(node, {
+        // Shared HTTP client. Owns the axios instance, retry policy, 401
+        // refresh-and-retry, response cache, in-flight de-duplication, and
+        // concurrency throttle. Per-node wrappers (viessmann-helpers.js)
+        // layer status icon and node.error on top.
+        //
+        // cacheTTL and maxConcurrent fall back to client defaults when the
+        // editor config doesn't set them. Numeric coercion guards against
+        // string values arriving from the HTML editor.
+        const clientOptions = {
             log: (m) => debugLog(m)
-        });
+        };
+        if (config.cacheTTL !== undefined && config.cacheTTL !== '') {
+            const ttl = Number(config.cacheTTL);
+            if (Number.isFinite(ttl) && ttl >= 0) clientOptions.cacheTTL = ttl;
+        }
+        if (config.maxConcurrent !== undefined && config.maxConcurrent !== '') {
+            const mc = Number(config.maxConcurrent);
+            if (Number.isFinite(mc) && mc >= 1) clientOptions.maxConcurrent = mc;
+        }
+        this.client = new ViessmannClient(node, clientOptions);
         
         /**
          * Log debug information if debug mode is enabled
