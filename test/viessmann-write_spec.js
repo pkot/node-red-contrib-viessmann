@@ -561,10 +561,14 @@ describe('viessmann-write Node', function() {
             };
 
             c1.authenticate().catch(() => {
-                expect(statusCalls.length).to.be.greaterThan(0);
-                const lastStatus = statusCalls[statusCalls.length - 1];
-                expect(lastStatus.fill).to.equal('red');
-                done();
+                try {
+                    expect(statusCalls.length).to.be.greaterThan(0);
+                    const lastStatus = statusCalls[statusCalls.length - 1];
+                    expect(lastStatus.fill).to.equal('red');
+                    done();
+                } catch (err) {
+                    done(err);
+                }
             });
         });
     });
