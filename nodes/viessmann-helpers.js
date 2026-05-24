@@ -136,7 +136,9 @@ function extractErrorMessage(error) {
             || data?.error
             || (typeof data === 'string' ? data : '');
         if (status !== undefined) {
-            return detail ? `HTTP ${status}: ${detail}` : `HTTP ${status}`;
+            const base = detail ? `HTTP ${status}: ${detail}` : `HTTP ${status}`;
+            const hint = actionableStatusHint(status);
+            return hint ? `${base} - ${hint}` : base;
         }
         return detail || error.message || 'Unknown error';
     }
@@ -146,6 +148,24 @@ function extractErrorMessage(error) {
             : 'No response from server';
     }
     return error.message || 'Unknown error';
+}
+
+/**
+ * For statuses where the user's fix is well-known, return a short hint to
+ * append to the error message. Returns '' for statuses with no actionable
+ * guidance.
+ */
+function actionableStatusHint(status) {
+    switch (status) {
+        case 403:
+            return 'token lacks scope (regenerate tokens if scopes changed)';
+        case 404:
+            return 'check installationId/gatewaySerial/deviceId';
+        case 401:
+            return 'token expired or invalid (the client refreshes automatically; if this persists, regenerate tokens)';
+        default:
+            return '';
+    }
 }
 
 /**
