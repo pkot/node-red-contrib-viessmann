@@ -1,5 +1,7 @@
 # Viessmann API Features Reference
 
+> ⚠️ **Non-authoritative.** This document is a hand-curated snapshot of the Viessmann feature catalog as of the time it was last updated. The upstream catalog evolves; the only authoritative list of features available on **your** device is what the `viessmann-device-features` node returns at runtime. Per-node I/O is documented in each node's HTML help (visible in the Node-RED editor); this file is reference-only.
+
 This document lists the features available through the Viessmann API. These features can be accessed using the `viessmann-read` and `viessmann-write` nodes.
 
 **Note:** Not all features are available on all devices. Use the `viessmann-device-features` node to discover which features are available on your specific device.
