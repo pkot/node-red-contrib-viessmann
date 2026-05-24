@@ -3,8 +3,11 @@ const sinon = require('sinon');
 const {
     VIESSMANN_API_BASE_URL,
     HTTP_TIMEOUT_MS,
+    RETRYABLE_STATUSES,
+    MAX_RETRIES,
     extractErrorMessage,
     truncateForStatus,
+    parseRetryAfter,
     validateInstallationId,
     validateGatewaySerial,
     validateDeviceId
@@ -23,6 +26,59 @@ describe('viessmann-helpers', function() {
             expect(HTTP_TIMEOUT_MS).to.be.a('number');
             expect(HTTP_TIMEOUT_MS).to.be.greaterThan(0);
             expect(Number.isInteger(HTTP_TIMEOUT_MS)).to.equal(true);
+        });
+    });
+
+    describe('retry policy constants', function() {
+        it('should include 429 and the common transient 5xx statuses', function() {
+            expect(RETRYABLE_STATUSES.has(429)).to.equal(true);
+            expect(RETRYABLE_STATUSES.has(502)).to.equal(true);
+            expect(RETRYABLE_STATUSES.has(503)).to.equal(true);
+            expect(RETRYABLE_STATUSES.has(504)).to.equal(true);
+        });
+
+        it('should not retry non-transient statuses', function() {
+            expect(RETRYABLE_STATUSES.has(400)).to.equal(false);
+            expect(RETRYABLE_STATUSES.has(401)).to.equal(false);
+            expect(RETRYABLE_STATUSES.has(404)).to.equal(false);
+            expect(RETRYABLE_STATUSES.has(500)).to.equal(false);
+        });
+
+        it('should cap retries at a small positive integer', function() {
+            expect(MAX_RETRIES).to.be.a('number');
+            expect(MAX_RETRIES).to.be.greaterThan(0);
+            expect(MAX_RETRIES).to.be.lessThan(10);
+        });
+    });
+
+    describe('parseRetryAfter', function() {
+        it('should return null for missing header', function() {
+            expect(parseRetryAfter(undefined)).to.equal(null);
+            expect(parseRetryAfter(null)).to.equal(null);
+            expect(parseRetryAfter('')).to.equal(null);
+        });
+
+        it('should parse delta-seconds into milliseconds', function() {
+            expect(parseRetryAfter('0')).to.equal(0);
+            expect(parseRetryAfter('1')).to.equal(1000);
+            expect(parseRetryAfter('5')).to.equal(5000);
+        });
+
+        it('should clamp very large values to the maximum delay', function() {
+            // 86400s = 1 day, far above any sane cap.
+            expect(parseRetryAfter('86400')).to.be.lessThan(86400 * 1000);
+        });
+
+        it('should parse HTTP-date strings', function() {
+            const future = new Date(Date.now() + 2000).toUTCString();
+            const ms = parseRetryAfter(future);
+            expect(ms).to.be.a('number');
+            // Allow a wide tolerance for clock granularity / parse rounding.
+            expect(ms).to.be.greaterThan(0);
+        });
+
+        it('should return null for garbage input', function() {
+            expect(parseRetryAfter('not-a-number-or-date')).to.equal(null);
         });
     });
 
