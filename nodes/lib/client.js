@@ -19,6 +19,9 @@
 const axios = require('axios');
 
 const VIESSMANN_API_BASE_URL = 'https://api.viessmann-climatesolutions.com';
+const VIESSMANN_IAM_BASE_URL = 'https://iam.viessmann-climatesolutions.com';
+const VIESSMANN_TOKEN_PATH = '/idp/v3/token';
+const VIESSMANN_AUTHORIZE_PATH = '/idp/v3/authorize';
 const HTTP_TIMEOUT_MS = 30000;
 
 const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
@@ -290,6 +293,9 @@ class ViessmannClient {
 module.exports = {
     ViessmannClient,
     VIESSMANN_API_BASE_URL,
+    VIESSMANN_IAM_BASE_URL,
+    VIESSMANN_TOKEN_PATH,
+    VIESSMANN_AUTHORIZE_PATH,
     HTTP_TIMEOUT_MS,
     RETRYABLE_STATUSES,
     MAX_RETRIES,
