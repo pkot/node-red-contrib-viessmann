@@ -25,6 +25,10 @@ const HTTP_TIMEOUT_MS = 30000;
 // discoverable next to wherever the user ran the script from.
 const DEFAULT_TOKEN_FILE = 'viessmann-tokens.json';
 
+// Max time to wait for the OAuth callback. If the user closes the browser
+// or never logs in, the script should not hang forever.
+const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
+
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -56,6 +60,13 @@ function generatePKCE() {
 function startCallbackServer(port, expectedState) {
     return new Promise((resolve, reject) => {
         const allowedHosts = new Set([`localhost:${port}`, `127.0.0.1:${port}`]);
+        let settled = false;
+        const settle = (fn, value) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timeoutHandle);
+            fn(value);
+        };
 
         const server = http.createServer((req, res) => {
             // Reject anything that didn't come through our loopback origin.
@@ -81,7 +92,7 @@ function startCallbackServer(port, expectedState) {
                     </html>
                 `);
                 server.close();
-                resolve(code);
+                settle(resolve, code);
             } else {
                 res.writeHead(400, { 'Content-Type': 'text/plain' });
                 res.end('Invalid authorization callback (missing code or state mismatch)');
@@ -97,8 +108,16 @@ function startCallbackServer(port, expectedState) {
                 console.error(`\nError: Port ${port} is already in use.`);
                 console.error('Please close any applications using this port and try again.');
             }
-            reject(err);
+            settle(reject, err);
         });
+
+        // Bound the wait. If the user never completes the flow, fail with a
+        // clear error rather than hanging forever.
+        const timeoutHandle = setTimeout(() => {
+            server.close();
+            const minutes = Math.round(CALLBACK_TIMEOUT_MS / 60000);
+            settle(reject, new Error(`No authorization callback received within ${minutes} minutes; aborting.`));
+        }, CALLBACK_TIMEOUT_MS);
     });
 }
 
