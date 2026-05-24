@@ -12,6 +12,9 @@ const {
     validateGatewaySerial,
     validateDeviceId,
     validateViessmannRef,
+    validateFeature,
+    validateCommand,
+    validateParams,
     surfaceUnexpectedError
 } = require('../nodes/viessmann-helpers');
 
@@ -397,6 +400,97 @@ describe('viessmann-helpers', function() {
             validateViessmannRef(node, originalMsg);
             const [, passedMsg] = node.error.firstCall.args;
             expect(passedMsg).to.equal(originalMsg);
+        });
+    });
+
+    describe('validateFeature', function() {
+        let node;
+        beforeEach(function() {
+            node = { status: sinon.stub(), error: sinon.stub() };
+        });
+
+        it('returns msg.feature when valid', function() {
+            expect(validateFeature(node, { feature: 'heating.circuits.0' })).to.equal('heating.circuits.0');
+        });
+
+        it('falls back to msg.datapoint', function() {
+            expect(validateFeature(node, { datapoint: 'heating.circuits.0' })).to.equal('heating.circuits.0');
+        });
+
+        it('prefers feature over datapoint', function() {
+            expect(validateFeature(node, { feature: 'A', datapoint: 'B' })).to.equal('A');
+        });
+
+        it('trims whitespace', function() {
+            expect(validateFeature(node, { feature: '  X  ' })).to.equal('X');
+        });
+
+        it('rejects null/undefined', function() {
+            expect(validateFeature(node, {})).to.be.null;
+            expect(node.error.calledOnce).to.be.true;
+        });
+
+        it('rejects non-string', function() {
+            expect(validateFeature(node, { feature: 42 })).to.be.null;
+        });
+
+        it('rejects empty/whitespace-only', function() {
+            expect(validateFeature(node, { feature: '   ' })).to.be.null;
+        });
+    });
+
+    describe('validateCommand', function() {
+        let node;
+        beforeEach(function() {
+            node = { status: sinon.stub(), error: sinon.stub() };
+        });
+
+        it('returns trimmed command', function() {
+            expect(validateCommand(node, { command: '  setMode  ' })).to.equal('setMode');
+        });
+
+        it('rejects null/undefined/missing', function() {
+            expect(validateCommand(node, {})).to.be.null;
+            expect(validateCommand(node, { command: null })).to.be.null;
+        });
+
+        it('rejects non-string (catches the URL-injection-via-int case)', function() {
+            expect(validateCommand(node, { command: 42 })).to.be.null;
+        });
+
+        it('rejects whitespace-only', function() {
+            expect(validateCommand(node, { command: '   ' })).to.be.null;
+        });
+    });
+
+    describe('validateParams', function() {
+        let node;
+        beforeEach(function() {
+            node = { status: sinon.stub(), error: sinon.stub(), warn: sinon.stub() };
+        });
+
+        it('returns a plain object', function() {
+            const params = { mode: 'dhw' };
+            expect(validateParams(node, { params })).to.equal(params);
+            expect(node.warn.called).to.be.false;
+        });
+
+        it('rejects missing params', function() {
+            expect(validateParams(node, {})).to.be.null;
+            expect(node.error.calledOnce).to.be.true;
+        });
+
+        it('rejects arrays', function() {
+            expect(validateParams(node, { params: [1, 2] })).to.be.null;
+        });
+
+        it('rejects non-object', function() {
+            expect(validateParams(node, { params: 'oops' })).to.be.null;
+        });
+
+        it('warns but accepts empty object', function() {
+            expect(validateParams(node, { params: {} })).to.deep.equal({});
+            expect(node.warn.calledOnce).to.be.true;
         });
     });
 
