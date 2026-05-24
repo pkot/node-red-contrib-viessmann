@@ -478,6 +478,17 @@ function statusRetryReporter(node, statusText) {
  * @param {string} errorPrefix - Prefix for error messages (default: 'Failed to fetch data')
  */
 async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPrefix = 'Failed to fetch data') {
+    if (!node.config) {
+        // Defensive: per-node entry guards check validateConfigNode, but the
+        // config can be deleted/disabled while a request is queued. Without
+        // this check, `node.config.client.get(...)` throws an opaque
+        // TypeError that gets surfaced as
+        // "Failed to fetch data: Cannot read properties of undefined".
+        node.status({fill: 'red', shape: 'dot', text: 'no config'});
+        const err = new Error('No configuration node available');
+        node.error(`${errorPrefix}: ${err.message}`, msg);
+        throw err;
+    }
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         node.debug(`Executing GET ${url}`);
@@ -500,6 +511,12 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
  * Same already-surfaced-on-throw contract as executeApiGet.
  */
 async function executeApiPost(node, msg, url, data, statusText = 'writing...', errorPrefix = 'Failed to write data') {
+    if (!node.config) {
+        node.status({fill: 'red', shape: 'dot', text: 'no config'});
+        const err = new Error('No configuration node available');
+        node.error(`${errorPrefix}: ${err.message}`, msg);
+        throw err;
+    }
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         node.debug(`Executing POST ${url} with data: ${JSON.stringify(data)}`);
