@@ -4,7 +4,7 @@ A Node-RED module for integrating Viessmann heating devices via the official Vie
 
 ## Features
 
-- **OAuth2 Authentication**: Secure authentication with Viessmann API using client credentials or device flow
+- **OAuth2 Authentication**: Authorization Code with PKCE for token bootstrap (via the bundled CLI), refresh-token grant at runtime; tokens stored securely via Node-RED credentials
 - **Installation Discovery**: List all accessible Viessmann installations for your account
 - **Gateway Discovery**: List all gateways for a specific installation
 - **Device Discovery**: List all devices attached to a specific gateway
