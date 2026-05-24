@@ -116,12 +116,46 @@ function setupDependentNode(node) {
 }
 
 /**
- * Extract error message from axios error
- * @param {Error} error - The error object
- * @returns {string} Extracted error message
+ * Extract a user-facing message from an axios error.
+ *
+ * Distinguishes axios's three failure shapes:
+ *   - error.response  : the server replied with an HTTP status.
+ *                       Prefer data.error_description (OAuth-style),
+ *                       then data.message (Viessmann 401 body uses this),
+ *                       then data.error (older API shape),
+ *                       then a string body.
+ *   - error.request   : a request was sent but no response arrived
+ *                       (DNS, TCP reset, timeout, etc.). Include error.code
+ *                       when present so the user can diagnose.
+ *   - otherwise       : a setup error - fall back to error.message.
+ *
+ * @param {Error} error - axios error or any thrown value
+ * @returns {string} Human-readable message
  */
 function extractErrorMessage(error) {
-    return error.response?.data?.error || error.message;
+    if (error === null || error === undefined) {
+        return 'Unknown error';
+    }
+    if (typeof error !== 'object') {
+        return String(error);
+    }
+    if (error.response) {
+        const { status, data } = error.response;
+        const detail = data?.error_description
+            || data?.message
+            || data?.error
+            || (typeof data === 'string' ? data : '');
+        if (status !== undefined) {
+            return detail ? `HTTP ${status}: ${detail}` : `HTTP ${status}`;
+        }
+        return detail || error.message || 'Unknown error';
+    }
+    if (error.request) {
+        return error.code
+            ? `No response from server (${error.code})`
+            : 'No response from server';
+    }
+    return error.message || 'Unknown error';
 }
 
 /**

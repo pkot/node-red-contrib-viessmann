@@ -109,6 +109,53 @@ describe('viessmann-helpers', function() {
             const error = { message: 'ECONNREFUSED' };
             expect(extractErrorMessage(error)).to.equal('ECONNREFUSED');
         });
+
+        it('should include HTTP status in the message when response has status', function() {
+            const error = {
+                response: { status: 401, data: { message: 'Invalid token' } }
+            };
+            expect(extractErrorMessage(error)).to.equal('HTTP 401: Invalid token');
+        });
+
+        it('should prefer OAuth-style error_description when present', function() {
+            const error = {
+                response: {
+                    status: 400,
+                    data: { error: 'invalid_grant', error_description: 'Refresh token expired' }
+                }
+            };
+            expect(extractErrorMessage(error)).to.equal('HTTP 400: Refresh token expired');
+        });
+
+        it('should report HTTP status alone when body has no recognizable detail', function() {
+            const error = { response: { status: 503, data: {} } };
+            expect(extractErrorMessage(error)).to.equal('HTTP 503');
+        });
+
+        it('should describe no-response errors with the error code', function() {
+            const error = { request: {}, code: 'ECONNRESET', message: 'socket hang up' };
+            expect(extractErrorMessage(error)).to.equal('No response from server (ECONNRESET)');
+        });
+
+        it('should describe no-response errors without a code', function() {
+            const error = { request: {}, message: 'something failed' };
+            expect(extractErrorMessage(error)).to.equal('No response from server');
+        });
+
+        it('should handle string response body', function() {
+            const error = { response: { status: 502, data: 'Bad Gateway' } };
+            expect(extractErrorMessage(error)).to.equal('HTTP 502: Bad Gateway');
+        });
+
+        it('should not throw on null/undefined input', function() {
+            expect(extractErrorMessage(null)).to.equal('Unknown error');
+            expect(extractErrorMessage(undefined)).to.equal('Unknown error');
+        });
+
+        it('should stringify non-object thrown values', function() {
+            expect(extractErrorMessage('bare string')).to.equal('bare string');
+            expect(extractErrorMessage(42)).to.equal('42');
+        });
     });
 
     describe('truncateForStatus', function() {

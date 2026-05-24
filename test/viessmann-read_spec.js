@@ -401,9 +401,11 @@ describe('viessmann-read Node', function() {
             }
         };
 
+        // Real axios decorates connection errors with a `code` property; nock's
+        // string form doesn't, so we pass an Error explicitly to mirror reality.
         nock('https://api.viessmann-climatesolutions.com')
             .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
-            .replyWithError('connect ECONNREFUSED 127.0.0.1:443');
+            .replyWithError(Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:443'), { code: 'ECONNREFUSED' }));
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -443,7 +445,7 @@ describe('viessmann-read Node', function() {
 
         nock('https://api.viessmann-climatesolutions.com')
             .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
-            .replyWithError('connect ETIMEDOUT 10.0.0.1:443');
+            .replyWithError(Object.assign(new Error('connect ETIMEDOUT 10.0.0.1:443'), { code: 'ETIMEDOUT' }));
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
