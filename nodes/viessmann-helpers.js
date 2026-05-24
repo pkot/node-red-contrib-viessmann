@@ -246,6 +246,61 @@ function validateDeviceId(node, msg) {
 }
 
 /**
+ * Resolve a msg into a validation-source object: prefers msg.viessmann (the new
+ * preferred bundle) when present, otherwise returns the msg itself.
+ *
+ * The result is what the individual validators will read coordinate fields from.
+ * Everything else on the msg (notably _msgid) is preserved on the returned
+ * object so node.error(text, source) still routes a Catch node to the
+ * originating flow.
+ *
+ * @param {object} msg - The incoming message
+ * @returns {object} validation source - the msg itself when no bundle is provided
+ */
+function viessmannRefSource(msg) {
+    if (!msg.viessmann || typeof msg.viessmann !== 'object' || Array.isArray(msg.viessmann)) {
+        return msg;
+    }
+    return Object.assign({}, msg, {
+        installationId: msg.viessmann.installationId,
+        gatewaySerial: msg.viessmann.gatewaySerial,
+        deviceId: msg.viessmann.deviceId
+    });
+}
+
+/**
+ * Validate the three coordinates that address a Viessmann device.
+ *
+ * Accepts either:
+ *   - msg.viessmann = { installationId, gatewaySerial, deviceId }   (preferred bundle)
+ *   - msg.installationId / msg.gatewaySerial / msg.deviceId         (legacy fields)
+ *
+ * Short-circuits on the first failure so a malformed message produces one
+ * node.error / one status update instead of three. Returns null on any
+ * failure (validators emit their own user-facing errors via node.error).
+ *
+ * Side effects: sets node.status and calls node.error(message, source) on the
+ * first invalid field. The `source` is either the original msg or a clone with
+ * _msgid preserved, so a downstream Catch node still routes correctly.
+ *
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @returns {{installationId: number, gatewaySerial: string, deviceId: string}|null}
+ */
+function validateViessmannRef(node, msg) {
+    const source = viessmannRefSource(msg);
+
+    const installationId = validateInstallationId(node, source);
+    if (installationId === null) return null;
+    const gatewaySerial = validateGatewaySerial(node, source);
+    if (gatewaySerial === null) return null;
+    const deviceId = validateDeviceId(node, source);
+    if (deviceId === null) return null;
+
+    return { installationId, gatewaySerial, deviceId };
+}
+
+/**
  * Build a retry-wait callback that reflects the next retry's countdown in the
  * node's status icon, so users see "fetching... (HTTP 429, retry in 2s)"
  * instead of a frozen yellow ring.
@@ -320,6 +375,8 @@ module.exports = {
     validateInstallationId,
     validateGatewaySerial,
     validateDeviceId,
+    validateViessmannRef,
+    viessmannRefSource,
     executeApiGet,
     executeApiPost
 };

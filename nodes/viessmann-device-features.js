@@ -1,18 +1,15 @@
-const { initializeViessmannNode, validateConfigNode, validateInstallationId, validateGatewaySerial, validateDeviceId, executeApiGet } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateViessmannRef, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceFeaturesNode(config) {
         initializeViessmannNode(RED, this, config);
         const node = this;
-        
+
         node.on('input', async function(msg) {
-            const installationId = validateInstallationId(node, msg);
-            const gatewaySerial = validateGatewaySerial(node, msg);
-            const deviceId = validateDeviceId(node, msg);
-            
-            if (!validateConfigNode(node, msg) || !installationId || !gatewaySerial || !deviceId) {
-                return;
-            }
+            if (!validateConfigNode(node, msg)) return;
+            const ref = validateViessmannRef(node, msg);
+            if (!ref) return;
+            const { installationId, gatewaySerial, deviceId } = ref;
                         
             try {
                 const response = await executeApiGet(

@@ -1,18 +1,15 @@
-const { initializeViessmannNode, validateConfigNode, validateInstallationId, validateGatewaySerial, validateDeviceId, executeApiPost } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateViessmannRef, executeApiPost } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannWriteNode(config) {
         initializeViessmannNode(RED, this, config);
         const node = this;
-        
+
         node.on('input', async function(msg) {
-            const installationId = validateInstallationId(node, msg);
-            const gatewaySerial = validateGatewaySerial(node, msg);
-            const deviceId = validateDeviceId(node, msg);
-            
-            if (!validateConfigNode(node, msg) || !installationId || !gatewaySerial || !deviceId) {
-                return;
-            }
+            if (!validateConfigNode(node, msg)) return;
+            const ref = validateViessmannRef(node, msg);
+            if (!ref) return;
+            const { installationId, gatewaySerial, deviceId } = ref;
                         
             // Check for feature or datapoint (both are treated the same way)
             const feature = msg.feature || msg.datapoint;
