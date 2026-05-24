@@ -87,12 +87,14 @@ describe('validateWriteAgainstSchema', function() {
         expect(result.errors[0]).to.include('finite number');
     });
 
-    it('reports non-executable command but still surfaces other errors', function() {
+    it('reports non-executable command alongside other validation errors', function() {
         const feat = makeFeature();
         feat.commands.setMode.isExecutable = false;
-        const result = validateWriteAgainstSchema(feat, 'setMode', { mode: 'dhw' });
+        const result = validateWriteAgainstSchema(feat, 'setMode', { mode: 'rocket' });
         expect(result.valid).to.equal(false);
-        expect(result.errors[0]).to.include('not executable');
+        // Both the executability failure AND the enum violation should be reported.
+        expect(result.errors.some(e => e.includes('not executable'))).to.equal(true);
+        expect(result.errors.some(e => e.includes('one of: dhw, dhwAndHeating, standby'))).to.equal(true);
     });
 
     it('returns invalid when there is no feature data at all', function() {

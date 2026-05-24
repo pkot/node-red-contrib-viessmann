@@ -48,10 +48,12 @@ module.exports = function(RED) {
                         return;
                     }
                 } catch (schemaFetchError) {
-                    // Soft-fail: the GET produced its own node.error+status, but
-                    // we don't want to block the write because the schema
-                    // pre-check itself failed - let the POST attempt run and
-                    // surface the server's response.
+                    // Soft-fail: we call client.get directly (not via
+                    // executeApiGet), so this catch handles the schema GET
+                    // ourselves with a node.warn rather than blocking the
+                    // write. The POST below still runs, and the server's
+                    // response is the authoritative error if the params
+                    // are bad.
                     node.warn('Schema pre-check failed (' + (schemaFetchError && schemaFetchError.message ? schemaFetchError.message : 'unknown') + '); attempting write anyway');
                 }
             }
