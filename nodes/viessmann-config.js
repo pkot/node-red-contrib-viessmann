@@ -29,7 +29,7 @@ module.exports = function(RED) {
     function ViessmannConfigNode(config) {
         RED.nodes.createNode(this, config);
         const node = this;
-        
+
         // Store debug flag from config
         this.enableDebug = config.enableDebug || false;
 
@@ -38,15 +38,15 @@ module.exports = function(RED) {
         // Off by default to preserve the existing opaque pass-through;
         // users opt-in for stricter validation.
         this.validateBeforeWrite = config.validateBeforeWrite === true || config.validateBeforeWrite === 'true';
-        
+
         // OAuth2 endpoints
         this.tokenUrl = VIESSMANN_IAM_BASE_URL + VIESSMANN_TOKEN_PATH;
-        
+
         // Token storage - initialize from credentials if provided
         this.accessToken = node.credentials.accessToken || null;
         this.refreshToken = node.credentials.refreshToken || null;
         this.tokenExpiry = null;
-        
+
         // Authentication state. Read-only from outside; mutated only inside
         // updateAuthState (which also emits the 'auth-state' event below).
         this.authState = 'disconnected'; // 'disconnected', 'authenticating', 'authenticated', 'error'
@@ -76,7 +76,7 @@ module.exports = function(RED) {
             if (Number.isFinite(mc) && mc >= 1) clientOptions.maxConcurrent = mc;
         }
         this.client = new ViessmannClient(node, clientOptions);
-        
+
         /**
          * Log debug information if debug mode is enabled
          * @param {string} message - The debug message to log
@@ -86,7 +86,7 @@ module.exports = function(RED) {
                 node.log('[DEBUG] ' + message);
             }
         };
-        
+
         /**
          * Update authentication state and notify subscribers via the
          * 'auth-state' event.
@@ -106,7 +106,7 @@ module.exports = function(RED) {
         this.getAuthSnapshot = function() {
             return { state: node.authState, error: node.authError };
         };
-        
+
         // Initialize token expiry tracking if we have an access token
         if (this.accessToken) {
             // Assume token expires in 1 hour (default for Viessmann) minus buffer
@@ -114,7 +114,7 @@ module.exports = function(RED) {
             this.tokenExpiry = Date.now() + (3600 * 1000);
             updateAuthState('authenticated');
         }
-        
+
         /**
          * Validate that we have an access token
          * @returns {Promise<void>}
@@ -137,7 +137,7 @@ module.exports = function(RED) {
             updateAuthState('error', errorMsg);
             throw new Error(errorMsg);
         };
-        
+
         // In-flight refresh promise. While set, concurrent callers share it
         // so we never POST /idp/v3/token twice with the same (rotating) refresh
         // token - the IdP would reject the losers and we'd race-overwrite
@@ -263,26 +263,26 @@ module.exports = function(RED) {
 
             return node._refreshPromise;
         };
-        
+
         /**
          * Get a valid access token, refreshing if necessary
          * @returns {Promise<string>} Valid access token
          */
         this.getValidToken = async function() {
             debugLog('Checking token validity');
-            
+
             // If no token exists, authenticate
             if (!node.accessToken) {
                 debugLog('No access token found, initiating authentication');
                 await node.authenticate();
                 return node.accessToken;
             }
-            
+
             // Check if token is expired (with buffer)
             const now = Date.now();
             const timeUntilExpiry = node.tokenExpiry - now;
             debugLog('Current token status: ' + Math.max(0, timeUntilExpiry) + 'ms until expiry (buffer: ' + TOKEN_REFRESH_BUFFER_MS + 'ms)');
-            
+
             if (node.tokenExpiry && now >= (node.tokenExpiry - TOKEN_REFRESH_BUFFER_MS)) {
                 debugLog('Token is expired or near expiry, refreshing');
                 if (node.refreshToken) {
@@ -295,11 +295,11 @@ module.exports = function(RED) {
             } else {
                 debugLog('Token is still valid, returning existing token');
             }
-            
+
             return node.accessToken;
         };
     }
-    
+
     RED.nodes.registerType("viessmann-config", ViessmannConfigNode, {
         credentials: {
             clientId: { type: "text" },

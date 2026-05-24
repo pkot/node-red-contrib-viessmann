@@ -19,9 +19,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should store credentials securely', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = makeCredentials('n1');
@@ -35,16 +35,16 @@ describe('viessmann-config Node', function() {
     });
 
     it('should use provided access token', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = makeCredentials('n1');
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.authenticate().then(() => {
                 expect(n1.accessToken).to.equal('test-access-token');
                 expect(n1.refreshToken).to.equal('test-refresh-token');
@@ -104,9 +104,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should refresh token when expired', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = {
@@ -129,13 +129,13 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Token is initially loaded from credentials
             expect(n1.accessToken).to.equal('initial-token');
-            
+
             // Force token to be expired
             n1.tokenExpiry = Date.now() - 1000;
-            
+
             // getValidToken should trigger a refresh
             n1.getValidToken().then(() => {
                 expect(n1.accessToken).to.equal('refreshed-token');
@@ -146,9 +146,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should update credentials when tokens are refreshed', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = {
@@ -171,17 +171,17 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Verify initial credentials
             expect(n1.credentials.accessToken).to.equal('initial-access-token');
             expect(n1.credentials.refreshToken).to.equal('initial-refresh-token');
-            
+
             // Trigger token refresh
             n1.refreshAccessToken().then(() => {
                 // Verify that credentials are updated with new tokens
                 expect(n1.credentials.accessToken).to.equal('new-access-token');
                 expect(n1.credentials.refreshToken).to.equal('new-refresh-token');
-                
+
                 // Also verify the node properties are updated
                 expect(n1.accessToken).to.equal('new-access-token');
                 expect(n1.refreshToken).to.equal('new-refresh-token');
@@ -191,9 +191,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should update access token in credentials even when refresh token is not returned', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = {
@@ -216,19 +216,19 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Verify initial credentials
             expect(n1.credentials.accessToken).to.equal('initial-access-token');
             expect(n1.credentials.refreshToken).to.equal('initial-refresh-token');
-            
+
             // Trigger token refresh
             n1.refreshAccessToken().then(() => {
                 // Verify that access token credential is updated
                 expect(n1.credentials.accessToken).to.equal('new-access-token-only');
-                
+
                 // Verify that refresh token credential remains unchanged
                 expect(n1.credentials.refreshToken).to.equal('initial-refresh-token');
-                
+
                 // Also verify the node properties
                 expect(n1.accessToken).to.equal('new-access-token-only');
                 expect(n1.refreshToken).to.equal('initial-refresh-token');
@@ -270,9 +270,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should provide valid token to requesting nodes', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = makeCredentials('n1');
@@ -288,7 +288,7 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.getValidToken().then(token => {
                 expect(token).to.equal('test-access-token');
                 done();
@@ -297,9 +297,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should not log debug messages when debug is disabled', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config',
             enableDebug: false
         }];
@@ -316,7 +316,7 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Store original log function
             const originalLog = n1.log;
             let logMessages = [];
@@ -324,7 +324,7 @@ describe('viessmann-config Node', function() {
                 logMessages.push(msg);
                 originalLog.call(n1, msg);
             };
-            
+
             n1.authenticate().then(() => {
                 // Should only have one log message (the success message)
                 const debugLogs = logMessages.filter(msg => msg.includes('[DEBUG]'));
@@ -335,9 +335,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should log debug messages when debug is enabled', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config',
             enableDebug: true
         }];
@@ -354,7 +354,7 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Store original log function
             const originalLog = n1.log;
             let logMessages = [];
@@ -362,7 +362,7 @@ describe('viessmann-config Node', function() {
                 logMessages.push(msg);
                 originalLog.call(n1, msg);
             };
-            
+
             n1.authenticate().then(() => {
                 // Should have multiple debug log messages
                 const debugLogs = logMessages.filter(msg => msg.includes('[DEBUG]'));
@@ -373,9 +373,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should log debug messages during token refresh', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config',
             enableDebug: true
         }];
@@ -396,7 +396,7 @@ describe('viessmann-config Node', function() {
             n1.accessToken = 'old-token';
             n1.refreshToken = 'old-refresh-token';
             n1.tokenExpiry = Date.now() + 3600000;
-            
+
             // Store original log function
             const originalLog = n1.log;
             let logMessages = [];
@@ -404,23 +404,23 @@ describe('viessmann-config Node', function() {
                 logMessages.push(msg);
                 originalLog.call(n1, msg);
             };
-            
+
             n1.refreshAccessToken().then(() => {
                 const debugLogs = logMessages.filter(msg => msg.includes('[DEBUG]'));
-                
+
                 // Should have debug messages about token refresh
                 const hasRefreshMsg = debugLogs.some(msg => msg.includes('Starting token refresh'));
                 expect(hasRefreshMsg).to.be.true;
-                
+
                 done();
             }).catch(done);
         });
     });
 
     it('should log debug messages in getValidToken', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config',
             enableDebug: true
         }];
@@ -437,7 +437,7 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Store original log function
             const originalLog = n1.log;
             let logMessages = [];
@@ -445,33 +445,33 @@ describe('viessmann-config Node', function() {
                 logMessages.push(msg);
                 originalLog.call(n1, msg);
             };
-            
+
             n1.getValidToken().then(() => {
                 const debugLogs = logMessages.filter(msg => msg.includes('[DEBUG]'));
-                
+
                 // Should have debug message about checking token validity
                 const hasCheckMsg = debugLogs.some(msg => msg.includes('Checking token validity'));
                 expect(hasCheckMsg).to.be.true;
-                
+
                 done();
             }).catch(done);
         });
     });
 
     it('should update auth state to authenticated on successful authentication', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = makeCredentials('n1');
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // With tokens provided, auth state should be authenticated on load
             expect(n1.authState).to.equal('authenticated');
-            
+
             n1.authenticate().then(() => {
                 expect(n1.authState).to.equal('authenticated');
                 expect(n1.authError).to.be.null;
@@ -481,9 +481,9 @@ describe('viessmann-config Node', function() {
     });
 
     it('should update auth state to error on authentication failure', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = {
@@ -495,7 +495,7 @@ describe('viessmann-config Node', function() {
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.authenticate().then(() => {
                 done(new Error('Should have failed authentication'));
             }).catch(() => {

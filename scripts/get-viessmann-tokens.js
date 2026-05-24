@@ -2,10 +2,10 @@
 
 /**
  * Viessmann Token Generator
- * 
+ *
  * This script helps you generate access and refresh tokens for the Viessmann API
  * using the OAuth2 PKCE flow.
- * 
+ *
  * Usage: node get-viessmann-tokens.js
  */
 
@@ -44,13 +44,13 @@ function question(prompt) {
 function generatePKCE() {
     // Generate a random code verifier (43-128 characters)
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
-    
+
     // Generate code challenge (SHA256 hash of verifier, base64url encoded)
     const codeChallenge = crypto
         .createHash('sha256')
         .update(codeVerifier)
         .digest('base64url');
-    
+
     return { codeVerifier, codeChallenge };
 }
 
@@ -136,7 +136,7 @@ function exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri) {
             code_verifier: codeVerifier,
             code: code
         });
-        
+
         const options = {
             hostname: 'iam.viessmann-climatesolutions.com',
             path: '/idp/v3/token',
@@ -146,7 +146,7 @@ function exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri) {
                 'Content-Length': Buffer.byteLength(postData)
             }
         };
-        
+
         const req = https.request(options, (res) => {
             let data = '';
 
@@ -187,7 +187,7 @@ async function main() {
     console.log('='.repeat(70));
     console.log('\nThis script will help you generate access and refresh tokens');
     console.log('for use with the Node-RED Viessmann integration.\n');
-    
+
     try {
         // Get client ID
         const clientId = await question('Enter your Viessmann Client ID: ');
@@ -196,12 +196,12 @@ async function main() {
             rl.close();
             process.exit(1);
         }
-        
+
         // Generate PKCE codes
         console.log('\nGenerating PKCE code verifier and challenge...');
         const { codeVerifier, codeChallenge } = generatePKCE();
         console.log('✓ Generated');
-        
+
         // Build authorization URL with a cryptographically random state value.
         // The callback server requires the redirected state to match this, which
         // blocks LAN/CSRF code-injection attempts (see issue #69).
@@ -217,7 +217,7 @@ async function main() {
             `state=${encodeURIComponent(state)}&` +
             `code_challenge=${encodeURIComponent(codeChallenge)}&` +
             `code_challenge_method=S256`;
-        
+
         console.log('\n' + '='.repeat(70));
         console.log('STEP 1: Authorize in Browser');
         console.log('='.repeat(70));
@@ -227,7 +227,7 @@ async function main() {
         console.log('2. Authorize the application');
         console.log('3. You will be redirected to localhost (this is expected)');
         console.log('\nStarting local server to capture the authorization code...');
-        
+
         // Try to open browser. Uses execFile (array form) on a real
         // executable on every platform, so no shell parses the URL.
         // encodeURIComponent is no longer the only line of defense
@@ -247,7 +247,7 @@ async function main() {
                 execFile('xdg-open', [url], () => { /* best-effort */ });
             }
         };
-        
+
         setTimeout(() => {
             try {
                 open(authUrl);
@@ -255,19 +255,19 @@ async function main() {
                 console.log('\nCould not open browser automatically. Please open the URL manually.');
             }
         }, 1000);
-        
+
         // Start callback server and wait for code
         const code = await startCallbackServer(callbackPort, state);
         console.log('\n✓ Authorization code received');
-        
+
         // Exchange code for tokens
         console.log('\n' + '='.repeat(70));
         console.log('STEP 2: Exchanging Code for Tokens');
         console.log('='.repeat(70));
         console.log('\nRequesting access and refresh tokens...');
-        
+
         const tokens = await exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri);
-        
+
         console.log('\n✓ Tokens received successfully!');
 
         // Write tokens to a restricted-permission file rather than printing
@@ -318,7 +318,7 @@ async function main() {
         console.log('\nAccess token expires in ' + (tokens.expires_in / 3600) + ' hours.');
         console.log('Refresh token expires in 180 days (used for automatic renewal).');
         console.log('='.repeat(70) + '\n');
-        
+
     } catch (err) {
         console.error('\nError:', err.message);
         process.exit(1);

@@ -69,9 +69,9 @@ describe('viessmann-read Node', function() {
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -181,9 +181,9 @@ describe('viessmann-read Node', function() {
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0'
             });
         });
@@ -198,7 +198,7 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
@@ -216,7 +216,7 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
@@ -234,7 +234,7 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
@@ -252,7 +252,7 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Test various invalid inputs: string, alphanumeric, negative, zero, float
             const invalidInputs = [
                 { installationId: 'invalid', gatewaySerial: '1234567890123456', deviceId: '0' },
@@ -261,9 +261,9 @@ describe('viessmann-read Node', function() {
                 { installationId: 0, gatewaySerial: '1234567890123456', deviceId: '0' },
                 { installationId: 1.5, gatewaySerial: '1234567890123456', deviceId: '0' }
             ];
-            
+
             let errorCount = 0;
-            
+
             n1.on('call:error', function() {
                 errorCount++;
                 if (errorCount === invalidInputs.length) {
@@ -284,7 +284,7 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Test various invalid inputs: number, empty string, whitespace-only, null
             const invalidInputs = [
                 { installationId: 123456, gatewaySerial: 12345, deviceId: '0' },
@@ -292,9 +292,9 @@ describe('viessmann-read Node', function() {
                 { installationId: 123456, gatewaySerial: '   ', deviceId: '0' },
                 { installationId: 123456, gatewaySerial: null, deviceId: '0' }
             ];
-            
+
             let errorCount = 0;
-            
+
             n1.on('call:error', function() {
                 errorCount++;
                 if (errorCount === invalidInputs.length) {
@@ -315,7 +315,7 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             // Test various invalid inputs: number, empty string, whitespace-only, null
             const invalidInputs = [
                 { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: 12345 },
@@ -323,9 +323,9 @@ describe('viessmann-read Node', function() {
                 { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '   ' },
                 { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: null }
             ];
-            
+
             let errorCount = 0;
-            
+
             n1.on('call:error', function() {
                 errorCount++;
                 if (errorCount === invalidInputs.length) {
@@ -353,14 +353,14 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0'
             });
         });
@@ -593,9 +593,9 @@ describe('viessmann-read Node', function() {
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -642,22 +642,22 @@ describe('viessmann-read Node', function() {
                     expect(msg.payload).to.have.property('feature', 'heating.circuits.0.temperature');
                     expect(msg.payload.properties.value).to.have.property('value', 21.5);
                     expect(msg.payload.properties.value).to.have.property('unit', 'celsius');
-                    
+
                     // Check that status was set with value and unit
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', '21.5celsius');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -702,22 +702,22 @@ describe('viessmann-read Node', function() {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload).to.have.property('feature', 'heating.circuits.0.operating.modes.active');
                     expect(msg.payload.properties.value).to.have.property('value', 'dhw');
-                    
+
                     // Check that status was set with value only
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', 'dhw');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active'
             });
@@ -763,22 +763,22 @@ describe('viessmann-read Node', function() {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload).to.have.property('feature', 'device.status');
                     expect(msg.payload.properties.status).to.have.property('value', 'OK');
-                    
+
                     // Check that status was set with value from properties.status
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', 'OK');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'device.status'
             });
@@ -823,22 +823,22 @@ describe('viessmann-read Node', function() {
                 try {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload).to.have.property('feature', 'heating.circuits.0.temperature');
-                    
+
                     // Check that status was set to success when value is null
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', 'success');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -885,22 +885,22 @@ describe('viessmann-read Node', function() {
                 try {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload).to.be.an('array');
-                    
+
                     // Check that status was set to success for all features read
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', 'success');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0'
             });
         });
@@ -937,14 +937,14 @@ describe('viessmann-read Node', function() {
 
         helper.load([configNode, readNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -988,22 +988,22 @@ describe('viessmann-read Node', function() {
                 try {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload.properties.strength).to.have.property('value', 75);
-                    
+
                     // Check that status was set with strength value
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', '75');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.burner.strength'
             });
@@ -1047,22 +1047,22 @@ describe('viessmann-read Node', function() {
                 try {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload.properties.active).to.have.property('value', true);
-                    
+
                     // Check that status was set with active value
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', 'true');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.active'
             });
@@ -1108,22 +1108,22 @@ describe('viessmann-read Node', function() {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload.properties.hours).to.have.property('value', 1234.5);
                     expect(msg.payload.properties.hours).to.have.property('unit', 'hour');
-                    
+
                     // Check that status was set with hours value and unit
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', '1234.5hour');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.burner.statistics'
             });
@@ -1167,22 +1167,22 @@ describe('viessmann-read Node', function() {
                 try {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload.properties.starts).to.have.property('value', 5678);
-                    
+
                     // Check that status was set with starts value
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', '5678');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.burner.starts'
             });
@@ -1228,22 +1228,22 @@ describe('viessmann-read Node', function() {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload.properties.temperature).to.have.property('value', 65.5);
                     expect(msg.payload.properties.temperature).to.have.property('unit', 'celsius');
-                    
+
                     // Check that status was set with temperature value and unit
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', '65.5celsius');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.boiler.temperature'
             });
@@ -1294,22 +1294,22 @@ describe('viessmann-read Node', function() {
                     expect(msg.payload.properties.hours).to.have.property('value', 1234.5);
                     expect(msg.payload.properties.hours).to.have.property('unit', 'hour');
                     expect(msg.payload.properties.starts).to.have.property('value', 5678);
-                    
+
                     // Check that status shows both values concatenated with /
                     const status = n1.status.lastCall.args[0];
                     expect(status).to.have.property('fill', 'green');
                     expect(status).to.have.property('shape', 'dot');
                     expect(status).to.have.property('text', '1234.5hour/5678');
-                    
+
                     done();
                 } catch (err) {
                     done(err);
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.burner.statistics'
             });

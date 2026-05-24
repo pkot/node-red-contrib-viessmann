@@ -49,9 +49,9 @@ describe('viessmann-write Node', function() {
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -87,9 +87,9 @@ describe('viessmann-write Node', function() {
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 datapoint: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -200,13 +200,13 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -224,13 +224,13 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
+            n1.receive({
+                installationId: 123456,
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -248,13 +248,13 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
+            n1.receive({
+                installationId: 123456,
                 gatewaySerial: '1234567890123456',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -272,13 +272,13 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
+            n1.receive({
+                installationId: 123456,
                 gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 command: 'setMode',
@@ -296,13 +296,13 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
+            n1.receive({
+                installationId: 123456,
                 gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
@@ -320,13 +320,13 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
+            n1.receive({
+                installationId: 123456,
                 gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
@@ -381,9 +381,9 @@ describe('viessmann-write Node', function() {
                 { installationId: 0, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: 1.5, gatewaySerial: '1234567890123456', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } }
             ];
-            
+
             let errorCount = 0;
-            
+
             n1.on('call:error', function() {
                 errorCount++;
                 if (errorCount === invalidInputs.length) {
@@ -404,16 +404,16 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             const invalidInputs = [
                 { installationId: 123456, gatewaySerial: 12345, deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: 123456, gatewaySerial: '', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: 123456, gatewaySerial: '   ', deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: 123456, gatewaySerial: null, deviceId: '0', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } }
             ];
-            
+
             let errorCount = 0;
-            
+
             n1.on('call:error', function() {
                 errorCount++;
                 if (errorCount === invalidInputs.length) {
@@ -434,16 +434,16 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             const invalidInputs = [
                 { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: 12345, feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '   ', feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } },
                 { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: null, feature: 'heating.circuits.0.operating.modes.active', command: 'setMode', params: { mode: 'dhw' } }
             ];
-            
+
             let errorCount = 0;
-            
+
             n1.on('call:error', function() {
                 errorCount++;
                 if (errorCount === invalidInputs.length) {
@@ -471,14 +471,14 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -494,14 +494,14 @@ describe('viessmann-write Node', function() {
 
         helper.load([writeNode], flow, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -631,9 +631,9 @@ describe('viessmann-write Node', function() {
                 }
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
@@ -673,14 +673,14 @@ describe('viessmann-write Node', function() {
 
         helper.load([configNode, writeNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
 
-            n1.receive({ 
-                installationId: 123456, 
-                gatewaySerial: '1234567890123456', 
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active',
                 command: 'setMode',
