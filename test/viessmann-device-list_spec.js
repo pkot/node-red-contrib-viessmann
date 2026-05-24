@@ -103,33 +103,43 @@ describe('viessmann-device-list Node', function() {
         helper.load([configNode, deviceListNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
 
-            // Fire the input; the request begins but won't complete for 2s.
-            n1.receive({ payload: {} });
-
-            // Unload after 100ms. The controller in node._inflightAbortControllers
-            // should fire, axios should reject (aborted), and the executeApiGet
-            // catch should surface the abort error to the test's `error` shim.
+            // Capture the first error message so we can assert it actually
+            // describes an abort (not some other failure).
+            let firstError = null;
             const origError = n1.error;
-            let aborted = false;
             n1.error = function(message, originatingMsg) {
-                aborted = true;
+                if (firstError === null) firstError = String(message);
                 origError.call(n1, message, originatingMsg);
             };
 
-            setTimeout(() => {
-                helper.unload().then(() => {
-                    setTimeout(() => {
-                        try {
-                            // The abort path went through node.error(...) before
-                            // the close handler tore everything down.
-                            expect(aborted).to.equal(true);
-                            done();
-                        } catch (err) {
-                            done(err);
-                        }
-                    }, 50);
-                }).catch(done);
-            }, 100);
+            // Resolve the deferred completion as soon as the abort path
+            // surfaces a node.error. Avoids relying on a fixed sleep.
+            let finished = false;
+            const finish = (err) => {
+                if (finished) return;
+                finished = true;
+                done(err);
+            };
+            const checkInterval = setInterval(() => {
+                if (firstError !== null) {
+                    clearInterval(checkInterval);
+                    try {
+                        // axios uses 'canceled' / 'aborted' wording on AbortError
+                        // and our delay rejects with code ERR_CANCELED; both
+                        // surface through extractErrorMessage. Either substring
+                        // is acceptable evidence the abort fired.
+                        expect(firstError.toLowerCase()).to.match(/cancel|abort/);
+                        finish();
+                    } catch (err) {
+                        finish(err);
+                    }
+                }
+            }, 20);
+
+            // Fire the input; the request begins but won't complete for 2s.
+            n1.receive({ payload: {} });
+            // Unload shortly after, which aborts the request.
+            setTimeout(() => helper.unload().catch(() => { /* ignore */ }), 50);
         });
     });
 
