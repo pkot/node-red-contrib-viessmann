@@ -50,29 +50,34 @@ function validateConfigNode(node, msg) {
 }
 
 /**
- * Create a status update function for dependent nodes
+ * Create a status update function for dependent nodes.
+ *
+ * Accepts an optional `snapshot` argument (state, error) - the same shape
+ * the config node emits via the 'auth-state' event. Falls back to
+ * `node.config.getAuthSnapshot()` when called with no argument (e.g. the
+ * initial render).
+ *
  * @param {object} node - The Node-RED node instance
- * @returns {function} Status update function
+ * @returns {function} Status update function: (snapshot?) => void
  */
 function createStatusUpdater(node) {
-    return function() {
+    return function(snapshot) {
         if (!node.config) {
             node.status({fill: 'red', shape: 'dot', text: 'no config'});
             return;
         }
-        
-        switch (node.config.authState) {
+        const { state, error } = snapshot || node.config.getAuthSnapshot();
+
+        switch (state) {
             case 'authenticated':
                 node.status({fill: 'green', shape: 'dot', text: 'connected'});
                 break;
             case 'authenticating':
                 node.status({fill: 'yellow', shape: 'ring', text: 'authenticating...'});
                 break;
-            case 'error': {
-                const errorText = node.config.authError || 'auth failed';
-                node.status({fill: 'red', shape: 'dot', text: errorText});
+            case 'error':
+                node.status({fill: 'red', shape: 'dot', text: error || 'auth failed'});
                 break;
-            }
             case 'disconnected':
             default:
                 node.status({fill: 'grey', shape: 'ring', text: 'disconnected'});
@@ -97,9 +102,10 @@ function setupDependentNode(node) {
         return;
     }
 
-    // Subscribe via EventEmitter. We hold the bound listener so we can
-    // remove it cleanly on node close.
-    const onAuthState = function() { node.updateStatus(); };
+    // Subscribe via EventEmitter. The listener receives the snapshot payload
+    // and passes it to updateStatus so the status reflects exactly what was
+    // emitted (no second read of mutable config state).
+    const onAuthState = function(snapshot) { node.updateStatus(snapshot); };
     node.config.on('auth-state', onAuthState);
 
     // Render the current state immediately.
