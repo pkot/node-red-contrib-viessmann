@@ -15,6 +15,9 @@
     "README.md",
     "FEATURES.md"
   ],
+  "bin": {
+    "viessmann-get-tokens": "scripts/get-viessmann-tokens.js"
+  },
   "keywords": [
     "node-red",
     "viessmann",
