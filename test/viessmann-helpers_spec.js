@@ -119,7 +119,29 @@ describe('viessmann-helpers', function() {
             const error = {
                 response: { status: 401, data: { message: 'Invalid token' } }
             };
-            expect(extractErrorMessage(error)).to.equal('HTTP 401: Invalid token');
+            const out = extractErrorMessage(error);
+            expect(out).to.match(/^HTTP 401: Invalid token/);
+            // 401 gets an actionable hint appended; assert it's there.
+            expect(out).to.include('token expired');
+        });
+
+        it('should append a 403-scope hint', function() {
+            const error = { response: { status: 403, data: { message: 'Forbidden' } } };
+            const msg = extractErrorMessage(error);
+            expect(msg).to.include('HTTP 403');
+            expect(msg).to.include('scope');
+        });
+
+        it('should append a 404-IDs hint', function() {
+            const error = { response: { status: 404, data: { message: 'Not Found' } } };
+            const msg = extractErrorMessage(error);
+            expect(msg).to.include('HTTP 404');
+            expect(msg).to.include('installationId');
+        });
+
+        it('should not append a hint for statuses without one', function() {
+            const error = { response: { status: 418, data: {} } };
+            expect(extractErrorMessage(error)).to.equal('HTTP 418');
         });
 
         it('should prefer OAuth-style error_description when present', function() {
