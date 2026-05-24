@@ -98,6 +98,99 @@ describe('viessmann-write Node', function() {
         });
     });
 
+    it('should pre-flight validate against schema when validateBeforeWrite is on (success case)', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config', validateBeforeWrite: true },
+            { id: 'n1', type: 'viessmann-write', name: 'test write', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = makeCredentials();
+
+        const featurePath = '/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active';
+        // Schema GET (pre-flight) then command POST.
+        nock('https://api.viessmann-climatesolutions.com')
+            .get(featurePath)
+            .reply(200, { data: {
+                feature: 'heating.circuits.0.operating.modes.active',
+                commands: {
+                    setMode: {
+                        isExecutable: true,
+                        params: { mode: { type: 'string', required: true, constraints: { enum: ['dhw', 'standby'] } } }
+                    }
+                }
+            } })
+            .post(featurePath + '/commands/setMode')
+            .reply(200, {});
+
+        helper.load([configNode, writeNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg.payload).to.have.property('success', true);
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '7571381573112225',
+                deviceId: '0',
+                feature: 'heating.circuits.0.operating.modes.active',
+                command: 'setMode',
+                params: { mode: 'dhw' }
+            });
+        });
+    });
+
+    it('should reject invalid params before POST when validateBeforeWrite is on', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config', validateBeforeWrite: true },
+            { id: 'n1', type: 'viessmann-write', name: 'test write', config: 'c1' }
+        ];
+        const credentials = makeCredentials();
+
+        const featurePath = '/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active';
+        // Only the schema GET; the POST must not be attempted.
+        nock('https://api.viessmann-climatesolutions.com')
+            .get(featurePath)
+            .reply(200, { data: {
+                feature: 'heating.circuits.0.operating.modes.active',
+                commands: {
+                    setMode: {
+                        isExecutable: true,
+                        params: { mode: { type: 'string', required: true, constraints: { enum: ['dhw', 'standby'] } } }
+                    }
+                }
+            } });
+
+        helper.load([configNode, writeNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+
+            n1.on('call:error', function(call) {
+                try {
+                    expect(call.firstArg).to.include('Schema validation failed');
+                    expect(call.firstArg).to.include('one of: dhw, standby');
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '7571381573112225',
+                deviceId: '0',
+                feature: 'heating.circuits.0.operating.modes.active',
+                command: 'setMode',
+                params: { mode: 'rocket' }
+            });
+        });
+    });
+
     it('should handle missing installationId', function(done) {
         const flow = [
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
