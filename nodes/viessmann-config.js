@@ -32,6 +32,12 @@ module.exports = function(RED) {
         
         // Store debug flag from config
         this.enableDebug = config.enableDebug || false;
+
+        // When true, viessmann-write performs a client-side schema check
+        // against the feature's declared `commands` before posting (#77).
+        // Off by default to preserve the existing opaque pass-through;
+        // users opt-in for stricter validation.
+        this.validateBeforeWrite = config.validateBeforeWrite === true || config.validateBeforeWrite === 'true';
         
         // OAuth2 endpoints
         this.tokenUrl = VIESSMANN_IAM_BASE_URL + VIESSMANN_TOKEN_PATH;
