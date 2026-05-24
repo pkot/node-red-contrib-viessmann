@@ -78,6 +78,45 @@ describe('viessmann-read Node', function() {
         });
     });
 
+    it('should warn and return envelope when response.data.data is missing', function(done) {
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-read', name: 'test read', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = makeCredentials();
+
+        // Pathological response: 200 OK but the envelope's `data` is missing.
+        const envelope = { meta: { foo: 'bar' } };
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.temperature')
+            .reply(200, envelope);
+
+        helper.load([configNode, readNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            const warnings = [];
+            const origWarn = n1.warn;
+            n1.warn = function(m) { warnings.push(String(m)); origWarn.call(n1, m); };
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg.payload).to.deep.equal(envelope);
+                    expect(warnings.some(w => w.toLowerCase().includes('unexpected response shape'))).to.equal(true);
+                    done();
+                } catch (err) { done(err); }
+            });
+
+            n1.receive({
+                installationId: 123456,
+                gatewaySerial: '1234567890123456',
+                deviceId: '0',
+                feature: 'heating.circuits.0.temperature'
+            });
+        });
+    });
+
     it('should read all features when no feature is specified', function(done) {
         const flow = [
             { id: 'c1', type: 'viessmann-config', name: 'test config' },

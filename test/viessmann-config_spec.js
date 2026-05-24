@@ -237,6 +237,38 @@ describe('viessmann-config Node', function() {
         });
     });
 
+    it('should default to a 1-hour expiry and warn when expires_in is missing', function(done) {
+        const flow = [{ id: 'n1', type: 'viessmann-config', name: 'test config' }];
+        const credentials = makeCredentials('n1');
+
+        nock('https://iam.viessmann-climatesolutions.com')
+            .post('/idp/v3/token')
+            .reply(200, {
+                access_token: 'fresh-token',
+                token_type: 'Bearer'
+                // No expires_in
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const warnings = [];
+            const origWarn = n1.warn;
+            n1.warn = function(m) { warnings.push(String(m)); origWarn.call(n1, m); };
+
+            const before = Date.now();
+            n1.refreshAccessToken().then(() => {
+                try {
+                    expect(warnings.some(w => w.includes('expires_in'))).to.equal(true);
+                    // Expiry should be ~1 hour from now (allow generous tolerance).
+                    const elapsed = n1.tokenExpiry - before;
+                    expect(elapsed).to.be.greaterThan(3600 * 1000 - 5000);
+                    expect(elapsed).to.be.lessThan(3600 * 1000 + 5000);
+                    done();
+                } catch (err) { done(err); }
+            }).catch(done);
+        });
+    });
+
     it('should provide valid token to requesting nodes', function(done) {
         const flow = [{ 
             id: 'n1', 

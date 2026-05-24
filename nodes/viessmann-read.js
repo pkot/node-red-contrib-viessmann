@@ -25,10 +25,17 @@ module.exports = function(RED) {
             }
 
             try {
-                // Set payload to the data
                 // For single feature reads, API returns { data: {...} }
                 // For all features reads, API returns { data: [...] }
-                msg.payload = response.data.data || response.data;
+                // If the response shape is unexpected (missing data.data),
+                // surface a node.warn so users notice rather than silently
+                // handing the caller the whole envelope.
+                if (response.data && response.data.data !== undefined && response.data.data !== null) {
+                    msg.payload = response.data.data;
+                } else {
+                    node.warn('Unexpected response shape: response.data.data missing, returning envelope');
+                    msg.payload = response.data;
+                }
 
                 // Set status based on the read result
                 if (feature && msg.payload.properties) {
