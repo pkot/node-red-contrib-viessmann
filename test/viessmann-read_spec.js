@@ -503,15 +503,25 @@ describe('viessmann-read Node', function() {
         };
 
         helper.load([configNode, readNode], flow, credentials, function() {
-            const n1 = helper.getNode('n1');
             const c1 = helper.getNode('c1');
-            
-            expect(n1).to.have.property('updateStatus');
-            expect(typeof n1.updateStatus).to.equal('function');
-            
-            // Should be authenticated with token
-            expect(c1.authState).to.equal('authenticated');
-            done();
+            const n1 = helper.getNode('n1');
+
+            // Capture every status() call so we can assert on the actual
+            // visible icon, not just internal state.
+            const statusCalls = [];
+            const originalStatus = n1.status;
+            n1.status = function(status) {
+                statusCalls.push(status);
+                originalStatus.call(n1, status);
+            };
+
+            c1.authenticate().then(() => {
+                expect(statusCalls.length).to.be.greaterThan(0);
+                const lastStatus = statusCalls[statusCalls.length - 1];
+                expect(lastStatus.fill).to.equal('green');
+                expect(lastStatus.text).to.equal('connected');
+                done();
+            }).catch(done);
         });
     });
 
@@ -522,22 +532,29 @@ describe('viessmann-read Node', function() {
         ];
         const credentials = {
             c1: {
-                clientId: 'test-client-id',
-                accessToken: '',
-                refreshToken: ''
+                clientId: 'test-client-id'
+                // No accessToken - authenticate() will reject and push the
+                // node into the error auth state.
             }
         };
 
         helper.load([configNode, readNode], flow, credentials, function() {
-            const n1 = helper.getNode('n1');
             const c1 = helper.getNode('c1');
-            
-            expect(n1).to.have.property('updateStatus');
-            expect(typeof n1.updateStatus).to.equal('function');
-            
-            // Should be disconnected without token
-            expect(c1.authState).to.equal('disconnected');
-            done();
+            const n1 = helper.getNode('n1');
+
+            const statusCalls = [];
+            const originalStatus = n1.status;
+            n1.status = function(status) {
+                statusCalls.push(status);
+                originalStatus.call(n1, status);
+            };
+
+            c1.authenticate().catch(() => {
+                expect(statusCalls.length).to.be.greaterThan(0);
+                const lastStatus = statusCalls[statusCalls.length - 1];
+                expect(lastStatus.fill).to.equal('red');
+                done();
+            });
         });
     });
 
