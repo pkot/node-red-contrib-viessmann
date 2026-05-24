@@ -1,5 +1,10 @@
 const axios = require('axios');
-const { ViessmannClient, HTTP_TIMEOUT_MS } = require('./lib/client');
+const {
+    ViessmannClient,
+    HTTP_TIMEOUT_MS,
+    VIESSMANN_IAM_BASE_URL,
+    VIESSMANN_TOKEN_PATH
+} = require('./lib/client');
 
 // Token refresh buffer time (5 minutes before expiration)
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
@@ -29,7 +34,7 @@ module.exports = function(RED) {
         this.enableDebug = config.enableDebug || false;
         
         // OAuth2 endpoints
-        this.tokenUrl = 'https://iam.viessmann-climatesolutions.com/idp/v3/token';
+        this.tokenUrl = VIESSMANN_IAM_BASE_URL + VIESSMANN_TOKEN_PATH;
         
         // Token storage - initialize from credentials if provided
         this.accessToken = node.credentials.accessToken || null;

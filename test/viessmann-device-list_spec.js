@@ -44,7 +44,7 @@ describe('viessmann-device-list Node', function() {
         };
 
         // Mock OAuth2 token endpoint
-        nock('https://iam.viessmann.com')
+        nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
             .reply(200, {
                 access_token: 'test-access-token',
@@ -163,7 +163,7 @@ describe('viessmann-device-list Node', function() {
         };
 
         // Mock OAuth2 token endpoint
-        nock('https://iam.viessmann.com')
+        nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
             .reply(200, {
                 access_token: 'test-access-token',
@@ -219,7 +219,7 @@ describe('viessmann-device-list Node', function() {
             }
         };
 
-        nock('https://iam.viessmann.com')
+        nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
             .reply(200, {
                 access_token: 'test-access-token',
