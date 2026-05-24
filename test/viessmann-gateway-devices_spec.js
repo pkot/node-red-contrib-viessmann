@@ -32,11 +32,11 @@ describe('viessmann-gateway-devices Node', function() {
 
         // Mock gateway devices endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices')
+            .get('/iot/v2/equipment/installations/123456/gateways/1234567890123456/devices')
             .reply(200, {
                 data: [
                     {
-                        gatewaySerial: '7571381573112225',
+                        gatewaySerial: '1234567890123456',
                         id: '0',
                         boilerSerial: '123456789012',
                         boilerSerialEditor: 'User',
@@ -53,7 +53,7 @@ describe('viessmann-gateway-devices Node', function() {
                         translationKey: null
                     },
                     {
-                        gatewaySerial: '7571381573112225',
+                        gatewaySerial: '1234567890123456',
                         id: '1',
                         boilerSerial: '987654321098',
                         boilerSerialEditor: 'User',
@@ -82,7 +82,7 @@ describe('viessmann-gateway-devices Node', function() {
                     expect(msg.payload).to.be.an('array');
                     expect(msg.payload).to.have.lengthOf(2);
                     expect(msg.payload[0]).to.have.property('id', '0');
-                    expect(msg.payload[0]).to.have.property('gatewaySerial', '7571381573112225');
+                    expect(msg.payload[0]).to.have.property('gatewaySerial', '1234567890123456');
                     expect(msg.payload[0]).to.have.property('deviceType', 'heating');
                     expect(msg.payload[0]).to.have.property('status', 'Offline');
                     expect(msg.payload[1]).to.have.property('id', '1');
@@ -93,7 +93,7 @@ describe('viessmann-gateway-devices Node', function() {
                 }
             });
 
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225' });
+            n1.receive({ installationId: 123456, gatewaySerial: '1234567890123456' });
         });
     });
 
@@ -111,7 +111,7 @@ describe('viessmann-gateway-devices Node', function() {
                 done();
             });
 
-            n1.receive({ gatewaySerial: '7571381573112225' });
+            n1.receive({ gatewaySerial: '1234567890123456' });
         });
     });
 
@@ -154,11 +154,11 @@ describe('viessmann-gateway-devices Node', function() {
             });
 
             // Test various invalid inputs
-            n1.receive({ installationId: 'invalid', gatewaySerial: '7571381573112225' });
-            n1.receive({ installationId: '123abc', gatewaySerial: '7571381573112225' });
-            n1.receive({ installationId: -1, gatewaySerial: '7571381573112225' });
-            n1.receive({ installationId: 0, gatewaySerial: '7571381573112225' });
-            n1.receive({ installationId: 1.5, gatewaySerial: '7571381573112225' });
+            n1.receive({ installationId: 'invalid', gatewaySerial: '1234567890123456' });
+            n1.receive({ installationId: '123abc', gatewaySerial: '1234567890123456' });
+            n1.receive({ installationId: -1, gatewaySerial: '1234567890123456' });
+            n1.receive({ installationId: 0, gatewaySerial: '1234567890123456' });
+            n1.receive({ installationId: 1.5, gatewaySerial: '1234567890123456' });
         });
     });
 
@@ -198,7 +198,7 @@ describe('viessmann-gateway-devices Node', function() {
 
         // Mock gateway devices endpoint with error
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices')
+            .get('/iot/v2/equipment/installations/123456/gateways/1234567890123456/devices')
             .reply(404, {
                 error: 'Gateway not found'
             });
@@ -210,7 +210,7 @@ describe('viessmann-gateway-devices Node', function() {
                 done();
             });
 
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225' });
+            n1.receive({ installationId: 123456, gatewaySerial: '1234567890123456' });
         });
     });
 
@@ -226,7 +226,7 @@ describe('viessmann-gateway-devices Node', function() {
                 done();
             });
 
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225' });
+            n1.receive({ installationId: 123456, gatewaySerial: '1234567890123456' });
         });
     });
 

@@ -32,11 +32,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.temperature')
             .reply(200, {
                 data: {
                     feature: 'heating.circuits.0.temperature',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -71,7 +71,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -88,12 +88,12 @@ describe('viessmann-read Node', function() {
 
         // Mock features endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features')
             .reply(200, {
                 data: [
                     {
                         feature: 'heating.circuits.0.temperature',
-                        gatewayId: '7571381573112225',
+                        gatewayId: '1234567890123456',
                         deviceId: '0',
                         isEnabled: true,
                         isReady: true,
@@ -109,7 +109,7 @@ describe('viessmann-read Node', function() {
                     },
                     {
                         feature: 'heating.circuits.0.operating.modes.active',
-                        gatewayId: '7571381573112225',
+                        gatewayId: '1234567890123456',
                         deviceId: '0',
                         isEnabled: true,
                         isReady: true,
@@ -144,7 +144,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0'
             });
         });
@@ -164,7 +164,7 @@ describe('viessmann-read Node', function() {
                 done();
             });
 
-            n1.receive({ gatewaySerial: '7571381573112225', deviceId: '0' });
+            n1.receive({ gatewaySerial: '1234567890123456', deviceId: '0' });
         });
     });
 
@@ -200,7 +200,7 @@ describe('viessmann-read Node', function() {
                 done();
             });
 
-            n1.receive({ installationId: 123456, gatewaySerial: '7571381573112225' });
+            n1.receive({ installationId: 123456, gatewaySerial: '1234567890123456' });
         });
     });
 
@@ -216,11 +216,11 @@ describe('viessmann-read Node', function() {
             
             // Test various invalid inputs: string, alphanumeric, negative, zero, float
             const invalidInputs = [
-                { installationId: 'invalid', gatewaySerial: '7571381573112225', deviceId: '0' },
-                { installationId: '123abc', gatewaySerial: '7571381573112225', deviceId: '0' },
-                { installationId: -1, gatewaySerial: '7571381573112225', deviceId: '0' },
-                { installationId: 0, gatewaySerial: '7571381573112225', deviceId: '0' },
-                { installationId: 1.5, gatewaySerial: '7571381573112225', deviceId: '0' }
+                { installationId: 'invalid', gatewaySerial: '1234567890123456', deviceId: '0' },
+                { installationId: '123abc', gatewaySerial: '1234567890123456', deviceId: '0' },
+                { installationId: -1, gatewaySerial: '1234567890123456', deviceId: '0' },
+                { installationId: 0, gatewaySerial: '1234567890123456', deviceId: '0' },
+                { installationId: 1.5, gatewaySerial: '1234567890123456', deviceId: '0' }
             ];
             
             let errorCount = 0;
@@ -279,10 +279,10 @@ describe('viessmann-read Node', function() {
             
             // Test various invalid inputs: number, empty string, whitespace-only, null
             const invalidInputs = [
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: 12345 },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '' },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: '   ' },
-                { installationId: 123456, gatewaySerial: '7571381573112225', deviceId: null }
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: 12345 },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '' },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: '   ' },
+                { installationId: 123456, gatewaySerial: '1234567890123456', deviceId: null }
             ];
             
             let errorCount = 0;
@@ -307,7 +307,7 @@ describe('viessmann-read Node', function() {
 
         // Mock API error
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features')
             .reply(404, {
                 error: 'Device not found'
             });
@@ -321,7 +321,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0'
             });
         });
@@ -337,7 +337,7 @@ describe('viessmann-read Node', function() {
         // Real axios decorates connection errors with a `code` property; nock's
         // string form doesn't, so we pass an Error explicitly to mirror reality.
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features')
             .replyWithError(Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:443'), { code: 'ECONNREFUSED' }));
 
         helper.load([configNode, readNode], flow, credentials, function() {
@@ -357,7 +357,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({
                 installationId: 123456,
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0'
             });
         });
@@ -371,7 +371,7 @@ describe('viessmann-read Node', function() {
         const credentials = makeCredentials();
 
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features')
             .replyWithError(Object.assign(new Error('connect ETIMEDOUT 10.0.0.1:443'), { code: 'ETIMEDOUT' }));
 
         helper.load([configNode, readNode], flow, credentials, function() {
@@ -390,7 +390,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({
                 installationId: 123456,
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0'
             });
         });
@@ -410,7 +410,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({
                 installationId: 123456,
-                gatewaySerial: '7571381573112225',
+                gatewaySerial: '1234567890123456',
                 deviceId: '0'
             });
         });
@@ -499,7 +499,7 @@ describe('viessmann-read Node', function() {
 
         // First request with expired token returns 401
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.temperature')
             .reply(401, {
                 error: 'Unauthorized',
                 message: 'Invalid or expired token'
@@ -517,11 +517,11 @@ describe('viessmann-read Node', function() {
 
         // Retry with new token succeeds
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.temperature')
             .reply(200, {
                 data: {
                     feature: 'heating.circuits.0.temperature',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -556,7 +556,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -573,11 +573,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.temperature')
             .reply(200, {
                 data: {
                     feature: 'heating.circuits.0.temperature',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -618,7 +618,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -635,11 +635,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint - no unit
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active')
             .reply(200, {
                 data: {
                     feature: 'heating.circuits.0.operating.modes.active',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -678,7 +678,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.operating.modes.active'
             });
@@ -695,11 +695,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with properties.status instead of properties.value
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/device.status')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/device.status')
             .reply(200, {
                 data: {
                     feature: 'device.status',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -739,7 +739,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'device.status'
             });
@@ -756,11 +756,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with null value
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.temperature')
             .reply(200, {
                 data: {
                     feature: 'heating.circuits.0.temperature',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -799,7 +799,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -816,12 +816,12 @@ describe('viessmann-read Node', function() {
 
         // Mock features endpoint
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features')
             .reply(200, {
                 data: [
                     {
                         feature: 'heating.circuits.0.temperature',
-                        gatewayId: '7571381573112225',
+                        gatewayId: '1234567890123456',
                         deviceId: '0',
                         isEnabled: true,
                         isReady: true,
@@ -861,7 +861,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0'
             });
         });
@@ -882,7 +882,7 @@ describe('viessmann-read Node', function() {
 
         // First request with expired token returns 401
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.temperature')
             .reply(401, {
                 error: 'Unauthorized',
                 message: 'Invalid or expired token'
@@ -905,7 +905,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.temperature'
             });
@@ -922,11 +922,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with properties.strength
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.burner.strength')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.burner.strength')
             .reply(200, {
                 data: {
                     feature: 'heating.burner.strength',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -964,7 +964,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.burner.strength'
             });
@@ -981,11 +981,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with properties.active
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.active')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.active')
             .reply(200, {
                 data: {
                     feature: 'heating.circuits.0.active',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -1023,7 +1023,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.circuits.0.active'
             });
@@ -1040,11 +1040,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with properties.hours
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.burner.statistics')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.burner.statistics')
             .reply(200, {
                 data: {
                     feature: 'heating.burner.statistics',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -1084,7 +1084,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.burner.statistics'
             });
@@ -1101,11 +1101,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with properties.starts
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.burner.starts')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.burner.starts')
             .reply(200, {
                 data: {
                     feature: 'heating.burner.starts',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -1143,7 +1143,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.burner.starts'
             });
@@ -1160,11 +1160,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with properties.temperature
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.boiler.temperature')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.boiler.temperature')
             .reply(200, {
                 data: {
                     feature: 'heating.boiler.temperature',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -1204,7 +1204,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.boiler.temperature'
             });
@@ -1221,11 +1221,11 @@ describe('viessmann-read Node', function() {
 
         // Mock feature endpoint with both hours and starts properties
         nock('https://api.viessmann-climatesolutions.com')
-            .get('/iot/v2/features/installations/123456/gateways/7571381573112225/devices/0/features/heating.burner.statistics')
+            .get('/iot/v2/features/installations/123456/gateways/1234567890123456/devices/0/features/heating.burner.statistics')
             .reply(200, {
                 data: {
                     feature: 'heating.burner.statistics',
-                    gatewayId: '7571381573112225',
+                    gatewayId: '1234567890123456',
                     deviceId: '0',
                     isEnabled: true,
                     isReady: true,
@@ -1270,7 +1270,7 @@ describe('viessmann-read Node', function() {
 
             n1.receive({ 
                 installationId: 123456, 
-                gatewaySerial: '7571381573112225', 
+                gatewaySerial: '1234567890123456', 
                 deviceId: '0',
                 feature: 'heating.burner.statistics'
             });

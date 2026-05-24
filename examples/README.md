@@ -142,7 +142,7 @@ All examples include debug nodes showing the API responses. Check these for:
 
 In each flow, look for function nodes with "TODO" comments. Replace the placeholder values with your actual:
 - Installation ID (e.g., 123456)
-- Gateway serial (e.g., "7571381573112225")
+- Gateway serial (e.g., "1234567890123456")
 - Device ID (e.g., "0")
 - Feature names (discovered using device-features node)
 
@@ -151,7 +151,7 @@ In each flow, look for function nodes with "TODO" comments. Replace the placehol
 ```javascript
 // Before (placeholder):
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 
 // After (your actual values):

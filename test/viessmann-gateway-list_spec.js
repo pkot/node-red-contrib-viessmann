@@ -36,7 +36,7 @@ describe('viessmann-gateway-list Node', function() {
             .reply(200, {
                 data: [
                     {
-                        serial: '7571381573112225',
+                        serial: '1234567890123456',
                         version: '1.2.3.4',
                         firmwareUpdateFailureCounter: 435,
                         autoUpdate: false,
@@ -82,7 +82,7 @@ describe('viessmann-gateway-list Node', function() {
                     expect(msg).to.have.property('payload');
                     expect(msg.payload).to.be.an('array');
                     expect(msg.payload).to.have.lengthOf(2);
-                    expect(msg.payload[0]).to.have.property('serial', '7571381573112225');
+                    expect(msg.payload[0]).to.have.property('serial', '1234567890123456');
                     expect(msg.payload[0]).to.have.property('gatewayType', 'VitoconnectOPTO2');
                     expect(msg.payload[0]).to.have.property('aggregatedStatus', 'WorksProperly');
                     expect(msg.payload[1]).to.have.property('serial', '9876543210111222');

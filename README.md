@@ -170,7 +170,7 @@ Lists all gateways for a specific Viessmann installation.
   ```json
   [
     {
-      "serial": "7571381573112225",
+      "serial": "1234567890123456",
       "version": "1.2.3.4",
       "gatewayType": "VitoconnectOPTO2",
       "aggregatedStatus": "WorksProperly",
@@ -216,7 +216,7 @@ Lists all devices attached to a specific gateway in a Viessmann installation.
   [
     {
       "id": "0",
-      "gatewaySerial": "7571381573112225",
+      "gatewaySerial": "1234567890123456",
       "boilerSerial": "123456789012",
       "boilerSerialEditor": "User",
       "bmuSerial": "123456789012",
@@ -265,7 +265,7 @@ Lists all available features/services for a specific device on a gateway.
   [
     {
       "feature": "heating.circuits.0.temperature",
-      "gatewayId": "7571381573112225",
+      "gatewayId": "1234567890123456",
       "deviceId": "0",
       "isEnabled": true,
       "isReady": true,
@@ -281,7 +281,7 @@ Lists all available features/services for a specific device on a gateway.
     },
     {
       "feature": "heating.circuits.0.operating.modes.active",
-      "gatewayId": "7571381573112225",
+      "gatewayId": "1234567890123456",
       "deviceId": "0",
       "isEnabled": true,
       "isReady": true,
@@ -293,7 +293,7 @@ Lists all available features/services for a specific device on a gateway.
       },
       "commands": {
         "setMode": {
-          "uri": "/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
+          "uri": "/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
           "name": "setMode",
           "isExecutable": true,
           "params": {
@@ -357,7 +357,7 @@ Reads specific data points from a selected device.
   ```json
   {
     "feature": "heating.circuits.0.temperature",
-    "gatewayId": "7571381573112225",
+    "gatewayId": "1234567890123456",
     "deviceId": "0",
     "isEnabled": true,
     "isReady": true,
@@ -378,7 +378,7 @@ Reads specific data points from a selected device.
   [
     {
       "feature": "heating.circuits.0.temperature",
-      "gatewayId": "7571381573112225",
+      "gatewayId": "1234567890123456",
       "deviceId": "0",
       "isEnabled": true,
       "isReady": true,
@@ -394,7 +394,7 @@ Reads specific data points from a selected device.
     },
     {
       "feature": "heating.circuits.0.operating.modes.active",
-      "gatewayId": "7571381573112225",
+      "gatewayId": "1234567890123456",
       "deviceId": "0",
       "isEnabled": true,
       "isReady": true,
@@ -406,7 +406,7 @@ Reads specific data points from a selected device.
       },
       "commands": {
         "setMode": {
-          "uri": "/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
+          "uri": "/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
           "name": "setMode",
           "isExecutable": true,
           "params": {
@@ -458,7 +458,7 @@ Example flow:
 ```javascript
 // Set the identifiers
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 msg.feature = "heating.circuits.0.temperature";
 // Returns: { feature: "heating.circuits.0.temperature", properties: { value: { value: 21.5, unit: "celsius" } }, ... }
@@ -473,7 +473,7 @@ Example flow:
 ```javascript
 // Set the identifiers
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 // Returns: [ { feature: "...", ... }, { feature: "...", ... }, ... ]
 ```
@@ -500,7 +500,7 @@ Sets values for writable Viessmann device parameters by executing commands on fe
   {
     "success": true,
     "installationId": 123456,
-    "gatewaySerial": "7571381573112225",
+    "gatewaySerial": "1234567890123456",
     "deviceId": "0",
     "feature": "heating.circuits.0.operating.modes.active",
     "command": "setMode",
@@ -523,7 +523,7 @@ Use the `viessmann-device-features` or `viessmann-read` node to discover which c
   "feature": "heating.circuits.0.operating.modes.active",
   "commands": {
     "setMode": {
-      "uri": "/installations/123456/gateways/7571381573112225/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
+      "uri": "/installations/123456/gateways/1234567890123456/devices/0/features/heating.circuits.0.operating.modes.active/commands/setMode",
       "name": "setMode",
       "isExecutable": true,
       "params": {
@@ -575,13 +575,13 @@ Example flow:
 ```javascript
 // Discover available commands first
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 // Pass to viessmann-read or viessmann-device-features to get commands
 
 // Then execute a command
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 msg.feature = "heating.circuits.0.operating.modes.active";
 msg.command = "setMode";
@@ -592,7 +592,7 @@ msg.params = { mode: "dhw" };
 *Setting a temperature setpoint:*
 ```javascript
 msg.installationId = 123456;
-msg.gatewaySerial = "7571381573112225";
+msg.gatewaySerial = "1234567890123456";
 msg.deviceId = "0";
 msg.feature = "heating.circuits.0.temperature";
 msg.command = "setTemperature";
