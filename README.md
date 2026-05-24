@@ -1,5 +1,8 @@
 # node-red-contrib-viessmann
 
+[![CI](https://github.com/pkot/node-red-contrib-viessmann/actions/workflows/ci.yml/badge.svg)](https://github.com/pkot/node-red-contrib-viessmann/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A Node-RED module for integrating Viessmann heating devices via the official Viessmann SaaS API.
 
 ## Features
