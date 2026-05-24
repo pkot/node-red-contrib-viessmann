@@ -119,8 +119,10 @@ describe('viessmann-helpers', function() {
             const error = {
                 response: { status: 401, data: { message: 'Invalid token' } }
             };
-            // 401 gets an actionable hint appended; assert on the prefix.
-            expect(extractErrorMessage(error)).to.match(/^HTTP 401: Invalid token/);
+            const out = extractErrorMessage(error);
+            expect(out).to.match(/^HTTP 401: Invalid token/);
+            // 401 gets an actionable hint appended; assert it's there.
+            expect(out).to.include('token expired');
         });
 
         it('should append a 403-scope hint', function() {
