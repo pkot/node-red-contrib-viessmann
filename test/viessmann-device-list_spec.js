@@ -85,6 +85,54 @@ describe('viessmann-device-list Node', function() {
         });
     });
 
+    it('should abort in-flight requests when the node closes', function(done) {
+        this.timeout(4000);
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-device-list', name: 'test device list', config: 'c1' }
+        ];
+        const credentials = makeCredentials();
+
+        // Slow upstream: nock delays 2s. Without abort, the request would
+        // outlive the unload() and try to set status on a destroyed node.
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/equipment/installations')
+            .delay(2000)
+            .reply(200, { data: [] });
+
+        helper.load([configNode, deviceListNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+
+            // Fire the input; the request begins but won't complete for 2s.
+            n1.receive({ payload: {} });
+
+            // Unload after 100ms. The controller in node._inflightAbortControllers
+            // should fire, axios should reject (aborted), and the executeApiGet
+            // catch should surface the abort error to the test's `error` shim.
+            const origError = n1.error;
+            let aborted = false;
+            n1.error = function(message, originatingMsg) {
+                aborted = true;
+                origError.call(n1, message, originatingMsg);
+            };
+
+            setTimeout(() => {
+                helper.unload().then(() => {
+                    setTimeout(() => {
+                        try {
+                            // The abort path went through node.error(...) before
+                            // the close handler tore everything down.
+                            expect(aborted).to.equal(true);
+                            done();
+                        } catch (err) {
+                            done(err);
+                        }
+                    }, 50);
+                }).catch(done);
+            }, 100);
+        });
+    });
+
     it('should retry on HTTP 429 with Retry-After and succeed on next attempt', function(done) {
         this.timeout(5000);
         const flow = [

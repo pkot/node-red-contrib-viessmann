@@ -238,12 +238,15 @@ class ViessmannClient {
         }
     }
 
-    async _request(axiosConfig, { onRetryWait } = {}) {
+    async _request(axiosConfig, { onRetryWait, signal } = {}) {
         return this._withRetry(() => this._withTokenRefresh(async () => {
             const token = await this._config.getValidToken();
             return this._axios.request({
                 ...axiosConfig,
-                headers: { ...(axiosConfig.headers || {}), Authorization: `Bearer ${token}` }
+                headers: { ...(axiosConfig.headers || {}), Authorization: `Bearer ${token}` },
+                // axios v1 forwards `signal` to the underlying http request so
+                // an aborted controller cancels the in-flight call.
+                ...(signal ? { signal } : {})
             });
         }), onRetryWait);
     }
