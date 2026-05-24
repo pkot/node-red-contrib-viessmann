@@ -29,7 +29,9 @@ module.exports = [
         }
     },
     {
-        files: ['test/**/*_spec.js'],
+        // Mocha globals apply to spec files and to shared test helpers
+        // under test/support/ that call hooks like beforeEach.
+        files: ['test/**/*_spec.js', 'test/support/**/*.js'],
         languageOptions: {
             globals: {
                 describe: 'readonly',
