@@ -204,12 +204,24 @@ async function main() {
         console.log('3. You will be redirected to localhost (this is expected)');
         console.log('\nStarting local server to capture the authorization code...');
         
-        // Try to open browser
+        // Try to open browser. Uses execFile (array form) instead of exec
+        // with a templated string so the URL is never interpreted by the
+        // shell - encodeURIComponent is no longer the only line of defense
+        // against a future regression in the URL builder.
         const open = (url) => {
-            const { exec } = require('child_process');
-            const start = process.platform === 'darwin' ? 'open' : 
-                         process.platform === 'win32' ? 'start' : 'xdg-open';
-            exec(`${start} "${url}"`);
+            const { execFile } = require('child_process');
+            const platform = process.platform;
+            if (platform === 'darwin') {
+                execFile('open', [url], () => { /* best-effort */ });
+            } else if (platform === 'win32') {
+                // Windows `start` is a cmd builtin, not an executable; pass
+                // it via cmd.exe with `/c start "" "<url>"`. The leading
+                // quoted empty string prevents start from misinterpreting
+                // the URL as the window title.
+                execFile('cmd.exe', ['/c', 'start', '""', url], () => { /* best-effort */ });
+            } else {
+                execFile('xdg-open', [url], () => { /* best-effort */ });
+            }
         };
         
         setTimeout(() => {
