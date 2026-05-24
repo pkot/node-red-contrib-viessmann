@@ -43,14 +43,26 @@ function generatePKCE() {
     return { codeVerifier, codeChallenge };
 }
 
-// Start a temporary HTTP server to capture the callback
-function startCallbackServer(port = 4200) {
+// Start a temporary HTTP server to capture the callback.
+// Binds to loopback only and validates the OAuth state parameter to prevent
+// LAN/co-tenant code injection and local CSRF (see issue #69).
+function startCallbackServer(port, expectedState) {
     return new Promise((resolve, reject) => {
+        const allowedHosts = new Set([`localhost:${port}`, `127.0.0.1:${port}`]);
+
         const server = http.createServer((req, res) => {
-            const url = new URL(req.url, `http://localhost:${port}`);
+            // Reject anything that didn't come through our loopback origin.
+            if (!allowedHosts.has(req.headers.host)) {
+                res.writeHead(400, { 'Content-Type': 'text/plain' });
+                res.end('Invalid Host header');
+                return;
+            }
+
+            const url = new URL(req.url, `http://127.0.0.1:${port}`);
             const code = url.searchParams.get('code');
-            
-            if (code) {
+            const state = url.searchParams.get('state');
+
+            if (code && state && state === expectedState) {
                 res.writeHead(200, { 'Content-Type': 'text/html' });
                 res.end(`
                     <html>
@@ -65,14 +77,14 @@ function startCallbackServer(port = 4200) {
                 resolve(code);
             } else {
                 res.writeHead(400, { 'Content-Type': 'text/plain' });
-                res.end('No authorization code received');
+                res.end('Invalid authorization callback (missing code or state mismatch)');
             }
         });
-        
-        server.listen(port, () => {
-            console.log(`\nCallback server started on http://localhost:${port}/`);
+
+        server.listen(port, '127.0.0.1', () => {
+            console.log(`\nCallback server started on http://127.0.0.1:${port}/`);
         });
-        
+
         server.on('error', (err) => {
             if (err.code === 'EADDRINUSE') {
                 console.error(`\nError: Port ${port} is already in use.`);
@@ -159,14 +171,19 @@ async function main() {
         const { codeVerifier, codeChallenge } = generatePKCE();
         console.log('✓ Generated');
         
-        // Build authorization URL
-        const redirectUri = 'http://localhost:4200/';
+        // Build authorization URL with a cryptographically random state value.
+        // The callback server requires the redirected state to match this, which
+        // blocks LAN/CSRF code-injection attempts (see issue #69).
+        const state = crypto.randomBytes(16).toString('base64url');
+        const callbackPort = 4200;
+        const redirectUri = `http://localhost:${callbackPort}/`;
         const scope = 'IoT offline_access';
         const authUrl = `https://iam.viessmann-climatesolutions.com/idp/v3/authorize?` +
             `response_type=code&` +
             `client_id=${encodeURIComponent(clientId)}&` +
             `redirect_uri=${encodeURIComponent(redirectUri)}&` +
             `scope=${encodeURIComponent(scope)}&` +
+            `state=${encodeURIComponent(state)}&` +
             `code_challenge=${encodeURIComponent(codeChallenge)}&` +
             `code_challenge_method=S256`;
         
@@ -197,7 +214,7 @@ async function main() {
         }, 1000);
         
         // Start callback server and wait for code
-        const code = await startCallbackServer(4200);
+        const code = await startCallbackServer(callbackPort, state);
         console.log('\n✓ Authorization code received');
         
         // Exchange code for tokens
