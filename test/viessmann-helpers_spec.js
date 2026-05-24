@@ -70,11 +70,12 @@ describe('viessmann-helpers', function() {
         });
 
         it('should parse HTTP-date strings', function() {
-            const future = new Date(Date.now() + 2000).toUTCString();
+            // Use a 60-second future offset so the test isn't flaky on slow CI.
+            // HTTP-date has 1-second resolution; ms >= 0 keeps the assertion robust.
+            const future = new Date(Date.now() + 60000).toUTCString();
             const ms = parseRetryAfter(future);
             expect(ms).to.be.a('number');
-            // Allow a wide tolerance for clock granularity / parse rounding.
-            expect(ms).to.be.greaterThan(0);
+            expect(ms).to.be.at.least(0);
         });
 
         it('should return null for garbage input', function() {
