@@ -54,6 +54,20 @@ describe('viessmann-config Node', function() {
         });
     });
 
+    it('should force first-use refresh when seeding from stored credentials', function(done) {
+        // tokenExpiry must be 0 (not Date.now() + 1h) so the first
+        // getValidToken() call refreshes/validates instead of trusting an
+        // unknown-age stored token.
+        const flow = [{ id: 'n1', type: 'viessmann-config', name: 'test config' }];
+        const credentials = makeCredentials('n1');
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            expect(n1.tokenExpiry).to.equal(0);
+            done();
+        });
+    });
+
     it('should dedupe concurrent token refreshes into a single token endpoint call', function(done) {
         const flow = [{
             id: 'n1',

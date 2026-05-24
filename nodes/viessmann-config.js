@@ -111,11 +111,17 @@ module.exports = function(RED) {
             return { state: node.authState, error: node.authError };
         };
 
-        // Initialize token expiry tracking if we have an access token
+        // Initialize token expiry tracking if we have an access token.
+        //
+        // We have no idea how old the stored access token actually is - it
+        // could have 59 minutes left or it could already be expired. Setting
+        // tokenExpiry = 0 makes the very first request force a refresh-or-
+        // validate path (cheap with a valid refresh token; fails fast and
+        // clearly if neither token works), instead of optimistically trusting
+        // the token for an hour and discovering its true state via a 401
+        // mid-flow.
         if (this.accessToken) {
-            // Assume token expires in 1 hour (default for Viessmann) minus buffer
-            // This will trigger a refresh on first use if refresh token is available
-            this.tokenExpiry = Date.now() + (3600 * 1000);
+            this.tokenExpiry = 0;
             updateAuthState('authenticated');
         }
 
