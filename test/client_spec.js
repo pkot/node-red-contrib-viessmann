@@ -261,6 +261,69 @@ describe('ViessmannClient', function() {
         });
     });
 
+    describe('constructor validation', function() {
+        it('rejects maxConcurrent < 1 (would deadlock the queue)', function() {
+            expect(() => new ViessmannClient(makeFakeConfig(), { maxConcurrent: 0 })).to.throw(RangeError);
+            expect(() => new ViessmannClient(makeFakeConfig(), { maxConcurrent: -1 })).to.throw(RangeError);
+        });
+
+        it('rejects non-numeric maxConcurrent', function() {
+            expect(() => new ViessmannClient(makeFakeConfig(), { maxConcurrent: NaN })).to.throw(RangeError);
+        });
+
+        it('floors fractional maxConcurrent to an integer', function() {
+            const c = new ViessmannClient(makeFakeConfig(), { maxConcurrent: 2.7 });
+            expect(c._maxConcurrent).to.equal(2);
+        });
+    });
+
+    describe('cache hygiene', function() {
+        it('drops expired cache entries lazily on subsequent get', async function() {
+            nock(BASE_URL)
+                .get('/p').reply(200, { v: 1 })
+                .get('/p').reply(200, { v: 2 });
+
+            // 1 ms TTL - any later get sees expiry.
+            const client = new ViessmannClient(makeFakeConfig(), {
+                baseURL: BASE_URL,
+                cacheTTL: 1
+            });
+
+            await client.get('/p');
+            // Wait past the 1ms TTL.
+            await new Promise(r => setTimeout(r, 10));
+            const second = await client.get('/p');
+
+            expect(second.data).to.deep.equal({ v: 2 });
+            // After lazy expiry + re-fetch, exactly one entry should be in the cache.
+            expect(client._cache.size).to.equal(1);
+        });
+
+        it('skips cache write when an invalidation happens during the in-flight request (epoch race)', async function() {
+            // Slow first GET; while it's in flight we POST to invalidate.
+            // When the GET resolves, it must NOT write to the cache.
+            nock(BASE_URL)
+                .get('/p').delay(50).reply(200, { v: 'stale-after-write' })
+                .post('/q').reply(200, { ok: true })
+                .get('/p').reply(200, { v: 'fresh' });
+
+            const client = new ViessmannClient(makeFakeConfig(), {
+                baseURL: BASE_URL,
+                cacheTTL: 10000
+            });
+
+            const getPromise = client.get('/p');
+            // Let the GET start, then race in a POST.
+            await new Promise(r => setTimeout(r, 10));
+            await client.post('/q', {});
+            await getPromise;
+
+            // The next GET must hit the network, not the (would-be) cached value.
+            const fresh = await client.get('/p');
+            expect(fresh.data).to.deep.equal({ v: 'fresh' });
+        });
+    });
+
     describe('concurrency throttle', function() {
         it('caps concurrent upstream requests at maxConcurrent', async function() {
             // Bound is 2; we fire 5 different URLs and observe via nock delays

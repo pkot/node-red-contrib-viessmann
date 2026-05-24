@@ -28,8 +28,9 @@ const MAX_RETRY_DELAY_MS = 30000;
 
 // Default cache TTL for GET responses. Viessmann publishes a tight per-day
 // rate budget, so a small staleness window dramatically cuts request volume
-// for the common "two read nodes polling the same feature" pattern. Users can
-// override or disable via the config node's cacheTTL setting.
+// for the common "two read nodes polling the same feature" pattern. The
+// config node forwards cacheTTL / maxConcurrent from its editor config when
+// set, so users can override these defaults.
 const DEFAULT_CACHE_TTL_MS = 30000;
 
 // Default cap on simultaneous in-flight upstream requests. Beyond this, calls
@@ -37,6 +38,12 @@ const DEFAULT_CACHE_TTL_MS = 30000;
 // nodes plus their initialization) without making one slow upstream block the
 // whole flow.
 const DEFAULT_MAX_CONCURRENT = 4;
+
+// Hard cap on cached entries. Lazy expiry already removes stale rows, but
+// many distinct URLs (e.g. polling lots of devices) would otherwise grow the
+// Map unboundedly. When this is reached we evict the oldest (FIFO via Map's
+// insertion order).
+const MAX_CACHE_ENTRIES = 256;
 
 /**
  * Parse an HTTP Retry-After header into milliseconds, or return null if unparseable.
@@ -83,8 +90,15 @@ class ViessmannClient {
         this._baseURL = options.baseURL || VIESSMANN_API_BASE_URL;
         this._timeout = options.timeout || HTTP_TIMEOUT_MS;
         this._maxRetries = options.maxRetries ?? MAX_RETRIES;
-        this._cacheTTL = options.cacheTTL ?? DEFAULT_CACHE_TTL_MS;
-        this._maxConcurrent = options.maxConcurrent ?? DEFAULT_MAX_CONCURRENT;
+        this._cacheTTL = Math.max(0, options.cacheTTL ?? DEFAULT_CACHE_TTL_MS);
+
+        // Validate maxConcurrent: 0 or negative would deadlock the queue.
+        const requestedMaxConcurrent = options.maxConcurrent ?? DEFAULT_MAX_CONCURRENT;
+        if (!Number.isFinite(requestedMaxConcurrent) || requestedMaxConcurrent < 1) {
+            throw new RangeError(`maxConcurrent must be a positive integer (got ${requestedMaxConcurrent})`);
+        }
+        this._maxConcurrent = Math.floor(requestedMaxConcurrent);
+
         this._log = typeof options.log === 'function' ? options.log : () => {};
         this._axios = options.axiosInstance || axios.create({
             baseURL: this._baseURL,
@@ -94,6 +108,11 @@ class ViessmannClient {
 
         // key -> { response, expiresAt } for cached GETs
         this._cache = new Map();
+        // Monotonic counter bumped by POST and invalidateCache(). Captured by
+        // each GET at start; if the epoch advanced while the request was in
+        // flight, the response is NOT written back to the cache (it could be
+        // stale relative to whatever invalidated it).
+        this._cacheEpoch = 0;
         // key -> Promise<response> for de-duped in-flight GETs
         this._inflight = new Map();
         // FIFO of waiter resolvers when at _maxConcurrent
@@ -119,9 +138,13 @@ class ViessmannClient {
 
         if (cacheEnabled) {
             const cached = this._cache.get(key);
-            if (cached && cached.expiresAt > Date.now()) {
-                this._log(`Cache hit: ${url}`);
-                return Promise.resolve(cached.response);
+            if (cached) {
+                if (cached.expiresAt > Date.now()) {
+                    this._log(`Cache hit: ${url}`);
+                    return Promise.resolve(cached.response);
+                }
+                // Lazy expiry - drop stale entry to keep the Map bounded.
+                this._cache.delete(key);
             }
         }
 
@@ -134,14 +157,23 @@ class ViessmannClient {
             return inflight;
         }
 
+        // Capture the epoch at request start. If a POST or invalidateCache()
+        // happens before we resolve, we must NOT write back to the cache.
+        const epochAtStart = this._cacheEpoch;
+
         const promise = (async () => {
             try {
                 const response = await this._scheduledRequest({ method: 'GET', url }, options);
-                if (cacheEnabled) {
+                if (cacheEnabled && epochAtStart === this._cacheEpoch) {
                     this._cache.set(key, {
                         response,
                         expiresAt: Date.now() + this._cacheTTL
                     });
+                    if (this._cache.size > MAX_CACHE_ENTRIES) {
+                        // Evict oldest insertion (Map preserves insertion order).
+                        const oldestKey = this._cache.keys().next().value;
+                        this._cache.delete(oldestKey);
+                    }
                 }
                 return response;
             } finally {
@@ -160,8 +192,12 @@ class ViessmannClient {
     post(url, data, options = {}) {
         if (this._cache.size > 0) {
             this._log(`POST ${url} - invalidating cache (${this._cache.size} entries)`);
-            this._cache.clear();
         }
+        // Bump epoch unconditionally - even an in-flight GET started before
+        // this POST must be prevented from writing its (possibly-stale-after-
+        // write) response into the cache.
+        this._cache.clear();
+        this._cacheEpoch += 1;
         return this._scheduledRequest({
             method: 'POST',
             url,
@@ -172,10 +208,12 @@ class ViessmannClient {
 
     /**
      * Explicitly drop all cached responses. Useful for manual refresh from
-     * a flow.
+     * a flow. Also bumps the cache epoch so any in-flight GETs do not write
+     * their results back after invalidation.
      */
     invalidateCache() {
         this._cache.clear();
+        this._cacheEpoch += 1;
     }
 
     /**
