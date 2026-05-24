@@ -221,7 +221,30 @@ module.exports = function(RED) {
                     debugLog('Token refresh failed with error: ' + error.message);
                     if (error.response) {
                         debugLog('Error status: ' + error.response.status);
-                        debugLog('Error data: ' + JSON.stringify(error.response.data));
+                        // Only log a small allowlist of OAuth error fields.
+                        // Avoid JSON.stringify(error.response.data) because
+                        // some IdPs echo submitted parameters back in the
+                        // error body, and Node-RED logs often land in
+                        // journalctl / syslog / log aggregators.
+                        //
+                        // Even within the allowlist, error_description can
+                        // contain reflected values - defensively redact the
+                        // current refresh token and client id from it.
+                        const data = error.response.data || {};
+                        const safe = {};
+                        if (data.error !== undefined) safe.error = data.error;
+                        if (data.error_uri !== undefined) safe.error_uri = data.error_uri;
+                        if (data.error_description !== undefined) {
+                            let desc = String(data.error_description);
+                            if (node.refreshToken) {
+                                desc = desc.split(node.refreshToken).join(maskSensitiveData(node.refreshToken));
+                            }
+                            if (node.credentials.clientId) {
+                                desc = desc.split(node.credentials.clientId).join(maskSensitiveData(node.credentials.clientId));
+                            }
+                            safe.error_description = desc;
+                        }
+                        debugLog('Error fields: ' + JSON.stringify(safe));
                     }
                     const errorMsg = error.response?.data?.error_description || error.message;
                     const fullErrorMsg = 'Token refresh failed: ' + errorMsg + '. You may need to generate new tokens.';
