@@ -15,6 +15,9 @@ const http = require('http');
 const https = require('https');
 const querystring = require('querystring');
 
+// Bound the token-exchange request so a hung connection doesn't leave the script waiting forever.
+const HTTP_TIMEOUT_MS = 30000;
+
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -103,11 +106,11 @@ function exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri) {
         
         const req = https.request(options, (res) => {
             let data = '';
-            
+
             res.on('data', (chunk) => {
                 data += chunk;
             });
-            
+
             res.on('end', () => {
                 try {
                     const response = JSON.parse(data);
@@ -121,11 +124,15 @@ function exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri) {
                 }
             });
         });
-        
+
         req.on('error', (err) => {
             reject(err);
         });
-        
+
+        req.setTimeout(HTTP_TIMEOUT_MS, () => {
+            req.destroy(new Error(`Token exchange timed out after ${HTTP_TIMEOUT_MS}ms`));
+        });
+
         req.write(postData);
         req.end();
     });

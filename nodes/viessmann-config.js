@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { HTTP_TIMEOUT_MS } = require('./viessmann-helpers');
 
 // Token refresh buffer time (5 minutes before expiration)
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
@@ -141,7 +142,8 @@ module.exports = function(RED) {
                 }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
-                    }
+                    },
+                    timeout: HTTP_TIMEOUT_MS
                 });
                 
                 // Update tokens in both node and credentials for persistence

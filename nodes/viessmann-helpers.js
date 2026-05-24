@@ -10,6 +10,13 @@ const axios = require('axios');
 const VIESSMANN_API_BASE_URL = 'https://api.viessmann-climatesolutions.com';
 
 /**
+ * Default HTTP request timeout in milliseconds.
+ * Bounds every outgoing axios call so a hung connection surfaces as an error
+ * instead of blocking the Node-RED flow indefinitely.
+ */
+const HTTP_TIMEOUT_MS = 30000;
+
+/**
  * Initialize a Viessmann node with common setup
  * @param {object} RED - The Node-RED runtime
  * @param {object} node - The Node-RED node instance (this)
@@ -260,7 +267,8 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
-                }
+                },
+                timeout: HTTP_TIMEOUT_MS
             });
         });
         
@@ -299,7 +307,8 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
-                }
+                },
+                timeout: HTTP_TIMEOUT_MS
             });
         });
         
@@ -316,6 +325,7 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
 
 module.exports = {
     VIESSMANN_API_BASE_URL,
+    HTTP_TIMEOUT_MS,
     initializeViessmannNode,
     validateConfigNode,
     createStatusUpdater,
