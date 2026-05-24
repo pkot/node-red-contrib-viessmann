@@ -1,10 +1,14 @@
 /**
  * Input validators for Viessmann node input messages.
  *
- * Each validator returns the validated value (or `null` on failure) and emits
- * a `node.status` + `node.error(msg)` side effect on failure so the caller's
- * Catch node routes correctly. Callers should check the return value and
- * short-circuit on `null`.
+ * Most validators return the validated value (or `null` on failure).
+ * validateConfigNode is the exception: it returns a boolean because its
+ * only job is the presence check.
+ *
+ * On failure each validator emits `node.status({fill:'red',...})` and calls
+ * `node.error(text, msg)` using Node-RED's `node.error(error, msg)`
+ * signature so the originating msg routes a Catch node correctly. Callers
+ * should check the return value and short-circuit on `null` / `false`.
  */
 
 function validateConfigNode(node, msg) {
