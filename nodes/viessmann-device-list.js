@@ -1,4 +1,4 @@
-const { initializeViessmannNode, validateConfigNode, executeApiGet } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, handlePostApiError, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannDeviceListNode(config) {
@@ -23,8 +23,8 @@ module.exports = function(RED) {
                 // Set payload to the installations data
                 msg.payload = response.data.data || [];
                 node.send(msg);
-            } catch (_error) {
-                // Error already handled by executeApiGet
+            } catch (error) {
+                handlePostApiError(node, msg, error);
             }
         });
     }

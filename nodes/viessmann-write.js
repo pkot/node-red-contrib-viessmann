@@ -1,4 +1,4 @@
-const { initializeViessmannNode, validateConfigNode, validateViessmannRef, executeApiPost } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateViessmannRef, handlePostApiError, executeApiPost } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannWriteNode(config) {
@@ -63,8 +63,8 @@ module.exports = function(RED) {
                 };
                 
                 node.send(msg);
-            } catch (_error) {
-                // Error already handled by executeApiPost
+            } catch (error) {
+                handlePostApiError(node, msg, error);
             }
         });
     }

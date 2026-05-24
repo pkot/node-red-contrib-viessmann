@@ -1,4 +1,4 @@
-const { initializeViessmannNode, validateConfigNode, validateViessmannRef, executeApiGet } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateViessmannRef, handlePostApiError, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannReadNode(config) {
@@ -68,8 +68,8 @@ module.exports = function(RED) {
                 }
                 
                 node.send(msg);
-            } catch (_error) {
-                // Error already handled by executeApiGet
+            } catch (error) {
+                handlePostApiError(node, msg, error);
             }
         });
     }

@@ -301,6 +301,30 @@ function validateViessmannRef(node, msg) {
 }
 
 /**
+ * Surface an exception from a node's input handler appropriately.
+ *
+ * executeApiGet/Post already call node.error + node.status for axios
+ * failures and rethrow the original error. The node-level catch is there
+ * to (a) suppress those (already surfaced) and (b) surface any OTHER
+ * error - a TypeError from payload processing, a JSON.stringify on a
+ * cyclic body, a bug in our response shaping - that would otherwise be
+ * silently swallowed.
+ *
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @param {*} error - The thrown value
+ */
+function handlePostApiError(node, msg, error) {
+    if (error && error.isAxiosError) {
+        // Already surfaced via node.error inside executeApiGet/Post.
+        return;
+    }
+    const message = error && error.message ? error.message : String(error);
+    node.status({fill: 'red', shape: 'dot', text: 'internal error'});
+    node.error('Internal error: ' + message, msg);
+}
+
+/**
  * Build a retry-wait callback that reflects the next retry's countdown in the
  * node's status icon, so users see "fetching... (HTTP 429, retry in 2s)"
  * instead of a frozen yellow ring.
@@ -377,6 +401,7 @@ module.exports = {
     validateDeviceId,
     validateViessmannRef,
     viessmannRefSource,
+    handlePostApiError,
     executeApiGet,
     executeApiPost
 };

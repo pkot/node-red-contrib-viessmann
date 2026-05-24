@@ -1,4 +1,4 @@
-const { initializeViessmannNode, validateConfigNode, validateInstallationId, validateGatewaySerial, viessmannRefSource, executeApiGet } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateInstallationId, validateGatewaySerial, viessmannRefSource, handlePostApiError, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannGatewayDevicesNode(config) {
@@ -26,8 +26,8 @@ module.exports = function(RED) {
                 // Set payload to the devices data
                 msg.payload = response.data.data || [];
                 node.send(msg);
-            } catch (_error) {
-                // Error already handled by executeApiGet
+            } catch (error) {
+                handlePostApiError(node, msg, error);
             }
         });
     }
