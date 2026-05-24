@@ -108,6 +108,47 @@ describe('viessmann-device-list Node', function() {
         });
     });
 
+    it('should retry on HTTP 429 with Retry-After and succeed on next attempt', function(done) {
+        this.timeout(5000);
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-device-list', name: 'test device list', config: 'c1', wires: [['n2']] },
+            { id: 'n2', type: 'helper' }
+        ];
+        const credentials = {
+            c1: {
+                clientId: 'test-client-id',
+                accessToken: 'test-access-token',
+                refreshToken: 'test-refresh-token'
+            }
+        };
+
+        // First call: 429 with Retry-After: 0 (immediate retry, keeps the test fast).
+        // Second call: success.
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/equipment/installations')
+            .reply(429, '', { 'Retry-After': '0' })
+            .get('/iot/v2/equipment/installations')
+            .reply(200, { data: [{ id: 1, description: 'Home' }] });
+
+        helper.load([configNode, deviceListNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const n2 = helper.getNode('n2');
+
+            n2.on('input', function(msg) {
+                try {
+                    expect(msg.payload).to.be.an('array').with.lengthOf(1);
+                    expect(msg.payload[0]).to.have.property('id', 1);
+                    done();
+                } catch (err) {
+                    done(err);
+                }
+            });
+
+            n1.receive({ payload: {} });
+        });
+    });
+
     it('should handle API errors gracefully', function(done) {
         const flow = [
             { id: 'c1', type: 'viessmann-config', name: 'test config' },

@@ -17,6 +17,15 @@ const VIESSMANN_API_BASE_URL = 'https://api.viessmann-climatesolutions.com';
 const HTTP_TIMEOUT_MS = 30000;
 
 /**
+ * Retry policy for transient API failures. 429 honours Retry-After; the rest
+ * use a bounded exponential backoff (1s, 2s, 4s, capped at MAX_RETRY_DELAY_MS).
+ */
+const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+const MAX_RETRIES = 3;
+const BASE_RETRY_DELAY_MS = 1000;
+const MAX_RETRY_DELAY_MS = 30000;
+
+/**
  * Initialize a Viessmann node with common setup
  * @param {object} RED - The Node-RED runtime
  * @param {object} node - The Node-RED node instance (this)
@@ -213,6 +222,68 @@ function validateDeviceId(node, msg) {
 }
 
 /**
+ * Parse an HTTP Retry-After header value into milliseconds, or return null if unparseable.
+ * Accepts either a delta-seconds number or an HTTP-date.
+ * @param {string|undefined} header - The Retry-After header value
+ * @returns {number|null} Milliseconds to wait, or null if the header is missing/invalid.
+ */
+function parseRetryAfter(header) {
+    if (header === undefined || header === null || header === '') {
+        return null;
+    }
+    const seconds = Number(header);
+    if (Number.isFinite(seconds) && seconds >= 0) {
+        return Math.min(seconds * 1000, MAX_RETRY_DELAY_MS);
+    }
+    const dateMs = Date.parse(header);
+    if (Number.isFinite(dateMs)) {
+        return Math.max(0, Math.min(dateMs - Date.now(), MAX_RETRY_DELAY_MS));
+    }
+    return null;
+}
+
+/**
+ * Exponential backoff delay with mild jitter to avoid thundering herd.
+ * @param {number} attempt - 1-indexed attempt number
+ * @returns {number} delay in milliseconds
+ */
+function backoffDelayMs(attempt) {
+    const jitter = 0.9 + Math.random() * 0.2;
+    return Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, attempt - 1) * jitter, MAX_RETRY_DELAY_MS);
+}
+
+/**
+ * Wrap a request function with retry-on-transient-failure (429 / 5xx).
+ * 429 honours Retry-After; 5xx and 429-without-Retry-After use exponential backoff.
+ * Non-retryable errors are rethrown immediately.
+ * @param {object} node - The Node-RED node instance
+ * @param {Function} requestFn - Function that performs one request attempt
+ * @param {string} statusText - Base text for the node status during retry waits
+ * @returns {Promise<object>} Response from the first successful attempt
+ */
+async function executeWithRetry(node, requestFn, statusText) {
+    for (let attempt = 0; ; attempt++) {
+        try {
+            return await requestFn();
+        } catch (error) {
+            const status = error.response?.status;
+            if (!RETRYABLE_STATUSES.has(status) || attempt >= MAX_RETRIES) {
+                throw error;
+            }
+            const nextAttempt = attempt + 1;
+            const retryAfterMs = status === 429
+                ? parseRetryAfter(error.response.headers?.['retry-after'])
+                : null;
+            const delayMs = retryAfterMs ?? backoffDelayMs(nextAttempt);
+            const waitSecs = Math.max(1, Math.ceil(delayMs / 1000));
+            node.status({fill: 'yellow', shape: 'ring', text: `${statusText} (HTTP ${status}, retry in ${waitSecs}s)`});
+            node.debug(`HTTP ${status} - retrying in ${delayMs}ms (attempt ${nextAttempt}/${MAX_RETRIES})`);
+            await new Promise(resolve => setTimeout(resolve, delayMs));
+        }
+    }
+}
+
+/**
  * Execute an API request with automatic token refresh on 401 error
  * @param {object} node - The Node-RED node instance
  * @param {Function} requestFn - Function that executes the API request
@@ -257,11 +328,11 @@ async function executeWithTokenRefresh(node, requestFn) {
 async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPrefix = 'Failed to fetch data') {
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
-        
+
         node.debug(`Executing GET ${url}`);
-        
-        // Execute request with automatic token refresh on 401
-        const response = await executeWithTokenRefresh(node, async () => {
+
+        // Retry transient 429/5xx around the token-refresh-aware request.
+        const response = await executeWithRetry(node, () => executeWithTokenRefresh(node, async () => {
             const token = await node.config.getValidToken();
             return await axios.get(url, {
                 headers: {
@@ -270,8 +341,8 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
                 },
                 timeout: HTTP_TIMEOUT_MS
             });
-        });
-        
+        }), statusText);
+
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
     } catch (error) {
@@ -296,11 +367,11 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
 async function executeApiPost(node, msg, url, data, statusText = 'writing...', errorPrefix = 'Failed to write data') {
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
-        
+
         node.debug(`Executing POST ${url} with data: ${JSON.stringify(data)}`);
 
-        // Execute request with automatic token refresh on 401
-        const response = await executeWithTokenRefresh(node, async () => {
+        // Retry transient 429/5xx around the token-refresh-aware request.
+        const response = await executeWithRetry(node, () => executeWithTokenRefresh(node, async () => {
             const token = await node.config.getValidToken();
             return await axios.post(url, data, {
                 headers: {
@@ -310,8 +381,8 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
                 },
                 timeout: HTTP_TIMEOUT_MS
             });
-        });
-        
+        }), statusText);
+
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
     } catch (error) {
@@ -326,12 +397,15 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
 module.exports = {
     VIESSMANN_API_BASE_URL,
     HTTP_TIMEOUT_MS,
+    RETRYABLE_STATUSES,
+    MAX_RETRIES,
     initializeViessmannNode,
     validateConfigNode,
     createStatusUpdater,
     setupDependentNode,
     extractErrorMessage,
     truncateForStatus,
+    parseRetryAfter,
     validateInstallationId,
     validateGatewaySerial,
     validateDeviceId,
