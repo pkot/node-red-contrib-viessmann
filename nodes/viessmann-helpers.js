@@ -82,25 +82,32 @@ function createStatusUpdater(node) {
 }
 
 /**
- * Setup dependent node registration with config node
+ * Subscribe a consumer node to the config node's auth-state event so its
+ * status icon reflects auth changes.
+ *
+ * Replaces the older registerDependent/dependentNodes push pattern (#75).
+ *
  * @param {object} node - The Node-RED node instance
  */
 function setupDependentNode(node) {
-    // Create and assign status update function
     node.updateStatus = createStatusUpdater(node);
-    
-    // Register with config node to receive auth state updates
-    if (node.config) {
-        node.config.registerDependent(node);
-        node.updateStatus();
-    } else {
+
+    if (!node.config) {
         node.status({fill: 'red', shape: 'dot', text: 'no config'});
+        return;
     }
-    
-    // Unregister when node is closed
+
+    // Subscribe via EventEmitter. We hold the bound listener so we can
+    // remove it cleanly on node close.
+    const onAuthState = function() { node.updateStatus(); };
+    node.config.on('auth-state', onAuthState);
+
+    // Render the current state immediately.
+    node.updateStatus();
+
     node.on('close', function() {
-        if (node.config) {
-            node.config.unregisterDependent(node);
+        if (node.config && typeof node.config.off === 'function') {
+            node.config.off('auth-state', onAuthState);
         }
     });
 }
