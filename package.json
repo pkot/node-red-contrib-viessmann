@@ -45,6 +45,25 @@
   "dependencies": {
     "axios": "^1.16.1"
   },
+  "//overrides": "Force fixed versions of transitive deps with published CVEs. All vulnerable paths are dev-only (mocha, node-red); patches do not change anything shipped to npm consumers. Revisit when upstream (node-red / mocha) bumps these themselves so the overrides can be removed.",
+  "overrides": {
+    "serialize-javascript": ">=7.0.5",
+    "picomatch": ">=4.0.4",
+    "ajv": ">=6.14.0",
+    "brace-expansion": ">=2.0.3",
+    "ip-address": ">=10.2.0",
+    "qs": ">=6.15.2",
+    "body-parser": ">=1.20.3",
+    "diff": ">=8.0.3",
+    "express": {
+      "path-to-regexp": "0.1.13"
+    },
+    "npm": {
+      "picomatch": ">=4.0.4",
+      "brace-expansion": ">=2.0.3",
+      "ip-address": ">=10.2.0"
+    }
+  },
   "engines": {
     "node": ">=20.0.0"
   },
