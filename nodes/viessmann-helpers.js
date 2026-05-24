@@ -301,6 +301,39 @@ function validateViessmannRef(node, msg) {
 }
 
 /**
+ * Surface an unexpected error from the payload-processing block of a node's
+ * input handler (the block AFTER executeApiGet/Post returns).
+ *
+ * executeApiGet/Post handle their own failures (call node.error / node.status
+ * for every thrown error inside them, then rethrow). To avoid double-firing,
+ * the consumer-node pattern is:
+ *
+ *   let response;
+ *   try { response = await executeApiGet(...); }
+ *   catch (_) { return; }              // already surfaced upstream
+ *   try {
+ *     msg.payload = ...response...;
+ *     node.send(msg);
+ *   } catch (error) {
+ *     surfaceUnexpectedError(node, msg, error);
+ *   }
+ *
+ * Anything that reaches this function is something we didn't anticipate -
+ * a TypeError from accessing an unexpected response shape, a cyclic
+ * JSON.stringify, or a bug in our shaping code - and it would otherwise
+ * be silently dropped.
+ *
+ * @param {object} node - The Node-RED node instance
+ * @param {object} msg - The incoming message
+ * @param {*} error - The thrown value
+ */
+function surfaceUnexpectedError(node, msg, error) {
+    const message = error && error.message ? error.message : String(error);
+    node.status({fill: 'red', shape: 'dot', text: 'internal error'});
+    node.error('Internal error: ' + message, msg);
+}
+
+/**
  * Build a retry-wait callback that reflects the next retry's countdown in the
  * node's status icon, so users see "fetching... (HTTP 429, retry in 2s)"
  * instead of a frozen yellow ring.
@@ -314,7 +347,14 @@ function statusRetryReporter(node, statusText) {
 
 /**
  * Execute an API GET via the shared ViessmannClient with UI side effects
- * (status icon + node.error on failure) layered on top.
+ * layered on top.
+ *
+ * On *any* thrown error (axios or otherwise) this helper calls node.error
+ * and node.status, then rethrows. Callers should treat the rejected promise
+ * as "already surfaced" and not double-fire node.error on it. For errors
+ * that happen AFTER this returns - e.g. payload-shaping bugs - use
+ * surfaceUnexpectedError in the consumer node.
+ *
  * @param {object} node - The Node-RED node instance
  * @param {object} msg - The incoming message
  * @param {string} url - The API endpoint URL
@@ -341,6 +381,7 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
 
 /**
  * Execute an API POST via the shared ViessmannClient with UI side effects.
+ * Same already-surfaced-on-throw contract as executeApiGet.
  */
 async function executeApiPost(node, msg, url, data, statusText = 'writing...', errorPrefix = 'Failed to write data') {
     try {
@@ -377,6 +418,7 @@ module.exports = {
     validateDeviceId,
     validateViessmannRef,
     viessmannRefSource,
+    surfaceUnexpectedError,
     executeApiGet,
     executeApiPost
 };

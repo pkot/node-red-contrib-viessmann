@@ -11,7 +11,8 @@ const {
     validateInstallationId,
     validateGatewaySerial,
     validateDeviceId,
-    validateViessmannRef
+    validateViessmannRef,
+    surfaceUnexpectedError
 } = require('../nodes/viessmann-helpers');
 
 describe('viessmann-helpers', function() {
@@ -396,6 +397,38 @@ describe('viessmann-helpers', function() {
             validateViessmannRef(node, originalMsg);
             const [, passedMsg] = node.error.firstCall.args;
             expect(passedMsg).to.equal(originalMsg);
+        });
+    });
+
+    describe('surfaceUnexpectedError', function() {
+        let node;
+        const msg = { _msgid: 'test' };
+
+        beforeEach(function() {
+            node = { status: sinon.stub(), error: sinon.stub() };
+        });
+
+        it('should call node.error with the originating msg', function() {
+            const internalError = new TypeError('Cannot read properties of null');
+            surfaceUnexpectedError(node, msg, internalError);
+            expect(node.error.calledOnce).to.be.true;
+            const [text, passedMsg] = node.error.firstCall.args;
+            expect(text).to.include('Cannot read properties of null');
+            expect(passedMsg).to.equal(msg);
+        });
+
+        it('should set a red node.status', function() {
+            surfaceUnexpectedError(node, msg, new Error('boom'));
+            expect(node.status.calledOnce).to.be.true;
+            const status = node.status.firstCall.args[0];
+            expect(status.fill).to.equal('red');
+        });
+
+        it('should not crash on non-Error thrown values', function() {
+            surfaceUnexpectedError(node, msg, 'plain string');
+            expect(node.error.calledOnce).to.be.true;
+            const [text] = node.error.firstCall.args;
+            expect(text).to.include('plain string');
         });
     });
 });

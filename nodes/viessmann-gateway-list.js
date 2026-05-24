@@ -1,31 +1,32 @@
-const { initializeViessmannNode, validateConfigNode, validateInstallationId, executeApiGet } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateInstallationId, surfaceUnexpectedError, executeApiGet } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannGatewayListNode(config) {
         initializeViessmannNode(RED, this, config);
         const node = this;
-        
+
         node.on('input', async function(msg) {
             const installationId = validateInstallationId(node, msg);
-            
-            if (!validateConfigNode(node, msg) || !installationId) {
-                return;
-            }
-                        
+            if (!validateConfigNode(node, msg) || !installationId) return;
+
+            let response;
             try {
-                const response = await executeApiGet(
+                response = await executeApiGet(
                     node,
                     msg,
                     `${node.apiBaseUrl}/iot/v2/equipment/installations/${encodeURIComponent(installationId)}/gateways`,
                     'fetching...',
                     'Failed to fetch gateways'
                 );
-                
-                // Set payload to the gateways data
+            } catch (_apiError) {
+                return;
+            }
+
+            try {
                 msg.payload = response.data.data || [];
                 node.send(msg);
-            } catch (_error) {
-                // Error already handled by executeApiGet
+            } catch (error) {
+                surfaceUnexpectedError(node, msg, error);
             }
         });
     }

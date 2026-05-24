@@ -1,4 +1,4 @@
-const { initializeViessmannNode, validateConfigNode, validateViessmannRef, executeApiPost } = require('./viessmann-helpers');
+const { initializeViessmannNode, validateConfigNode, validateViessmannRef, surfaceUnexpectedError, executeApiPost } = require('./viessmann-helpers');
 
 module.exports = function(RED) {
     function ViessmannWriteNode(config) {
@@ -39,19 +39,15 @@ module.exports = function(RED) {
                 return;
             }
             
+            const endpoint = `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features/${encodeURIComponent(feature)}/commands/${encodeURIComponent(msg.command)}`;
+
             try {
-                const endpoint = `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features/${encodeURIComponent(feature)}/commands/${encodeURIComponent(msg.command)}`;
-                
-                await executeApiPost(
-                    node,
-                    msg,
-                    endpoint,
-                    msg.params,
-                    'writing...',
-                    'Failed to write data'
-                );
-                
-                // Set payload to success status
+                await executeApiPost(node, msg, endpoint, msg.params, 'writing...', 'Failed to write data');
+            } catch (_apiError) {
+                return;
+            }
+
+            try {
                 msg.payload = {
                     success: true,
                     installationId: installationId,
@@ -61,10 +57,9 @@ module.exports = function(RED) {
                     command: msg.command,
                     params: msg.params
                 };
-                
                 node.send(msg);
-            } catch (_error) {
-                // Error already handled by executeApiPost
+            } catch (error) {
+                surfaceUnexpectedError(node, msg, error);
             }
         });
     }
