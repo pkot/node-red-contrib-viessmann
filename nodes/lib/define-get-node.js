@@ -43,9 +43,18 @@ function defineGetNode(RED, opts) {
     if (!opts || !opts.type || typeof opts.getContext !== 'function' || typeof opts.url !== 'function') {
         throw new TypeError('defineGetNode requires { type, getContext, url } at minimum');
     }
-    const statusText = opts.statusText || 'fetching...';
-    const errorPrefix = opts.errorPrefix || 'Failed to fetch data';
-    const shapePayload = opts.shapePayload || ((response) => response.data.data || []);
+    if (opts.statusText !== undefined && typeof opts.statusText !== 'string') {
+        throw new TypeError('defineGetNode opts.statusText must be a string');
+    }
+    if (opts.errorPrefix !== undefined && typeof opts.errorPrefix !== 'string') {
+        throw new TypeError('defineGetNode opts.errorPrefix must be a string');
+    }
+    if (opts.shapePayload !== undefined && typeof opts.shapePayload !== 'function') {
+        throw new TypeError('defineGetNode opts.shapePayload must be a function');
+    }
+    const statusText = opts.statusText !== undefined ? opts.statusText : 'fetching...';
+    const errorPrefix = opts.errorPrefix !== undefined ? opts.errorPrefix : 'Failed to fetch data';
+    const shapePayload = opts.shapePayload !== undefined ? opts.shapePayload : ((response) => response.data.data || []);
 
     function ViessmannGetNode(config) {
         initializeViessmannNode(RED, this, config);
