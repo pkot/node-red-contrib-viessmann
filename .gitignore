@@ -58,6 +58,9 @@ jspm_packages/
 .env
 .env.test
 
+# Viessmann tokens output from scripts/get-viessmann-tokens.js
+viessmann-tokens.json
+
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 
