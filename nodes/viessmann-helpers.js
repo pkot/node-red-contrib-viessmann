@@ -254,7 +254,8 @@ function validateDeviceId(node, msg) {
  * Side effects: node.error + node.status on failure.
  */
 function validateFeature(node, msg) {
-    const raw = msg.feature !== undefined ? msg.feature : msg.datapoint;
+    // ?? so msg.feature = null also falls through to datapoint.
+    const raw = msg.feature ?? msg.datapoint;
     if (raw === null || raw === undefined) {
         node.status({fill: 'red', shape: 'dot', text: 'no feature'});
         node.error('No feature/datapoint provided. Please provide msg.feature or msg.datapoint.', msg);
@@ -318,7 +319,7 @@ function validateParams(node, msg) {
         node.error('No params provided. Please provide msg.params.', msg);
         return null;
     }
-    if (typeof msg.params !== 'object' || Array.isArray(msg.params)) {
+    if (typeof msg.params !== 'object' || Array.isArray(msg.params) || !isPlainObject(msg.params)) {
         node.status({fill: 'red', shape: 'dot', text: 'invalid params'});
         node.error('Invalid params. msg.params must be a plain object (e.g., {temperature: 22}).', msg);
         return null;
@@ -327,6 +328,17 @@ function validateParams(node, msg) {
         node.warn('Posting empty msg.params - the Viessmann command will be called with no body.');
     }
     return msg.params;
+}
+
+/**
+ * A "plain object" is a Record-style object literal: not a class instance,
+ * Date, Buffer, Map, Set, etc. Used by validateParams to reject things that
+ * pass `typeof === 'object'` but JSON-serialize unpredictably.
+ */
+function isPlainObject(value) {
+    if (value === null || typeof value !== 'object') return false;
+    const proto = Object.getPrototypeOf(value);
+    return proto === Object.prototype || proto === null;
 }
 
 /**

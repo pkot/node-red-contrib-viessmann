@@ -492,6 +492,27 @@ describe('viessmann-helpers', function() {
             expect(validateParams(node, { params: {} })).to.deep.equal({});
             expect(node.warn.calledOnce).to.be.true;
         });
+
+        it('rejects Date / Buffer / class instances (not plain objects)', function() {
+            expect(validateParams(node, { params: new Date() })).to.be.null;
+            expect(validateParams(node, { params: Buffer.from('x') })).to.be.null;
+            class Custom {}
+            expect(validateParams(node, { params: new Custom() })).to.be.null;
+        });
+
+        it('accepts Object.create(null) (prototype-less plain object)', function() {
+            const obj = Object.create(null);
+            obj.foo = 1;
+            expect(validateParams(node, { params: obj })).to.equal(obj);
+        });
+    });
+
+    describe('validateFeature null/undefined fallback', function() {
+        it('treats msg.feature=null as missing and falls through to msg.datapoint', function() {
+            const node = { status: sinon.stub(), error: sinon.stub() };
+            expect(validateFeature(node, { feature: null, datapoint: 'fallback' })).to.equal('fallback');
+            expect(node.error.called).to.be.false;
+        });
     });
 
     describe('surfaceUnexpectedError', function() {
