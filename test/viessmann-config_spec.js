@@ -474,42 +474,45 @@ describe('viessmann-config Node', function() {
         });
     });
 
-    it('should notify dependent nodes on auth state change', function(done) {
-        const flow = [{ 
-            id: 'n1', 
-            type: 'viessmann-config', 
+    it('should emit auth-state events on auth state change', function(done) {
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
             name: 'test config'
         }];
         const credentials = makeCredentials('n1');
 
-        nock('https://iam.viessmann-climatesolutions.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'test-access-token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                refresh_token: 'test-refresh-token'
-            });
-
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
-            // Mock dependent node
-            let statusUpdateCount = 0;
-            const mockDepNode = {
-                updateStatus: function() {
-                    statusUpdateCount++;
-                }
-            };
-            
-            n1.registerDependent(mockDepNode);
-            
+
+            const events = [];
+            n1.on('auth-state', (snapshot) => events.push(snapshot));
+
             n1.authenticate().then(() => {
-                // Should have been called during authenticating and authenticated states
-                expect(statusUpdateCount).to.be.greaterThan(0);
+                // 'authenticated' was emitted on construction (stored token)
+                // and authenticate() re-emits it. Subscriber sees at least one.
+                expect(events.length).to.be.greaterThan(0);
+                expect(events[events.length - 1].state).to.equal('authenticated');
                 done();
             }).catch(done);
         });
     });
 
+    it('should expose getAuthSnapshot()', function(done) {
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
+            name: 'test config'
+        }];
+        const credentials = makeCredentials('n1');
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+            const snapshot = n1.getAuthSnapshot();
+            expect(snapshot).to.have.property('state');
+            expect(snapshot).to.have.property('error');
+            expect(snapshot.state).to.equal('authenticated');
+            done();
+        });
+    });
 });

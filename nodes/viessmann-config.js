@@ -41,12 +41,14 @@ module.exports = function(RED) {
         this.refreshToken = node.credentials.refreshToken || null;
         this.tokenExpiry = null;
         
-        // Authentication state
+        // Authentication state. Read-only from outside; mutated only inside
+        // updateAuthState (which also emits the 'auth-state' event below).
         this.authState = 'disconnected'; // 'disconnected', 'authenticating', 'authenticated', 'error'
         this.authError = null;
-        
-        // List of dependent nodes
-        this.dependentNodes = [];
+
+        // Dependent nodes observe state changes via this.on('auth-state', cb)
+        // instead of the previous registerDependent / dependentNodes array.
+        // EventEmitter is inherited from the Node-RED node base.
 
         // Shared HTTP client. Owns the axios instance, retry policy, 401
         // refresh-and-retry, response cache, in-flight de-duplication, and
@@ -80,20 +82,23 @@ module.exports = function(RED) {
         };
         
         /**
-         * Update authentication state and notify dependent nodes
+         * Update authentication state and notify subscribers via the
+         * 'auth-state' event.
          * @param {string} state - New authentication state
          * @param {string} error - Optional error message
          */
         const updateAuthState = function(state, error) {
             node.authState = state;
             node.authError = error || null;
-            
-            // Notify all dependent nodes
-            node.dependentNodes.forEach(depNode => {
-                if (depNode && typeof depNode.updateStatus === 'function') {
-                    depNode.updateStatus();
-                }
-            });
+            node.emit('auth-state', { state, error: node.authError });
+        };
+
+        /**
+         * Read-only snapshot of the current auth state. Prefer this over
+         * directly accessing node.authState / node.authError.
+         */
+        this.getAuthSnapshot = function() {
+            return { state: node.authState, error: node.authError };
         };
         
         // Initialize token expiry tracking if we have an access token
@@ -103,27 +108,6 @@ module.exports = function(RED) {
             this.tokenExpiry = Date.now() + (3600 * 1000);
             updateAuthState('authenticated');
         }
-        
-        /**
-         * Register a dependent node to receive auth state updates
-         * @param {object} depNode - The dependent node to register
-         */
-        this.registerDependent = function(depNode) {
-            if (!node.dependentNodes.includes(depNode)) {
-                node.dependentNodes.push(depNode);
-            }
-        };
-        
-        /**
-         * Unregister a dependent node
-         * @param {object} depNode - The dependent node to unregister
-         */
-        this.unregisterDependent = function(depNode) {
-            const index = node.dependentNodes.indexOf(depNode);
-            if (index > -1) {
-                node.dependentNodes.splice(index, 1);
-            }
-        };
         
         /**
          * Validate that we have an access token
