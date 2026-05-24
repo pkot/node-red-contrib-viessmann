@@ -146,6 +146,16 @@ describe('viessmann-helpers', function() {
             const error = { response: { status: 502, data: 'Bad Gateway' } };
             expect(extractErrorMessage(error)).to.equal('HTTP 502: Bad Gateway');
         });
+
+        it('should not throw on null/undefined input', function() {
+            expect(extractErrorMessage(null)).to.equal('Unknown error');
+            expect(extractErrorMessage(undefined)).to.equal('Unknown error');
+        });
+
+        it('should stringify non-object thrown values', function() {
+            expect(extractErrorMessage('bare string')).to.equal('bare string');
+            expect(extractErrorMessage(42)).to.equal('42');
+        });
     });
 
     describe('truncateForStatus', function() {

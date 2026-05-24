@@ -133,6 +133,12 @@ function setupDependentNode(node) {
  * @returns {string} Human-readable message
  */
 function extractErrorMessage(error) {
+    if (error === null || error === undefined) {
+        return 'Unknown error';
+    }
+    if (typeof error !== 'object') {
+        return String(error);
+    }
     if (error.response) {
         const { status, data } = error.response;
         const detail = data?.error_description
