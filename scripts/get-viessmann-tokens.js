@@ -35,7 +35,16 @@ const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 // Client ID's registered redirect URI in the Viessmann Developer Portal
 // must match http://localhost:<port>/ - keep that in sync if you change
 // the port.
-const CALLBACK_PORT = Number(process.env.VIESSMANN_CALLBACK_PORT) || 4200;
+function parseCallbackPort(envValue) {
+    if (envValue === undefined || envValue === '') return 4200;
+    const n = Number(envValue);
+    if (!Number.isInteger(n) || n < 1 || n > 65535) {
+        console.error(`VIESSMANN_CALLBACK_PORT must be an integer in 1..65535 (got ${JSON.stringify(envValue)}); aborting.`);
+        process.exit(1);
+    }
+    return n;
+}
+const CALLBACK_PORT = parseCallbackPort(process.env.VIESSMANN_CALLBACK_PORT);
 const CALLBACK_PATH = '/';
 const REDIRECT_URI = `http://localhost:${CALLBACK_PORT}${CALLBACK_PATH}`;
 const OAUTH_SCOPE = process.env.VIESSMANN_SCOPE || 'IoT offline_access';
