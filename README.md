@@ -732,7 +732,7 @@ Then restart Node-RED. The Viessmann nodes will appear in the palette.
 
 This project uses GitHub Actions for continuous integration. The CI workflow automatically:
 
-- Runs on all pushes and pull requests to `main` and `feature/**` branches
+- Runs on all pushes and pull requests targeting `main`
 - Tests on a matrix of Node.js versions (20.x, 22.x, 24.x, 26.x); minimum supported version is Node.js 20 (matches `engines` in `package.json`)
 - Installs dependencies using `npm ci`
 - Runs the linter (`npm run lint`)
