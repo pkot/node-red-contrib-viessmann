@@ -16,7 +16,7 @@
 
 ### a) Configuration Node: `viessmann-config`
 - Stores the public client ID and the pre-obtained access/refresh tokens securely via Node-RED's credential system.
-- Owns the runtime token lifecycle: validates the stored access token, refreshes it via the refresh token, and surfaces auth state to dependent nodes.
+- Owns the runtime token lifecycle: uses the stored access token until it's near expiry, then refreshes via the refresh token. Expired-but-not-yet-refreshed tokens are corrected reactively when the API returns 401 (the failing request retries once with a fresh token). Auth state is surfaced to dependent nodes.
 - Provides config for all Viessmann nodes.
 - **Does not perform interactive authentication itself.** Token bootstrap is an out-of-band step handled by `scripts/get-viessmann-tokens.js` (see §2.0).
 
@@ -78,8 +78,7 @@ Refer to the [Viessmann API Authentication Documentation](https://api.viessmann-
 
 ## 3. Key Implementation Decisions
 
-- **Authentication:** Authorization Code with PKCE for bootstrap (via `scripts/get-viessmann-tokens.js`); refresh-token grant at runtime (in `viessmann-config`). Default scopes: `IoT offline_access`. Concurrent refresh attempts are de-duplicated via an in-flight promise so the IdP's refresh-token rotation cannot race-invalidate the stored token.
-  - **Scopes are configurable**: Users can modify scopes if needed for their specific use case
+- **Authentication:** Authorization Code with PKCE for bootstrap (via `scripts/get-viessmann-tokens.js`); refresh-token grant at runtime (in `viessmann-config`). Scopes are fixed at `IoT offline_access` in the bootstrap script - changing them today requires editing the script. Concurrent refresh attempts are de-duplicated via an in-flight promise so the IdP's refresh-token rotation cannot race-invalidate the stored token.
   - **External setup required**: Users must obtain a Client ID from the Viessmann Developer Portal and run the bootstrap CLI before the Node-RED config node can authenticate
   - **Error handling**: Provide specific, actionable error messages that guide users to fix configuration issues
 - **API Version:** Prioritize v2 endpoints where available, fallback to v1 if needed.
