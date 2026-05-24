@@ -1,35 +1,18 @@
-const { initializeViessmannNode, validateConfigNode, validateInstallationId, surfaceUnexpectedError, executeApiGet } = require('./viessmann-helpers');
+const { defineGetNode } = require('./lib/define-get-node');
+const { validateConfigNode, validateInstallationId } = require('./lib/validators');
 
 module.exports = function(RED) {
-    function ViessmannGatewayListNode(config) {
-        initializeViessmannNode(RED, this, config);
-        const node = this;
-
-        node.on('input', async function(msg) {
+    defineGetNode(RED, {
+        type: 'viessmann-gateway-list',
+        getContext: (node, msg) => {
+            if (!validateConfigNode(node, msg)) return null;
             const installationId = validateInstallationId(node, msg);
-            if (!validateConfigNode(node, msg) || !installationId) return;
-
-            let response;
-            try {
-                response = await executeApiGet(
-                    node,
-                    msg,
-                    `${node.apiBaseUrl}/iot/v2/equipment/installations/${encodeURIComponent(installationId)}/gateways`,
-                    'fetching...',
-                    'Failed to fetch gateways'
-                );
-            } catch (_apiError) {
-                return;
-            }
-
-            try {
-                msg.payload = response.data.data || [];
-                node.send(msg);
-            } catch (error) {
-                surfaceUnexpectedError(node, msg, error);
-            }
-        });
-    }
-    
-    RED.nodes.registerType("viessmann-gateway-list", ViessmannGatewayListNode);
+            if (!installationId) return null;
+            return { installationId };
+        },
+        url: ({ installationId }) =>
+            `/iot/v2/equipment/installations/${encodeURIComponent(installationId)}/gateways`,
+        statusText: 'fetching...',
+        errorPrefix: 'Failed to fetch gateways'
+    });
 };
