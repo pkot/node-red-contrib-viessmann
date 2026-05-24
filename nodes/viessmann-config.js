@@ -221,7 +221,17 @@ module.exports = function(RED) {
                     debugLog('Token refresh failed with error: ' + error.message);
                     if (error.response) {
                         debugLog('Error status: ' + error.response.status);
-                        debugLog('Error data: ' + JSON.stringify(error.response.data));
+                        // Only log known-safe OAuth error fields. Avoid
+                        // JSON.stringify(error.response.data) since some IdPs
+                        // echo the submitted refresh_token/client credentials
+                        // back in the error body, and Node-RED logs commonly
+                        // land in journalctl / shipped log aggregators.
+                        const data = error.response.data || {};
+                        const safe = {};
+                        if (data.error !== undefined) safe.error = data.error;
+                        if (data.error_description !== undefined) safe.error_description = data.error_description;
+                        if (data.error_uri !== undefined) safe.error_uri = data.error_uri;
+                        debugLog('Error fields: ' + JSON.stringify(safe));
                     }
                     const errorMsg = error.response?.data?.error_description || error.message;
                     const fullErrorMsg = 'Token refresh failed: ' + errorMsg + '. You may need to generate new tokens.';
