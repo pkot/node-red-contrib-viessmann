@@ -15,7 +15,9 @@ const {
     validateFeature,
     validateCommand,
     validateParams,
-    surfaceUnexpectedError
+    surfaceUnexpectedError,
+    executeApiGet,
+    executeApiPost
 } = require('../nodes/viessmann-helpers');
 
 describe('viessmann-helpers', function() {
@@ -566,6 +568,51 @@ describe('viessmann-helpers', function() {
             expect(node.error.calledOnce).to.be.true;
             const [text] = node.error.firstCall.args;
             expect(text).to.include('plain string');
+        });
+    });
+
+    describe('executeApiGet / executeApiPost missing-config guard', function() {
+        let node;
+        const msg = { _msgid: 'guard-test' };
+
+        beforeEach(function() {
+            node = {
+                config: null,
+                status: sinon.stub(),
+                error: sinon.stub(),
+                debug: sinon.stub()
+            };
+        });
+
+        it('executeApiGet rejects with "No configuration node" when config is missing', async function() {
+            let caught;
+            try {
+                await executeApiGet(node, msg, 'https://example.test/x');
+            } catch (e) {
+                caught = e;
+            }
+            expect(caught).to.exist;
+            expect(caught.message).to.include('No configuration node');
+            expect(node.error.calledOnce).to.be.true;
+            // node.status should have been set to a red 'no config'.
+            const lastStatus = node.status.lastCall.args[0];
+            expect(lastStatus.fill).to.equal('red');
+            expect(lastStatus.text).to.equal('no config');
+        });
+
+        it('executeApiPost rejects with "No configuration node" when config is missing', async function() {
+            let caught;
+            try {
+                await executeApiPost(node, msg, 'https://example.test/x', { a: 1 });
+            } catch (e) {
+                caught = e;
+            }
+            expect(caught).to.exist;
+            expect(caught.message).to.include('No configuration node');
+            expect(node.error.calledOnce).to.be.true;
+            const lastStatus = node.status.lastCall.args[0];
+            expect(lastStatus.fill).to.equal('red');
+            expect(lastStatus.text).to.equal('no config');
         });
     });
 });
