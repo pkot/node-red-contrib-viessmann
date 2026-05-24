@@ -29,6 +29,26 @@ const DEFAULT_TOKEN_FILE = 'viessmann-tokens.json';
 // or never logs in, the script should not hang forever.
 const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 
+// Bootstrap parameters. Tunable via environment variables so users whose
+// box already runs something on 4200 (Angular dev, often) or who need a
+// non-default OAuth scope can override without editing this file. The
+// Client ID's registered redirect URI in the Viessmann Developer Portal
+// must match http://localhost:<port>/ - keep that in sync if you change
+// the port.
+function parseCallbackPort(envValue) {
+    if (envValue === undefined || envValue === '') return 4200;
+    const n = Number(envValue);
+    if (!Number.isInteger(n) || n < 1 || n > 65535) {
+        console.error(`VIESSMANN_CALLBACK_PORT must be an integer in 1..65535 (got ${JSON.stringify(envValue)}); aborting.`);
+        process.exit(1);
+    }
+    return n;
+}
+const CALLBACK_PORT = parseCallbackPort(process.env.VIESSMANN_CALLBACK_PORT);
+const CALLBACK_PATH = '/';
+const REDIRECT_URI = `http://localhost:${CALLBACK_PORT}${CALLBACK_PATH}`;
+const OAUTH_SCOPE = process.env.VIESSMANN_SCOPE || 'IoT offline_access';
+
 const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -206,14 +226,11 @@ async function main() {
         // The callback server requires the redirected state to match this, which
         // blocks LAN/CSRF code-injection attempts (see issue #69).
         const state = crypto.randomBytes(16).toString('base64url');
-        const callbackPort = 4200;
-        const redirectUri = `http://localhost:${callbackPort}/`;
-        const scope = 'IoT offline_access';
         const authUrl = `https://iam.viessmann-climatesolutions.com/idp/v3/authorize?` +
             `response_type=code&` +
             `client_id=${encodeURIComponent(clientId)}&` +
-            `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-            `scope=${encodeURIComponent(scope)}&` +
+            `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+            `scope=${encodeURIComponent(OAUTH_SCOPE)}&` +
             `state=${encodeURIComponent(state)}&` +
             `code_challenge=${encodeURIComponent(codeChallenge)}&` +
             `code_challenge_method=S256`;
@@ -257,7 +274,7 @@ async function main() {
         }, 1000);
 
         // Start callback server and wait for code
-        const code = await startCallbackServer(callbackPort, state);
+        const code = await startCallbackServer(CALLBACK_PORT, state);
         console.log('\n✓ Authorization code received');
 
         // Exchange code for tokens
@@ -266,7 +283,7 @@ async function main() {
         console.log('='.repeat(70));
         console.log('\nRequesting access and refresh tokens...');
 
-        const tokens = await exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri);
+        const tokens = await exchangeCodeForTokens(clientId, code, codeVerifier, REDIRECT_URI);
 
         console.log('\n✓ Tokens received successfully!');
 
