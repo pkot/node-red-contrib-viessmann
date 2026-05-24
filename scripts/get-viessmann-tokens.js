@@ -61,10 +61,15 @@ function startCallbackServer(port, expectedState) {
     return new Promise((resolve, reject) => {
         const allowedHosts = new Set([`localhost:${port}`, `127.0.0.1:${port}`]);
         let settled = false;
+        // Declared with let so settle() can read it during the TDZ-safe
+        // window. Assigned at the bottom of this function; if a server
+        // 'error' fires before that, timeoutHandle is still undefined
+        // and clearTimeout(undefined) is a noop.
+        let timeoutHandle;
         const settle = (fn, value) => {
             if (settled) return;
             settled = true;
-            clearTimeout(timeoutHandle);
+            if (timeoutHandle) clearTimeout(timeoutHandle);
             fn(value);
         };
 
@@ -113,7 +118,7 @@ function startCallbackServer(port, expectedState) {
 
         // Bound the wait. If the user never completes the flow, fail with a
         // clear error rather than hanging forever.
-        const timeoutHandle = setTimeout(() => {
+        timeoutHandle = setTimeout(() => {
             server.close();
             const minutes = Math.round(CALLBACK_TIMEOUT_MS / 60000);
             settle(reject, new Error(`No authorization callback received within ${minutes} minutes; aborting.`));
