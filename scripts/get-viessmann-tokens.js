@@ -234,10 +234,16 @@ async function main() {
         
         console.log('\n✓ Tokens received successfully!');
 
-        // Write tokens to a 0600 file rather than printing them. stdout
-        // would otherwise persist in terminal scrollback, tmux/screen
-        // buffers, IDE terminal panes, and any shipped CI logs - and the
-        // refresh token has a 180-day life.
+        // Write tokens to a restricted-permission file rather than printing
+        // them to stdout. stdout would persist in terminal scrollback,
+        // tmux/screen buffers, IDE terminal panes, and any shipped CI logs -
+        // and the refresh token has a 180-day life.
+        //
+        // To avoid a window where an existing world-readable
+        // viessmann-tokens.json sits with the new contents under loose
+        // permissions, we write to a same-directory 0600 temp file first and
+        // atomically renameSync it into place. The rename inherits the
+        // temp file's mode.
         const tokenFilePath = path.resolve(process.cwd(), DEFAULT_TOKEN_FILE);
         const tokenFileBody = JSON.stringify({
             clientId,
@@ -247,20 +253,28 @@ async function main() {
             generatedAt: new Date().toISOString()
         }, null, 2) + '\n';
 
-        // Use the file-mode argument on writeFileSync so the file is created
-        // with 0600 atomically. On Windows the mode is ignored, but the file
-        // is still placed inside the user's CWD.
-        fs.writeFileSync(tokenFilePath, tokenFileBody, { mode: 0o600 });
-        if (os.platform() !== 'win32') {
-            // Defensive: writeFileSync's mode is only applied on create; if
-            // the file already existed we ensure 0600 explicitly.
-            try { fs.chmodSync(tokenFilePath, 0o600); } catch (_err) { /* best-effort */ }
+        const tmpPath = tokenFilePath + '.tmp-' + crypto.randomBytes(6).toString('hex');
+        const isWindows = os.platform() === 'win32';
+        // writeFileSync's mode is applied on file create. We use 'wx' so the
+        // file is freshly created (never reuses existing perms).
+        const fd = fs.openSync(tmpPath, 'wx', 0o600);
+        try {
+            fs.writeFileSync(fd, tokenFileBody);
+        } finally {
+            fs.closeSync(fd);
         }
+        fs.renameSync(tmpPath, tokenFilePath);
 
         console.log('\n' + '='.repeat(70));
         console.log('TOKENS WRITTEN');
         console.log('='.repeat(70));
-        console.log('\nWrote ' + tokenFilePath + ' (mode 0600).');
+        if (isWindows) {
+            console.log('\nWrote ' + tokenFilePath + ' (default Windows ACLs apply).');
+            console.log('Consider restricting NTFS permissions on this file if other');
+            console.log('users on this machine should not read it.');
+        } else {
+            console.log('\nWrote ' + tokenFilePath + ' (mode 0600).');
+        }
         console.log('Open it to copy the Access Token and Refresh Token into your');
         console.log('Node-RED Viessmann config node, then delete the file.\n');
         console.log('Client ID (no secret, safe to display):');
