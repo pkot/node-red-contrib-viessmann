@@ -43,16 +43,6 @@ describe('viessmann-gateway-devices Node', function() {
             }
         };
 
-        // Mock OAuth2 token endpoint
-        nock('https://iam.viessmann-climatesolutions.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'test-access-token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                refresh_token: 'test-refresh-token'
-            });
-
         // Mock gateway devices endpoint
         nock('https://api.viessmann-climatesolutions.com')
             .get('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices')
@@ -249,16 +239,6 @@ describe('viessmann-gateway-devices Node', function() {
             }
         };
 
-        // Mock OAuth2 token endpoint
-        nock('https://iam.viessmann-climatesolutions.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'test-access-token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                refresh_token: 'test-refresh-token'
-            });
-
         // Mock gateway devices endpoint with error
         nock('https://api.viessmann-climatesolutions.com')
             .get('/iot/v2/equipment/installations/123456/gateways/7571381573112225/devices')
@@ -305,15 +285,6 @@ describe('viessmann-gateway-devices Node', function() {
                 refreshToken: 'test-refresh-token'
             }
         };
-
-        nock('https://iam.viessmann-climatesolutions.com')
-            .post('/idp/v3/token')
-            .reply(200, {
-                access_token: 'test-access-token',
-                token_type: 'Bearer',
-                expires_in: 3600,
-                refresh_token: 'test-refresh-token'
-            });
 
         helper.load([configNode, gatewayDevicesNode], flow, credentials, function() {
             const c1 = helper.getNode('c1');
