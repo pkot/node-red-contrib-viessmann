@@ -116,69 +116,88 @@ module.exports = function(RED) {
             throw new Error(errorMsg);
         };
         
+        // In-flight refresh promise. While set, concurrent callers share it
+        // so we never POST /idp/v3/token twice with the same (rotating) refresh
+        // token - the IdP would reject the losers and we'd race-overwrite
+        // node.refreshToken with a stale value.
+        node._refreshPromise = null;
+
         /**
-         * Refresh the access token using refresh token
+         * Refresh the access token using refresh token.
+         * De-duplicates concurrent calls: if a refresh is already in flight,
+         * all callers await the same promise.
          * @returns {Promise<void>}
          */
-        this.refreshAccessToken = async function() {
-            if (!node.refreshToken) {
-                debugLog('No refresh token available, cannot refresh');
-                const errorMsg = 'Access token expired and no refresh token available. Please generate new tokens.';
-                node.error(errorMsg);
-                updateAuthState('error', errorMsg);
-                throw new Error(errorMsg);
+        this.refreshAccessToken = function() {
+            if (node._refreshPromise) {
+                debugLog('Refresh already in flight, awaiting existing request');
+                return node._refreshPromise;
             }
-            
-            try {
-                updateAuthState('authenticating');
-                debugLog('Starting token refresh');
-                debugLog('Current refresh token: ' + maskSensitiveData(node.refreshToken));
-                debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
-                
-                const response = await axios.post(node.tokenUrl, new URLSearchParams({
-                    grant_type: 'refresh_token',
-                    client_id: node.credentials.clientId,
-                    refresh_token: node.refreshToken
-                }), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    timeout: HTTP_TIMEOUT_MS
-                });
-                
-                // Update tokens in both node and credentials for persistence
-                node.accessToken = response.data.access_token;
-                node.credentials.accessToken = response.data.access_token;
-                debugLog('Updated access token in credentials for persistence: ' + maskSensitiveData(response.data.access_token));
-                if (response.data.refresh_token) {
-                    node.refreshToken = response.data.refresh_token;
-                    node.credentials.refreshToken = response.data.refresh_token;
-                    debugLog('Updated refresh token in credentials for persistence: ' + maskSensitiveData(response.data.refresh_token));
+
+            node._refreshPromise = (async function doRefresh() {
+                if (!node.refreshToken) {
+                    debugLog('No refresh token available, cannot refresh');
+                    const errorMsg = 'Access token expired and no refresh token available. Please generate new tokens.';
+                    node.error(errorMsg);
+                    updateAuthState('error', errorMsg);
+                    throw new Error(errorMsg);
                 }
-                node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
-                
-                const expiryDate = new Date(node.tokenExpiry);
-                debugLog('Token refresh successful');
-                debugLog('New access token: ' + maskSensitiveData(node.accessToken));
-                if (response.data.refresh_token) {
-                    debugLog('New refresh token: ' + maskSensitiveData(node.refreshToken));
+
+                try {
+                    updateAuthState('authenticating');
+                    debugLog('Starting token refresh');
+                    debugLog('Current refresh token: ' + maskSensitiveData(node.refreshToken));
+                    debugLog('Client ID: ' + maskSensitiveData(node.credentials.clientId));
+
+                    const response = await axios.post(node.tokenUrl, new URLSearchParams({
+                        grant_type: 'refresh_token',
+                        client_id: node.credentials.clientId,
+                        refresh_token: node.refreshToken
+                    }), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        timeout: HTTP_TIMEOUT_MS
+                    });
+
+                    // Update tokens in both node and credentials for persistence
+                    node.accessToken = response.data.access_token;
+                    node.credentials.accessToken = response.data.access_token;
+                    debugLog('Updated access token in credentials for persistence: ' + maskSensitiveData(response.data.access_token));
+                    if (response.data.refresh_token) {
+                        node.refreshToken = response.data.refresh_token;
+                        node.credentials.refreshToken = response.data.refresh_token;
+                        debugLog('Updated refresh token in credentials for persistence: ' + maskSensitiveData(response.data.refresh_token));
+                    }
+                    node.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
+
+                    const expiryDate = new Date(node.tokenExpiry);
+                    debugLog('Token refresh successful');
+                    debugLog('New access token: ' + maskSensitiveData(node.accessToken));
+                    if (response.data.refresh_token) {
+                        debugLog('New refresh token: ' + maskSensitiveData(node.refreshToken));
+                    }
+                    debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
+
+                    node.log('Successfully refreshed access token and updated credentials');
+                    updateAuthState('authenticated');
+                } catch (error) {
+                    debugLog('Token refresh failed with error: ' + error.message);
+                    if (error.response) {
+                        debugLog('Error status: ' + error.response.status);
+                        debugLog('Error data: ' + JSON.stringify(error.response.data));
+                    }
+                    const errorMsg = error.response?.data?.error_description || error.message;
+                    const fullErrorMsg = 'Token refresh failed: ' + errorMsg + '. You may need to generate new tokens.';
+                    node.error(fullErrorMsg);
+                    updateAuthState('error', fullErrorMsg);
+                    throw error;
                 }
-                debugLog('Token expires in: ' + response.data.expires_in + ' seconds (' + expiryDate.toISOString() + ')');
-                
-                node.log('Successfully refreshed access token and updated credentials');
-                updateAuthState('authenticated');
-            } catch (error) {
-                debugLog('Token refresh failed with error: ' + error.message);
-                if (error.response) {
-                    debugLog('Error status: ' + error.response.status);
-                    debugLog('Error data: ' + JSON.stringify(error.response.data));
-                }
-                const errorMsg = error.response?.data?.error_description || error.message;
-                const fullErrorMsg = 'Token refresh failed: ' + errorMsg + '. You may need to generate new tokens.';
-                node.error(fullErrorMsg);
-                updateAuthState('error', fullErrorMsg);
-                throw error;
-            }
+            })().finally(() => {
+                node._refreshPromise = null;
+            });
+
+            return node._refreshPromise;
         };
         
         /**

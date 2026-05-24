@@ -73,6 +73,55 @@ describe('viessmann-config Node', function() {
         });
     });
 
+    it('should dedupe concurrent token refreshes into a single token endpoint call', function(done) {
+        const flow = [{
+            id: 'n1',
+            type: 'viessmann-config',
+            name: 'test config'
+        }];
+        const credentials = {
+            n1: {
+                clientId: 'test-client-id',
+                accessToken: 'initial-token',
+                refreshToken: 'initial-refresh-token'
+            }
+        };
+
+        // Allow up to 5 refresh calls but track how many actually fire.
+        // Without de-duplication, three concurrent refreshAccessToken()
+        // calls would trigger three POSTs - and the IdP would invalidate
+        // the rotating refresh_token after the first.
+        let postCount = 0;
+        nock('https://iam.viessmann-climatesolutions.com')
+            .post('/idp/v3/token')
+            .times(5)
+            .reply(200, () => {
+                postCount += 1;
+                return {
+                    access_token: 'refreshed-token-' + postCount,
+                    token_type: 'Bearer',
+                    expires_in: 3600,
+                    refresh_token: 'rotated-refresh-' + postCount
+                };
+            });
+
+        helper.load(configNode, flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+
+            Promise.all([
+                n1.refreshAccessToken(),
+                n1.refreshAccessToken(),
+                n1.refreshAccessToken()
+            ]).then(() => {
+                expect(postCount).to.equal(1);
+                // All three callers should see the same single-rotation result.
+                expect(n1.accessToken).to.equal('refreshed-token-1');
+                expect(n1.refreshToken).to.equal('rotated-refresh-1');
+                done();
+            }).catch(done);
+        });
+    });
+
     it('should refresh token when expired', function(done) {
         const flow = [{ 
             id: 'n1', 
