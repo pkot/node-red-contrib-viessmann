@@ -87,6 +87,19 @@ function surfaceUnexpectedError(node, msg, error) {
 }
 
 /**
+ * JSON.stringify that never throws on cyclic structures - the debug-log
+ * path must not turn into a failure path. Falls back to a placeholder so a
+ * pathological msg.params doesn't masquerade as an API failure.
+ */
+function safeStringifyForDebug(value) {
+    try {
+        return JSON.stringify(value);
+    } catch (_err) {
+        return '<unserializable: ' + (_err && _err.message ? _err.message : 'unknown error') + '>';
+    }
+}
+
+/**
  * Build a retry-wait callback that reflects the next retry's countdown in
  * the node's status icon.
  */
@@ -143,7 +156,7 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
     }
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
-        node.debug(`Executing POST ${url} with data: ${JSON.stringify(data)}`);
+        node.debug(`Executing POST ${url} with data: ${safeStringifyForDebug(data)}`);
         const response = await node.config.client.post(url, data, {
             onRetryWait: statusRetryReporter(node, statusText)
         });
