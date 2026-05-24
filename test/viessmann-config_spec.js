@@ -2,19 +2,12 @@ const helper = require('node-red-node-test-helper');
 const configNode = require('../nodes/viessmann-config.js');
 const nock = require('nock');
 const { expect } = require('chai');
+const { makeCredentials, useNodeRedHelper } = require('./support/fixtures');
 
 helper.init(require.resolve('node-red'));
 
 describe('viessmann-config Node', function() {
-    beforeEach(function(done) {
-        helper.startServer(done);
-    });
-
-    afterEach(function(done) {
-        helper.unload();
-        helper.stopServer(done);
-        nock.cleanAll();
-    });
+    useNodeRedHelper(helper);
 
     it('should be loaded', function(done) {
         const flow = [{ id: 'n1', type: 'viessmann-config', name: 'test config' }];
@@ -31,13 +24,7 @@ describe('viessmann-config Node', function() {
             type: 'viessmann-config', 
             name: 'test config'
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
             expect(n1.credentials).to.have.property('clientId', 'test-client-id');
@@ -53,13 +40,7 @@ describe('viessmann-config Node', function() {
             type: 'viessmann-config', 
             name: 'test config'
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -262,13 +243,7 @@ describe('viessmann-config Node', function() {
             type: 'viessmann-config', 
             name: 'test config'
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
@@ -296,13 +271,7 @@ describe('viessmann-config Node', function() {
             name: 'test config',
             enableDebug: false
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
@@ -340,13 +309,7 @@ describe('viessmann-config Node', function() {
             name: 'test config',
             enableDebug: true
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
@@ -384,13 +347,7 @@ describe('viessmann-config Node', function() {
             name: 'test config',
             enableDebug: true
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
@@ -435,13 +392,7 @@ describe('viessmann-config Node', function() {
             name: 'test config',
             enableDebug: true
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')
@@ -481,13 +432,7 @@ describe('viessmann-config Node', function() {
             type: 'viessmann-config', 
             name: 'test config'
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         helper.load(configNode, flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -535,13 +480,7 @@ describe('viessmann-config Node', function() {
             type: 'viessmann-config', 
             name: 'test config'
         }];
-        const credentials = {
-            n1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials('n1');
 
         nock('https://iam.viessmann-climatesolutions.com')
             .post('/idp/v3/token')

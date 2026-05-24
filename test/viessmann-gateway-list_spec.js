@@ -3,19 +3,12 @@ const gatewayListNode = require('../nodes/viessmann-gateway-list.js');
 const configNode = require('../nodes/viessmann-config.js');
 const nock = require('nock');
 const { expect } = require('chai');
+const { makeCredentials, useNodeRedHelper } = require('./support/fixtures');
 
 helper.init(require.resolve('node-red'));
 
 describe('viessmann-gateway-list Node', function() {
-    beforeEach(function(done) {
-        helper.startServer(done);
-    });
-
-    afterEach(function(done) {
-        helper.unload();
-        helper.stopServer(done);
-        nock.cleanAll();
-    });
+    useNodeRedHelper(helper);
 
     it('should be loaded', function(done) {
         const flow = [
@@ -35,13 +28,7 @@ describe('viessmann-gateway-list Node', function() {
             { id: 'n1', type: 'viessmann-gateway-list', name: 'test gateway list', config: 'c1', wires: [['n2']] },
             { id: 'n2', type: 'helper' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock gateways endpoint
         nock('https://api.viessmann-climatesolutions.com')
@@ -115,13 +102,7 @@ describe('viessmann-gateway-list Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-gateway-list', name: 'test gateway list', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -139,13 +120,7 @@ describe('viessmann-gateway-list Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-gateway-list', name: 'test gateway list', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
@@ -174,13 +149,7 @@ describe('viessmann-gateway-list Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-gateway-list', name: 'test gateway list', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         // Mock gateways endpoint with error
         nock('https://api.viessmann-climatesolutions.com')
@@ -221,13 +190,7 @@ describe('viessmann-gateway-list Node', function() {
             { id: 'c1', type: 'viessmann-config', name: 'test config' },
             { id: 'n1', type: 'viessmann-gateway-list', name: 'test gateway list', config: 'c1' }
         ];
-        const credentials = {
-            c1: {
-                clientId: 'test-client-id',
-                accessToken: 'test-access-token',
-                refreshToken: 'test-refresh-token'
-            }
-        };
+        const credentials = makeCredentials();
 
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const c1 = helper.getNode('c1');
