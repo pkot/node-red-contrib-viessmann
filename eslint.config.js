@@ -26,7 +26,10 @@ module.exports = [
         },
         rules: {
             'no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }],
-            'no-console': 'off'
+            'no-console': 'off',
+            'no-trailing-spaces': 'error',
+            'no-multiple-empty-lines': ['error', { max: 2, maxEOF: 1 }],
+            'eol-last': ['error', 'always']
         }
     },
     {

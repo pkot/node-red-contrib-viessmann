@@ -73,6 +73,6 @@ module.exports = function(RED) {
             }
         });
     }
-    
+
     RED.nodes.registerType("viessmann-read", ViessmannReadNode);
 };

@@ -93,6 +93,6 @@ module.exports = function(RED) {
             }
         });
     }
-    
+
     RED.nodes.registerType("viessmann-write", ViessmannWriteNode);
 };

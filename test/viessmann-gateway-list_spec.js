@@ -106,7 +106,7 @@ describe('viessmann-gateway-list Node', function() {
 
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
@@ -124,10 +124,10 @@ describe('viessmann-gateway-list Node', function() {
 
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             let errorCount = 0;
             const expectedErrors = 5;
-            
+
             n1.on('call:error', function() {
                 errorCount++;
                 if (errorCount === expectedErrors) {
@@ -160,7 +160,7 @@ describe('viessmann-gateway-list Node', function() {
 
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
@@ -176,7 +176,7 @@ describe('viessmann-gateway-list Node', function() {
 
         helper.load([configNode, gatewayListNode], flow, function() {
             const n1 = helper.getNode('n1');
-            
+
             n1.on('call:error', function() {
                 done();
             });
@@ -195,7 +195,7 @@ describe('viessmann-gateway-list Node', function() {
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const c1 = helper.getNode('c1');
             const n1 = helper.getNode('n1');
-            
+
             // Track status updates
             let statusCalls = [];
             const originalStatus = n1.status;
@@ -203,17 +203,17 @@ describe('viessmann-gateway-list Node', function() {
                 statusCalls.push(status);
                 originalStatus.call(n1, status);
             };
-            
+
             // Authenticate to trigger status update
             c1.authenticate().then(() => {
                 // Should have updated status
                 expect(statusCalls.length).to.be.greaterThan(0);
-                
+
                 // Last status should be green/connected
                 const lastStatus = statusCalls[statusCalls.length - 1];
                 expect(lastStatus.fill).to.equal('green');
                 expect(lastStatus.text).to.equal('connected');
-                
+
                 done();
             }).catch(done);
         });
@@ -234,7 +234,7 @@ describe('viessmann-gateway-list Node', function() {
         helper.load([configNode, gatewayListNode], flow, credentials, function() {
             const c1 = helper.getNode('c1');
             const n1 = helper.getNode('n1');
-            
+
             // Track status updates
             let statusCalls = [];
             const originalStatus = n1.status;
@@ -242,16 +242,16 @@ describe('viessmann-gateway-list Node', function() {
                 statusCalls.push(status);
                 originalStatus.call(n1, status);
             };
-            
+
             // Authenticate to trigger status update (will fail)
             c1.authenticate().catch(() => {
                 // Should have updated status to error
                 expect(statusCalls.length).to.be.greaterThan(0);
-                
+
                 // Last status should be red/error
                 const lastStatus = statusCalls[statusCalls.length - 1];
                 expect(lastStatus.fill).to.equal('red');
-                
+
                 done();
             });
         });
