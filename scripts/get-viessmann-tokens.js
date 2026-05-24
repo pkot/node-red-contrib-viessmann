@@ -204,12 +204,24 @@ async function main() {
         console.log('3. You will be redirected to localhost (this is expected)');
         console.log('\nStarting local server to capture the authorization code...');
         
-        // Try to open browser
+        // Try to open browser. Uses execFile (array form) on a real
+        // executable on every platform, so no shell parses the URL.
+        // encodeURIComponent is no longer the only line of defense
+        // against a future regression in the URL builder.
         const open = (url) => {
-            const { exec } = require('child_process');
-            const start = process.platform === 'darwin' ? 'open' : 
-                         process.platform === 'win32' ? 'start' : 'xdg-open';
-            exec(`${start} "${url}"`);
+            const { execFile } = require('child_process');
+            const platform = process.platform;
+            if (platform === 'darwin') {
+                execFile('open', [url], () => { /* best-effort */ });
+            } else if (platform === 'win32') {
+                // rundll32 url.dll,FileProtocolHandler is the standard
+                // Windows URL-opener that bypasses cmd.exe entirely (avoids
+                // `&` being treated as a command separator). Has worked
+                // unchanged since at least Windows 2000.
+                execFile('rundll32.exe', ['url.dll,FileProtocolHandler', url], () => { /* best-effort */ });
+            } else {
+                execFile('xdg-open', [url], () => { /* best-effort */ });
+            }
         };
         
         setTimeout(() => {
