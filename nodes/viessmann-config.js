@@ -109,9 +109,15 @@ module.exports = function(RED) {
                 updateAuthState('authenticated');
                 return;
             }
-            
+
+            // Do not call node.error here. The caller (executeApiGet/Post)
+            // calls node.error(message, msg) using Node-RED's
+            // node.error(error, msg) signature, which is what routes the
+            // failure to a Catch node attached to the user's flow.
+            // node.warn keeps the failure visible in the editor sidebar
+            // without double-firing.
             const errorMsg = 'No access token configured. Please generate an access token using the PKCE flow and configure it in the node settings.';
-            node.error(errorMsg);
+            node.warn(errorMsg);
             updateAuthState('error', errorMsg);
             throw new Error(errorMsg);
         };
@@ -138,7 +144,11 @@ module.exports = function(RED) {
                 if (!node.refreshToken) {
                     debugLog('No refresh token available, cannot refresh');
                     const errorMsg = 'Access token expired and no refresh token available. Please generate new tokens.';
-                    node.error(errorMsg);
+                    // node.warn (not node.error): the request-level helper will
+                    // call node.error(message, originatingMsg) - Node-RED's
+                    // signature is node.error(error, msg) - so the user's
+                    // Catch node routes to the correct flow.
+                    node.warn(errorMsg);
                     updateAuthState('error', errorMsg);
                     throw new Error(errorMsg);
                 }
@@ -189,7 +199,11 @@ module.exports = function(RED) {
                     }
                     const errorMsg = error.response?.data?.error_description || error.message;
                     const fullErrorMsg = 'Token refresh failed: ' + errorMsg + '. You may need to generate new tokens.';
-                    node.error(fullErrorMsg);
+                    // node.warn (not node.error): the request-level helper will
+                    // call node.error(message, originatingMsg) - Node-RED's
+                    // signature is node.error(error, msg) - so the user's
+                    // Catch node routes to the correct flow.
+                    node.warn(fullErrorMsg);
                     updateAuthState('error', fullErrorMsg);
                     throw error;
                 }
