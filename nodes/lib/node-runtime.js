@@ -58,6 +58,11 @@ function createStatusUpdater(node) {
  */
 function setupDependentNode(node) {
     node.updateStatus = createStatusUpdater(node);
+    // Per-node set of AbortControllers for in-flight requests. Populated by
+    // executeApiGet/executeApiPost, drained on close. Without this an
+    // in-flight request would outlive the redeployed node and try to call
+    // node.send/node.status on a destroyed instance.
+    node._inflightAbortControllers = new Set();
 
     if (!node.config) {
         node.status({fill: 'red', shape: 'dot', text: 'no config'});
@@ -73,6 +78,12 @@ function setupDependentNode(node) {
         if (node.config && typeof node.config.off === 'function') {
             node.config.off('auth-state', onAuthState);
         }
+        // Abort any in-flight requests so they don't try to use the node
+        // after Node-RED has torn it down.
+        for (const controller of node._inflightAbortControllers) {
+            try { controller.abort(); } catch (_e) { /* best-effort */ }
+        }
+        node._inflightAbortControllers.clear();
     });
 }
 
@@ -126,11 +137,13 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
         node.error(`${errorPrefix}: ${err.message}`, msg);
         throw err;
     }
+    const controller = trackAbortController(node);
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         node.debug(`Executing GET ${url}`);
         const response = await node.config.client.get(url, {
-            onRetryWait: statusRetryReporter(node, statusText)
+            onRetryWait: statusRetryReporter(node, statusText),
+            signal: controller.signal
         });
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
@@ -140,6 +153,10 @@ async function executeApiGet(node, msg, url, statusText = 'fetching...', errorPr
         node.status({fill: 'red', shape: 'dot', text: statusMsg});
         node.error(`${errorPrefix}: ${errorMsg}`, msg);
         throw error;
+    } finally {
+        if (node._inflightAbortControllers) {
+            node._inflightAbortControllers.delete(controller);
+        }
     }
 }
 
@@ -154,11 +171,13 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
         node.error(`${errorPrefix}: ${err.message}`, msg);
         throw err;
     }
+    const controller = trackAbortController(node);
     try {
         node.status({fill: 'yellow', shape: 'ring', text: statusText});
         node.debug(`Executing POST ${url} with data: ${safeStringifyForDebug(data)}`);
         const response = await node.config.client.post(url, data, {
-            onRetryWait: statusRetryReporter(node, statusText)
+            onRetryWait: statusRetryReporter(node, statusText),
+            signal: controller.signal
         });
         node.status({fill: 'green', shape: 'dot', text: 'success'});
         return response;
@@ -168,7 +187,25 @@ async function executeApiPost(node, msg, url, data, statusText = 'writing...', e
         node.status({fill: 'red', shape: 'dot', text: statusMsg});
         node.error(`${errorPrefix}: ${errorMsg}`, msg);
         throw error;
+    } finally {
+        if (node._inflightAbortControllers) {
+            node._inflightAbortControllers.delete(controller);
+        }
     }
+}
+
+/**
+ * Allocate an AbortController for one request and register it on the node so
+ * a node.close() can cancel it. Returns the controller; callers should
+ * forward `controller.signal` to the request and remove the controller from
+ * the tracker in `finally`.
+ */
+function trackAbortController(node) {
+    const controller = new AbortController();
+    if (node._inflightAbortControllers) {
+        node._inflightAbortControllers.add(controller);
+    }
+    return controller;
 }
 
 module.exports = {

@@ -85,6 +85,64 @@ describe('viessmann-device-list Node', function() {
         });
     });
 
+    it('should abort in-flight requests when the node closes', function(done) {
+        this.timeout(4000);
+        const flow = [
+            { id: 'c1', type: 'viessmann-config', name: 'test config' },
+            { id: 'n1', type: 'viessmann-device-list', name: 'test device list', config: 'c1' }
+        ];
+        const credentials = makeCredentials();
+
+        // Slow upstream: nock delays 2s. Without abort, the request would
+        // outlive the unload() and try to set status on a destroyed node.
+        nock('https://api.viessmann-climatesolutions.com')
+            .get('/iot/v2/equipment/installations')
+            .delay(2000)
+            .reply(200, { data: [] });
+
+        helper.load([configNode, deviceListNode], flow, credentials, function() {
+            const n1 = helper.getNode('n1');
+
+            // Capture the first error message so we can assert it actually
+            // describes an abort (not some other failure).
+            let firstError = null;
+            const origError = n1.error;
+            n1.error = function(message, originatingMsg) {
+                if (firstError === null) firstError = String(message);
+                origError.call(n1, message, originatingMsg);
+            };
+
+            // Resolve the deferred completion as soon as the abort path
+            // surfaces a node.error. Avoids relying on a fixed sleep.
+            let finished = false;
+            const finish = (err) => {
+                if (finished) return;
+                finished = true;
+                done(err);
+            };
+            const checkInterval = setInterval(() => {
+                if (firstError !== null) {
+                    clearInterval(checkInterval);
+                    try {
+                        // axios uses 'canceled' / 'aborted' wording on AbortError
+                        // and our delay rejects with code ERR_CANCELED; both
+                        // surface through extractErrorMessage. Either substring
+                        // is acceptable evidence the abort fired.
+                        expect(firstError.toLowerCase()).to.match(/cancel|abort/);
+                        finish();
+                    } catch (err) {
+                        finish(err);
+                    }
+                }
+            }, 20);
+
+            // Fire the input; the request begins but won't complete for 2s.
+            n1.receive({ payload: {} });
+            // Unload shortly after, which aborts the request.
+            setTimeout(() => helper.unload().catch(() => { /* ignore */ }), 50);
+        });
+    });
+
     it('should retry on HTTP 429 with Retry-After and succeed on next attempt', function(done) {
         this.timeout(5000);
         const flow = [

@@ -151,13 +151,19 @@ class ViessmannClient {
             }
         }
 
-        // De-duplicate concurrent identical GETs even when cache is off:
-        // a stampede of new read nodes all asking the same URL should share
-        // one upstream request.
-        const inflight = this._inflight.get(key);
-        if (inflight) {
-            this._log(`In-flight coalesce: ${url}`);
-            return inflight;
+        // De-duplicate concurrent identical GETs ONLY when no per-caller
+        // signal is in play. Sharing one upstream promise across callers
+        // would also share *whichever* signal got attached first, so node
+        // A's abort could cancel node B's request (or fail to cancel A's).
+        // With a signal, each caller gets its own upstream so cancellations
+        // stay isolated.
+        const canCoalesce = !options.signal;
+        if (canCoalesce) {
+            const inflight = this._inflight.get(key);
+            if (inflight) {
+                this._log(`In-flight coalesce: ${url}`);
+                return inflight;
+            }
         }
 
         // Capture the epoch at request start. If a POST or invalidateCache()
@@ -180,11 +186,11 @@ class ViessmannClient {
                 }
                 return response;
             } finally {
-                this._inflight.delete(key);
+                if (canCoalesce) this._inflight.delete(key);
             }
         })();
 
-        this._inflight.set(key, promise);
+        if (canCoalesce) this._inflight.set(key, promise);
         return promise;
     }
 
@@ -238,14 +244,17 @@ class ViessmannClient {
         }
     }
 
-    async _request(axiosConfig, { onRetryWait } = {}) {
+    async _request(axiosConfig, { onRetryWait, signal } = {}) {
         return this._withRetry(() => this._withTokenRefresh(async () => {
             const token = await this._config.getValidToken();
             return this._axios.request({
                 ...axiosConfig,
-                headers: { ...(axiosConfig.headers || {}), Authorization: `Bearer ${token}` }
+                headers: { ...(axiosConfig.headers || {}), Authorization: `Bearer ${token}` },
+                // axios v1 forwards `signal` to the underlying http request so
+                // an aborted controller cancels the in-flight call.
+                ...(signal ? { signal } : {})
             });
-        }), onRetryWait);
+        }), { onRetryWait, signal });
     }
 
     async _withTokenRefresh(requestFn) {
@@ -266,7 +275,7 @@ class ViessmannClient {
         }
     }
 
-    async _withRetry(requestFn, onRetryWait) {
+    async _withRetry(requestFn, { onRetryWait, signal } = {}) {
         for (let attempt = 0; ; attempt++) {
             try {
                 return await requestFn();
@@ -284,10 +293,42 @@ class ViessmannClient {
                     onRetryWait({ status, attempt: nextAttempt, delayMs });
                 }
                 this._log(`HTTP ${status} - retrying in ${delayMs}ms (attempt ${nextAttempt}/${this._maxRetries})`);
-                await new Promise(resolve => setTimeout(resolve, delayMs));
+                // Abort-aware sleep: if the caller's signal aborts during the
+                // backoff wait, bail out immediately rather than holding the
+                // promise pending for up to 30s.
+                await abortableDelay(delayMs, signal);
             }
         }
     }
+}
+
+/**
+ * setTimeout-style delay that rejects early when an AbortSignal fires.
+ * Used by the retry loop so close-during-backoff doesn't wait out the
+ * full delay before noticing the abort.
+ */
+function abortableDelay(ms, signal) {
+    if (signal && signal.aborted) {
+        return Promise.reject(makeAbortError(signal));
+    }
+    return new Promise((resolve, reject) => {
+        const t = setTimeout(() => {
+            if (signal) signal.removeEventListener('abort', onAbort);
+            resolve();
+        }, ms);
+        function onAbort() {
+            clearTimeout(t);
+            reject(makeAbortError(signal));
+        }
+        if (signal) signal.addEventListener('abort', onAbort, { once: true });
+    });
+}
+
+function makeAbortError(signal) {
+    const err = new Error((signal && signal.reason && signal.reason.message) || 'Request aborted');
+    err.name = 'AbortError';
+    err.code = 'ERR_CANCELED';
+    return err;
 }
 
 module.exports = {

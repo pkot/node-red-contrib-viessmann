@@ -37,8 +37,15 @@ module.exports = function(RED) {
             // command schema. Failures produce a structured local error rather
             // than an opaque 400 from the API.
             if (node.config.validateBeforeWrite) {
+                // Allocate an AbortController so a node.close() during the
+                // schema GET aborts it (instead of leaving an uncancellable
+                // direct client call in flight after redeploy).
+                const schemaCtrl = new AbortController();
+                if (node._inflightAbortControllers) {
+                    node._inflightAbortControllers.add(schemaCtrl);
+                }
                 try {
-                    const featureResp = await node.config.client.get(featureUrl);
+                    const featureResp = await node.config.client.get(featureUrl, { signal: schemaCtrl.signal });
                     const featureData = featureResp && featureResp.data && featureResp.data.data;
                     const validation = validateWriteAgainstSchema(featureData, command, params);
                     if (!validation.valid) {
@@ -53,8 +60,14 @@ module.exports = function(RED) {
                     // ourselves with a node.warn rather than blocking the
                     // write. The POST below still runs, and the server's
                     // response is the authoritative error if the params
-                    // are bad.
+                    // are bad. If the abort was due to a close, return -
+                    // we should not POST on a torn-down node.
+                    if (schemaFetchError && schemaFetchError.code === 'ERR_CANCELED') return;
                     node.warn('Schema pre-check failed (' + (schemaFetchError && schemaFetchError.message ? schemaFetchError.message : 'unknown') + '); attempting write anyway');
+                } finally {
+                    if (node._inflightAbortControllers) {
+                        node._inflightAbortControllers.delete(schemaCtrl);
+                    }
                 }
             }
 
