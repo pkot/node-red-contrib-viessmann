@@ -73,11 +73,14 @@ The Viessmann API exposes hundreds of features organised under `device.*`, `gate
 
 ## Development
 
-- Setup, coding standards, PR process → [CONTRIBUTING.md](CONTRIBUTING.md)
-- Test framework, fixtures, coverage → [test/README.md](test/README.md)
+These docs live on GitHub (not shipped to npm to keep the published
+tarball small):
+
+- Setup, coding standards, PR process → [CONTRIBUTING.md](https://github.com/pkot/node-red-contrib-viessmann/blob/main/CONTRIBUTING.md)
+- Test framework, fixtures, coverage → [test/README.md](https://github.com/pkot/node-red-contrib-viessmann/blob/main/test/README.md)
 - Token bootstrap CLI details → [scripts/README.md](scripts/README.md)
-- Intent and architecture decisions → [SPEC.md](SPEC.md)
-- Conventions / patterns for coding agents → [AGENTS.md](AGENTS.md)
+- Intent and architecture decisions → [SPEC.md](https://github.com/pkot/node-red-contrib-viessmann/blob/main/SPEC.md)
+- Conventions / patterns for coding agents → [AGENTS.md](https://github.com/pkot/node-red-contrib-viessmann/blob/main/AGENTS.md)
 
 ## Building from source
 
@@ -118,4 +121,4 @@ Paweł Kot
 
 ## Contributing
 
-Bug reports, feature requests, and pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+Bug reports, feature requests, and pull requests welcome. See [CONTRIBUTING.md](https://github.com/pkot/node-red-contrib-viessmann/blob/main/CONTRIBUTING.md) for the workflow.
