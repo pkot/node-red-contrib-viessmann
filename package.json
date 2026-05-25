@@ -45,6 +45,21 @@
   "dependencies": {
     "axios": "^1.16.1"
   },
+  "//overrides": "Force fixed versions of transitive deps with published CVEs. All vulnerable paths are dev-only (mocha, node-red); patches do not change anything shipped to npm consumers. Each override is scoped to a major-range that matches what upstream uses, so a future ajv 8.x or body-parser 2.x doesn't break consumers' APIs. Revisit when upstream itself bumps these.",
+  "overrides": {
+    "serialize-javascript": "^7.0.5",
+    "ajv": "^6.14.0",
+    "body-parser": "^1.20.3",
+    "qs": "^6.15.2",
+    "picomatch": "^4.0.4",
+    "brace-expansion": "^2.0.3",
+    "mocha": {
+      "diff": "^8.0.3"
+    },
+    "express": {
+      "path-to-regexp": "0.1.13"
+    }
+  },
   "engines": {
     "node": ">=20.0.0"
   },
