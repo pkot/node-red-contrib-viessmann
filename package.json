@@ -61,16 +61,16 @@
     }
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.19.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "chai": "^6.2.0",
-    "eslint": "^10.0.0",
-    "mocha": "^11.3.0",
-    "nock": "^14.0.10",
+    "chai": "^6.2.2",
+    "eslint": "^10.4.0",
+    "mocha": "^11.7.6",
+    "nock": "^14.0.15",
     "node-red": "^4.1.10",
-    "node-red-node-test-helper": "^0.3.5",
+    "node-red-node-test-helper": "^0.3.6",
     "sinon": "^22.0.0"
   }
 }
