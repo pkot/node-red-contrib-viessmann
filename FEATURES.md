@@ -1,6 +1,23 @@
 # Viessmann API Features Reference
 
-> ⚠️ **Non-authoritative.** This document is a hand-curated snapshot of the Viessmann feature catalog as of the time it was last updated. The upstream catalog evolves; the only authoritative list of features available on **your** device is what the `viessmann-device-features` node returns at runtime. Per-node I/O is documented in each node's HTML help (visible in the Node-RED editor); this file is reference-only.
+> ⚠️ **Non-authoritative reference.** This document is a navigational aid for
+> integrators using `viessmann-read` / `viessmann-write`: a listing of the
+> canonical Viessmann feature names (`device.*`, `gateway.*`, `heating.*`)
+> with short factual descriptions of what each represents. The feature names
+> themselves are the public API surface of Viessmann's IoT API; the
+> descriptions were compiled from Viessmann's
+> [Developer Portal](https://developer.viessmann.com/) documentation and from
+> observation of API responses, as a quick lookup that complements the
+> upstream docs.
+>
+> The upstream catalog evolves and varies per device. The only authoritative
+> list for **your** device is what the `viessmann-device-features` node
+> returns at runtime. Per-node I/O is documented in each node's HTML help
+> block (visible in the Node-RED editor). This file is a navigation aid,
+> not the source of truth.
+>
+> If you maintain Viessmann's developer documentation and would like this
+> reference adjusted or removed, please open an issue on the repository.
 
 This document lists the features available through the Viessmann API. These features can be accessed using the `viessmann-read` and `viessmann-write` nodes.
 

@@ -36,60 +36,17 @@ The Viessmann API uses **OAuth2 with PKCE flow**, which requires browser-based a
 
 #### Quick Start - Generating Tokens
 
-**Option 1: Use the Helper Script (Recommended)**
+1. **Get your Client ID** from the [Viessmann Developer Portal](https://developer.viessmann.com/) (My Dashboard → Your clients). Set the redirect URI to `http://localhost:4200/`. No client secret is issued — Viessmann uses public PKCE clients.
 
-1. **Get your Client ID** from the [Viessmann Developer Portal](https://developer.viessmann.com/)
-   - Log in with your Viessmann account
-   - Go to "My Dashboard" → "Your clients"
-   - Create a new client or use an existing one
-   - Note your Client ID
-   - Set redirect URI to: `http://localhost:4200/`
+2. **Run the bundled CLI**:
 
-2. **Run the provided token generator script**:
-
-  ```bash
-  cd ~/.node-red
-  node node_modules/node-red-contrib-viessmann/scripts/get-viessmann-tokens.js
-  ```
-  The script will:
-  1. Ask for your Client ID
-  2. Open your browser for Viessmann login
-  3. Automatically capture the authorization code
-  4. Exchange it for access and refresh tokens
-  5. Display the tokens to copy into Node-RED
-
-**Option 2: Manual Token Generation**
-
-If you prefer to generate tokens manually, follow these steps:
-
-1. **Get your Client ID** from the [Viessmann Developer Portal](https://developer.viessmann.com/)
-   - Log in with your Viessmann account
-   - Go to "My Dashboard" → "Your clients"
-   - Create a new client or use an existing one
-   - Note your Client ID
-   - Set redirect URI to: `http://localhost:4200/`
-
-2. **Generate PKCE codes** using [this tool](https://developer.pingidentity.com/en/tools/pkce-code-generator.html)
-   - Save both the Code Verifier and Code Challenge
-
-3. **Authorize in browser** - Visit this URL (replace CLIENT_ID and CODE_CHALLENGE):
-   ```
-   https://iam.viessmann-climatesolutions.com/idp/v3/authorize?response_type=code&client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:4200/&scope=IoT%20offline_access&code_challenge=YOUR_CODE_CHALLENGE&code_challenge_method=S256
-   ```
-   - Log in with your Viessmann account
-   - After authorization, copy the `code` parameter from the redirect URL
-   - **Note:** The code expires in 20 seconds!
-
-4. **Exchange code for tokens** using curl (replace values):
    ```bash
-   curl -X POST "https://iam.viessmann-climatesolutions.com/idp/v3/token" \
-     -H "Content-Type: application/x-www-form-urlencoded" \
-     -d "client_id=YOUR_CLIENT_ID&redirect_uri=http://localhost:4200/&grant_type=authorization_code&code_verifier=YOUR_CODE_VERIFIER&code=YOUR_AUTH_CODE"
+   npx viessmann-get-tokens
    ```
 
-5. **Copy the tokens** from the JSON response:
-   - `access_token` - valid for 1 hour
-   - `refresh_token` - valid for 180 days
+   It opens your browser, captures the redirect, exchanges the code for tokens, and writes them to `viessmann-tokens.json` (mode 0600) in the current directory. Copy `accessToken` and `refreshToken` into the config node, then delete the file.
+
+For options, environment variables, troubleshooting, and a manual fallback recipe, see [scripts/README.md](scripts/README.md).
 
 #### Configuration in Node-RED
 
@@ -637,73 +594,11 @@ Not all features are available on all devices. Use the `viessmann-device-feature
 
 ## Development
 
-### For Contributors
-
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
-- Development setup instructions
-- Coding standards and best practices
-- Testing guidelines
-- Pull request process
-- Documentation requirements
-
-### Test Strategy
-
-The module uses **Mocha** and **Chai** for unit testing with **Sinon** for mocking and **Nock** for HTTP mocking.
-
-**Running tests:**
-```bash
-npm test
-```
-
-**Test coverage:**
-- All nodes have comprehensive unit tests
-- Tests cover happy path, error handling, and edge cases
-- HTTP requests are mocked to avoid requiring real API access
-- Tests use the `node-red-node-test-helper` for Node-RED specific testing
-
-**Key test areas:**
-- Authentication and token refresh
-- API request handling
-- Input validation
-- Error handling and messaging
-- Node status updates
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed testing guidelines.
-
-### Code Style
-
-The project follows standard JavaScript conventions:
-- **Indentation**: 4 spaces
-- **Async operations**: async/await preferred
-- **Error handling**: Always provide helpful, actionable error messages
-- **Node status**: Keep users informed with status updates
-- **Documentation**: Update help text when changing node behavior
-
-### Project Structure
-
-```
-node-red-contrib-viessmann/
-├── nodes/                      # Node implementations
-│   ├── viessmann-config.js    # OAuth2 configuration
-│   ├── viessmann-read.js      # Read node
-│   ├── viessmann-write.js     # Write node
-│   └── ...                    # Other nodes
-├── test/                       # Unit tests
-├── examples/                   # Example flows
-├── scripts/                    # Utility scripts
-├── README.md                   # This file
-├── SPEC.md                     # Functional specification
-├── FEATURES.md                 # API features reference
-└── CONTRIBUTING.md             # Contribution guidelines
-```
-
-### Functional Specification
-
-See [SPEC.md](SPEC.md) for detailed functional specifications including:
-- Node designs and requirements
-- Authentication flow
-- API integration patterns
-- Error handling strategies
+- Setup, coding standards, PR process → [CONTRIBUTING.md](CONTRIBUTING.md)
+- Test framework, fixtures, coverage → [test/README.md](test/README.md)
+- Token bootstrap CLI details → [scripts/README.md](scripts/README.md)
+- Intent and architecture decisions → [SPEC.md](SPEC.md)
+- Conventions / patterns for coding agents → [AGENTS.md](AGENTS.md)
 
 ## Building & Installing from Package
 
