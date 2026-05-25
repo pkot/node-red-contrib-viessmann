@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "description": "Node-RED module for integrating Viessmann devices via the official SaaS API",
   "scripts": {
-    "test": "mocha \"test/**/*_spec.js\"",
+    "test": "c8 mocha \"test/**/*_spec.js\"",
+    "test:nocov": "mocha \"test/**/*_spec.js\"",
     "lint": "eslint .",
     "prepack": "npm run lint && npm test"
   },
@@ -65,6 +66,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "c8": "^11.0.0",
     "chai": "^6.2.2",
     "eslint": "^10.4.0",
     "mocha": "^11.7.6",
