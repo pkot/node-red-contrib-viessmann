@@ -41,8 +41,7 @@ npx c8 mocha test/viessmann-read_spec.js       # one file with coverage
 | Lines | 70% |
 
 Current numbers are well above (94 / 87 / 96 / 94 as of this writing).
-`coverage/lcov.info` is generated for Codecov; `coverage/index.html` is the
-local browse-able report.
+`coverage/index.html` is the local browse-able report.
 
 ## Layout
 
