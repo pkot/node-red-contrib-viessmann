@@ -2,8 +2,9 @@
 
 The package provides seven nodes. Each is documented below with its
 `msg` inputs, output shape, error behavior, and underlying API endpoint.
-The same content is available inline in the Node-RED editor's help panel
-for each node.
+A shorter version appears in the Node-RED editor's help panel for each
+node (the `nodes/*.html` help blocks); this file is the long-form
+reference.
 
 | Node | Purpose |
 |---|---|
