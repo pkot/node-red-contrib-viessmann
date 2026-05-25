@@ -17,8 +17,7 @@
     "README.md",
     "AGENTS.md",
     "CONTRIBUTING.md",
-    "SPEC.md",
-    "FEATURES.md"
+    "SPEC.md"
   ],
   "bin": {
     "viessmann-get-tokens": "scripts/get-viessmann-tokens.js"

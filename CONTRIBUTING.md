@@ -104,8 +104,6 @@ through advisory ones. CI must be green.
   of truth for what each node consumes / emits.
 - **`SPEC.md`** — design decisions and architecture. Update if you change
   an architectural invariant (e.g., move where transport lives).
-- **`FEATURES.md`** — non-authoritative catalog of Viessmann features.
-  Update when the upstream catalog meaningfully changes.
 - **Example flows** under `examples/` — add when introducing a new common
   user pattern; name `NN-descriptive-name.json`.
 

@@ -590,13 +590,9 @@ See the [examples README](examples/README.md) for detailed instructions on impor
 
 ## Available Features
 
-The Viessmann API provides hundreds of features for monitoring and controlling your heating system. See [FEATURES.md](FEATURES.md) for a comprehensive list of available features including:
+The Viessmann API exposes hundreds of features for monitoring and controlling your heating system, organised under `device.*`, `gateway.*`, and `heating.*` namespaces. The authoritative list for **your** device is what the `viessmann-device-features` node returns at runtime — feature availability varies by model, firmware, and installation.
 
-- **Device features**: Information, status, configuration, sensors, maintenance
-- **Gateway features**: Connection status, device lists, WiFi information
-- **Heating features**: Boiler, buffer, burners, circuits, DHW, power consumption, and more
-
-Not all features are available on all devices. Use the `viessmann-device-features` node to discover what your specific device supports.
+For the canonical reference, see Viessmann's [Developer Portal](https://developer.viessmann.com/) (account required).
 
 ## Development
 

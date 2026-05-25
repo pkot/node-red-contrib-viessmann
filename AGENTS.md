@@ -241,7 +241,8 @@ This repo's 46-issue refactor cycle established a working rhythm:
 - **User-facing per-node I/O** → each node's `*.html` help (rendered in
   the Node-RED editor sidebar). Source of truth for what `msg` fields
   each node consumes/emits.
-- **Feature names** → `FEATURES.md` (non-authoritative reference) and at
-  runtime via `viessmann-device-features` node
+- **Feature names** → query the `viessmann-device-features` node at
+  runtime; canonical reference is Viessmann's
+  [Developer Portal](https://developer.viessmann.com/)
 - **Test patterns** → `test/README.md` + `test/support/fixtures.js`
 - **Token bootstrap** → `scripts/README.md`

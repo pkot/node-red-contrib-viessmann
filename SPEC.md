@@ -1,6 +1,6 @@
 # Node-RED Viessmann Module: Functional Specification
 
-> **Scope of this document.** SPEC.md captures intent and architecture decisions. For per-node I/O contracts (`msg.payload`, error behavior, status icons), the source of truth is each node's HTML help block under `nodes/*.html` — that's what users see in the Node-RED editor. README.md is the install/usage guide. FEATURES.md is a non-authoritative catalog snapshot.
+> **Scope of this document.** SPEC.md captures intent and architecture decisions. For per-node I/O contracts (`msg.payload`, error behavior, status icons), the source of truth is each node's HTML help block under `nodes/*.html` — that's what users see in the Node-RED editor. README.md is the install/usage guide. For the catalog of available Viessmann features, query the `viessmann-device-features` node at runtime or consult the Viessmann Developer Portal.
 
 ## 1. Scope
 
