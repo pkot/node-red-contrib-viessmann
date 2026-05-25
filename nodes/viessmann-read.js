@@ -12,7 +12,6 @@ module.exports = function(RED) {
             if (!ref) return;
             const { installationId, gatewaySerial, deviceId } = ref;
 
-            // Check for feature or datapoint (both are treated the same way)
             const feature = msg.feature || msg.datapoint;
             const endpoint = feature
                 ? `${node.apiBaseUrl}/iot/v2/features/installations/${encodeURIComponent(installationId)}/gateways/${encodeURIComponent(gatewaySerial)}/devices/${encodeURIComponent(deviceId)}/features/${encodeURIComponent(feature)}`

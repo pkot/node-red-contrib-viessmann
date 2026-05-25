@@ -55,14 +55,12 @@ function validateWriteAgainstSchema(featureData, commandName, params) {
 
     const declared = command.params || {};
 
-    // Unknown parameter keys
     for (const key of Object.keys(params)) {
         if (!Object.prototype.hasOwnProperty.call(declared, key)) {
             errors.push(`Unknown parameter "${key}" for command "${commandName}"`);
         }
     }
 
-    // Required / type / constraints
     for (const [key, spec] of Object.entries(declared)) {
         const value = params[key];
         if (value === undefined) {
