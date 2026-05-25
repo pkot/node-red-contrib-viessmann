@@ -46,22 +46,3 @@ jobs:
 
     - name: Run tests (with coverage via c8)
       run: npm test
-      
-    - name: Upload coverage to Codecov
-      if: contains(fromJson('["20.x","22.x","24.x"]'), matrix.node-version)
-      # Real lcov.info is now produced by `npm test` via c8 (was a no-op when
-      # the path didn't exist).
-      uses: codecov/codecov-action@v6
-      with:
-        files: ./coverage/lcov.info
-        fail_ci_if_error: false
-        
-    - name: Archive test results
-      if: always()
-      uses: actions/upload-artifact@v7
-      with:
-        name: test-results-${{ matrix.node-version }}
-        path: |
-          coverage/
-          *.log
-        retention-days: 7
