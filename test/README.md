@@ -19,11 +19,14 @@ npm run test:nocov # mocha only, faster, no coverage; use for debugging
 npm run lint
 ```
 
-To run a single file or pattern:
+To run a single file or pattern (mocha treats extra positional args as
+*additional* globs to the `test/**/*_spec.js` set, not as a replacement —
+use `npx mocha` directly to scope down):
 
 ```bash
-npm run test:nocov -- test/viessmann-read_spec.js
-npm run test:nocov -- --grep "validateViessmannRef"
+npx mocha test/viessmann-read_spec.js          # one file
+npx mocha --grep "validateViessmannRef"        # by pattern (uses default glob)
+npx c8 mocha test/viessmann-read_spec.js       # one file with coverage
 ```
 
 ## Coverage

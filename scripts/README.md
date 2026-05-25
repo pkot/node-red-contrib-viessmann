@@ -18,10 +18,19 @@ itself — this script is the one-time bootstrap step.
 
 ### Run
 
-If the package is installed globally or via `npx`:
+If the package is installed in the current project (or globally), the
+bin entry is on PATH:
 
 ```bash
 npx viessmann-get-tokens
+```
+
+To run it without installing first (npx downloads on demand), the package
+name must be supplied explicitly because the bin name and package name
+differ:
+
+```bash
+npx --package node-red-contrib-viessmann viessmann-get-tokens
 ```
 
 Or from a Node-RED install:

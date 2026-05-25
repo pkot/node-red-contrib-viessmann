@@ -38,10 +38,16 @@ The Viessmann API uses **OAuth2 with PKCE flow**, which requires browser-based a
 
 1. **Get your Client ID** from the [Viessmann Developer Portal](https://developer.viessmann.com/) (My Dashboard → Your clients). Set the redirect URI to `http://localhost:4200/`. No client secret is issued — Viessmann uses public PKCE clients.
 
-2. **Run the bundled CLI**:
+2. **Run the bundled CLI**. From a directory where the package is installed:
 
    ```bash
    npx viessmann-get-tokens
+   ```
+
+   Or, without installing first:
+
+   ```bash
+   npx --package node-red-contrib-viessmann viessmann-get-tokens
    ```
 
    It opens your browser, captures the redirect, exchanges the code for tokens, and writes them to `viessmann-tokens.json` (mode 0600) in the current directory. Copy `accessToken` and `refreshToken` into the config node, then delete the file.

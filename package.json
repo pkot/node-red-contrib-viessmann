@@ -12,8 +12,12 @@
     "nodes/",
     "examples/",
     "scripts/",
+    "test/README.md",
     "LICENSE",
     "README.md",
+    "AGENTS.md",
+    "CONTRIBUTING.md",
+    "SPEC.md",
     "FEATURES.md"
   ],
   "bin": {

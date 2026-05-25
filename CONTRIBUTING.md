@@ -48,7 +48,7 @@ Restart Node-RED after code changes (or use `--watch`).
 
 - 4-space indent, single quotes, semicolons, `async/await` over raw promises.
 - camelCase for vars/functions; UPPER_SNAKE_CASE for true module constants.
-- Validate inputs at the boundary (`lib/validators.js`); error with
+- Validate inputs at the boundary (`nodes/lib/validators.js`); error with
   `node.error(text, originatingMsg)` so a Catch node routes correctly.
 - HTTP work goes through `node.config.client` (the `ViessmannClient` in
   `nodes/lib/client.js`) — don't import `axios` in a consumer node.
