@@ -60,12 +60,11 @@ function question(prompt) {
     });
 }
 
-// Generate code verifier and challenge for PKCE
 function generatePKCE() {
-    // Generate a random code verifier (43-128 characters)
+    // RFC 7636 requires the verifier to be 43-128 characters; 32 random bytes
+    // base64url-encode to 43 chars, the minimum.
     const codeVerifier = crypto.randomBytes(32).toString('base64url');
 
-    // Generate code challenge (SHA256 hash of verifier, base64url encoded)
     const codeChallenge = crypto
         .createHash('sha256')
         .update(codeVerifier)
@@ -146,7 +145,6 @@ function startCallbackServer(port, expectedState) {
     });
 }
 
-// Exchange authorization code for tokens
 function exchangeCodeForTokens(clientId, code, codeVerifier, redirectUri) {
     return new Promise((resolve, reject) => {
         const postData = querystring.stringify({
@@ -209,7 +207,6 @@ async function main() {
     console.log('for use with the Node-RED Viessmann integration.\n');
 
     try {
-        // Get client ID
         const clientId = await question('Enter your Viessmann Client ID: ');
         if (!clientId.trim()) {
             console.error('Error: Client ID is required');
@@ -217,7 +214,6 @@ async function main() {
             process.exit(1);
         }
 
-        // Generate PKCE codes
         console.log('\nGenerating PKCE code verifier and challenge...');
         const { codeVerifier, codeChallenge } = generatePKCE();
         console.log('✓ Generated');
@@ -273,11 +269,9 @@ async function main() {
             }
         }, 1000);
 
-        // Start callback server and wait for code
         const code = await startCallbackServer(CALLBACK_PORT, state);
         console.log('\n✓ Authorization code received');
 
-        // Exchange code for tokens
         console.log('\n' + '='.repeat(70));
         console.log('STEP 2: Exchanging Code for Tokens');
         console.log('='.repeat(70));

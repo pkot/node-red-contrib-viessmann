@@ -63,9 +63,6 @@ function actionableStatusHint(status) {
     }
 }
 
-/**
- * Truncate long text for status display.
- */
 function truncateForStatus(text, maxLength = 30) {
     if (typeof text !== 'string') {
         text = String(text);

@@ -6,16 +6,11 @@ const {
     VIESSMANN_TOKEN_PATH
 } = require('./lib/client');
 
-// Token refresh buffer time (5 minutes before expiration)
+// Refresh slightly before actual expiry to avoid races where a request
+// in flight crosses the boundary and gets a 401.
 const TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 module.exports = function(RED) {
-    /**
-     * Helper function to mask sensitive data for logging
-     * Shows only the last 4 characters of a string
-     * @param {string} value - The value to mask
-     * @returns {string} Masked value
-     */
     function maskSensitiveData(value) {
         if (!value || typeof value !== 'string') {
             return '****';
@@ -30,40 +25,24 @@ module.exports = function(RED) {
         RED.nodes.createNode(this, config);
         const node = this;
 
-        // Store debug flag from config
         this.enableDebug = config.enableDebug || false;
 
-        // When true, viessmann-write performs a client-side schema check
-        // against the feature's declared `commands` before posting (#77).
-        // Off by default to preserve the existing opaque pass-through;
-        // users opt-in for stricter validation.
+        // Opt-in client-side schema check before write (#77). Off by default
+        // to preserve the opaque pass-through behavior.
         this.validateBeforeWrite = config.validateBeforeWrite === true || config.validateBeforeWrite === 'true';
 
-        // OAuth2 endpoints
         this.tokenUrl = VIESSMANN_IAM_BASE_URL + VIESSMANN_TOKEN_PATH;
-
-        // Token storage - initialize from credentials if provided
         this.accessToken = node.credentials.accessToken || null;
         this.refreshToken = node.credentials.refreshToken || null;
         this.tokenExpiry = null;
 
-        // Authentication state. Read-only from outside; mutated only inside
-        // updateAuthState (which also emits the 'auth-state' event below).
-        this.authState = 'disconnected'; // 'disconnected', 'authenticating', 'authenticated', 'error'
+        // 'disconnected' | 'authenticating' | 'authenticated' | 'error'.
+        // Mutated only inside updateAuthState, which emits 'auth-state'.
+        this.authState = 'disconnected';
         this.authError = null;
 
-        // Dependent nodes observe state changes via this.on('auth-state', cb)
-        // instead of the previous registerDependent / dependentNodes array.
-        // EventEmitter is inherited from the Node-RED node base.
-
-        // Shared HTTP client. Owns the axios instance, retry policy, 401
-        // refresh-and-retry, response cache, in-flight de-duplication, and
-        // concurrency throttle. Per-node wrappers (viessmann-helpers.js)
-        // layer status icon and node.error on top.
-        //
-        // cacheTTL and maxConcurrent fall back to client defaults when the
-        // editor config doesn't set them. Numeric coercion guards against
-        // string values arriving from the HTML editor.
+        // Numeric coercion guards against string values arriving from the
+        // HTML editor; out-of-range values fall back to client defaults.
         const clientOptions = {
             log: (m) => debugLog(m)
         };
@@ -77,13 +56,9 @@ module.exports = function(RED) {
         }
         this.client = new ViessmannClient(node, clientOptions);
 
-        /**
-         * Log debug information if debug mode is enabled. Exposed as
-         * `node.debugLog` so consumer nodes (via node-runtime) can route
-         * their debug output through the same toggle - one "Enable Debug
-         * Logging" checkbox controls everything.
-         * @param {string} message - The debug message to log
-         */
+        // Exposed as `node.debugLog` so consumer nodes (via node-runtime)
+        // route their debug output through the same "Enable Debug Logging"
+        // checkbox.
         const debugLog = function(message) {
             if (node.enableDebug) {
                 node.log('[DEBUG] ' + message);
@@ -91,38 +66,26 @@ module.exports = function(RED) {
         };
         this.debugLog = debugLog;
 
-        /**
-         * Update authentication state and notify subscribers via the
-         * 'auth-state' event.
-         * @param {string} state - New authentication state
-         * @param {string} error - Optional error message
-         */
         const updateAuthState = function(state, error) {
             node.authState = state;
             node.authError = error || null;
             node.emit('auth-state', { state, error: node.authError });
         };
 
-        /**
-         * Read-only snapshot of the current auth state. Prefer this over
-         * directly accessing node.authState / node.authError.
-         */
+        // Prefer this over reading node.authState / node.authError directly.
         this.getAuthSnapshot = function() {
             return { state: node.authState, error: node.authError };
         };
 
-        // Initialize token expiry tracking if we have an access token
+        // Optimistic 1-hour expiry on load. The token's real age is unknown
+        // (could be 59 minutes old). When this estimate proves wrong, the
+        // 401-refresh path in executeApiGet/Post corrects it - see #83 for
+        // a deferred fix that would persist real expiry.
         if (this.accessToken) {
-            // Assume token expires in 1 hour (default for Viessmann) minus buffer
-            // This will trigger a refresh on first use if refresh token is available
             this.tokenExpiry = Date.now() + (3600 * 1000);
             updateAuthState('authenticated');
         }
 
-        /**
-         * Validate that we have an access token
-         * @returns {Promise<void>}
-         */
         this.authenticate = async function() {
             if (node.accessToken) {
                 debugLog('Access token is already available');
@@ -130,22 +93,19 @@ module.exports = function(RED) {
                 return;
             }
 
-            // Do not call node.error here. The caller (executeApiGet/Post)
-            // calls node.error(message, msg) using Node-RED's
-            // node.error(error, msg) signature, which is what routes the
-            // failure to a Catch node attached to the user's flow.
-            // node.warn keeps the failure visible in the editor sidebar
-            // without double-firing.
+            // node.warn (not node.error): the request-level helper calls
+            // node.error(message, originatingMsg) so a downstream Catch
+            // node routes correctly. Surfacing here too would double-fire.
             const errorMsg = 'No access token configured. Please generate an access token using the PKCE flow and configure it in the node settings.';
             node.warn(errorMsg);
             updateAuthState('error', errorMsg);
             throw new Error(errorMsg);
         };
 
-        // In-flight refresh promise. While set, concurrent callers share it
-        // so we never POST /idp/v3/token twice with the same (rotating) refresh
-        // token - the IdP would reject the losers and we'd race-overwrite
-        // node.refreshToken with a stale value.
+        // De-dup concurrent refresh calls. Without this, N callers each
+        // POST /idp/v3/token with the same refresh_token; the IdP rotates
+        // the token on the first response and rejects the rest as
+        // invalid_grant.
         node._refreshPromise = null;
 
         /**
@@ -164,10 +124,9 @@ module.exports = function(RED) {
                 if (!node.refreshToken) {
                     debugLog('No refresh token available, cannot refresh');
                     const errorMsg = 'Access token expired and no refresh token available. Please generate new tokens.';
-                    // node.warn (not node.error): the request-level helper will
-                    // call node.error(message, originatingMsg) - Node-RED's
-                    // signature is node.error(error, msg) - so the user's
-                    // Catch node routes to the correct flow.
+                    // node.warn instead of node.error - the request-level
+                    // helper does node.error(msg, originatingMsg) for
+                    // Catch-node routing; double-firing here would log twice.
                     node.warn(errorMsg);
                     updateAuthState('error', errorMsg);
                     throw new Error(errorMsg);
@@ -190,20 +149,20 @@ module.exports = function(RED) {
                         timeout: HTTP_TIMEOUT_MS
                     });
 
-                    // Update tokens in both node and credentials for persistence
+                    // Write to both .accessToken and .credentials.accessToken
+                    // because only the credentials version survives a Node-RED
+                    // restart.
                     node.accessToken = response.data.access_token;
                     node.credentials.accessToken = response.data.access_token;
-                    debugLog('Updated access token in credentials for persistence: ' + maskSensitiveData(response.data.access_token));
+                    debugLog('Updated access token: ' + maskSensitiveData(response.data.access_token));
                     if (response.data.refresh_token) {
                         node.refreshToken = response.data.refresh_token;
                         node.credentials.refreshToken = response.data.refresh_token;
-                        debugLog('Updated refresh token in credentials for persistence: ' + maskSensitiveData(response.data.refresh_token));
+                        debugLog('Updated refresh token: ' + maskSensitiveData(response.data.refresh_token));
                     }
-                    // The IdP normally returns expires_in (RFC 6749 §4.2.2).
-                    // If it's missing we'd otherwise compute tokenExpiry = NaN,
-                    // which would silently disable future expiry-based refreshes
-                    // (NaN comparisons are always false). Warn the user and
-                    // default to a conservative 1-hour expiry.
+                    // Defend against missing expires_in: NaN comparisons are
+                    // always false, so an unhandled NaN would disable all
+                    // future expiry-based refreshes.
                     const expiresInSeconds = Number(response.data.expires_in);
                     const validExpiresIn = Number.isFinite(expiresInSeconds) && expiresInSeconds > 0;
                     if (!validExpiresIn) {
@@ -226,15 +185,10 @@ module.exports = function(RED) {
                     debugLog('Token refresh failed with error: ' + error.message);
                     if (error.response) {
                         debugLog('Error status: ' + error.response.status);
-                        // Only log a small allowlist of OAuth error fields.
-                        // Avoid JSON.stringify(error.response.data) because
-                        // some IdPs echo submitted parameters back in the
-                        // error body, and Node-RED logs often land in
-                        // journalctl / syslog / log aggregators.
-                        //
-                        // Even within the allowlist, error_description can
-                        // contain reflected values - defensively redact the
-                        // current refresh token and client id from it.
+                        // Allowlist OAuth error fields + scrub credentials
+                        // from error_description: some IdPs echo submitted
+                        // parameters back, and Node-RED logs often land in
+                        // journalctl / log aggregators.
                         const data = error.response.data || {};
                         const safe = {};
                         if (data.error !== undefined) safe.error = data.error;
@@ -253,10 +207,7 @@ module.exports = function(RED) {
                     }
                     const errorMsg = error.response?.data?.error_description || error.message;
                     const fullErrorMsg = 'Token refresh failed: ' + errorMsg + '. You may need to generate new tokens.';
-                    // node.warn (not node.error): the request-level helper will
-                    // call node.error(message, originatingMsg) - Node-RED's
-                    // signature is node.error(error, msg) - so the user's
-                    // Catch node routes to the correct flow.
+                    // See "node.warn instead of node.error" rationale above.
                     node.warn(fullErrorMsg);
                     updateAuthState('error', fullErrorMsg);
                     throw error;
@@ -268,21 +219,15 @@ module.exports = function(RED) {
             return node._refreshPromise;
         };
 
-        /**
-         * Get a valid access token, refreshing if necessary
-         * @returns {Promise<string>} Valid access token
-         */
         this.getValidToken = async function() {
             debugLog('Checking token validity');
 
-            // If no token exists, authenticate
             if (!node.accessToken) {
                 debugLog('No access token found, initiating authentication');
                 await node.authenticate();
                 return node.accessToken;
             }
 
-            // Check if token is expired (with buffer)
             const now = Date.now();
             const timeUntilExpiry = node.tokenExpiry - now;
             debugLog('Current token status: ' + Math.max(0, timeUntilExpiry) + 'ms until expiry (buffer: ' + TOKEN_REFRESH_BUFFER_MS + 'ms)');
