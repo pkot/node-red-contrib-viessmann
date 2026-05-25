@@ -12,12 +12,8 @@
     "nodes/",
     "examples/",
     "scripts/",
-    "test/README.md",
     "LICENSE",
-    "README.md",
-    "AGENTS.md",
-    "CONTRIBUTING.md",
-    "SPEC.md"
+    "README.md"
   ],
   "bin": {
     "viessmann-get-tokens": "scripts/get-viessmann-tokens.js"
